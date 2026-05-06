@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>VotaAí — Enquetes ao Vivo</title>
+<title>CBHM — Enquetes ao Vivo</title>
 <meta name="description" content="Crie e compartilhe enquetes interativas ao vivo, grátis.">
 
 <!-- Fonts -->
@@ -25,20 +25,20 @@
      4. Cole aqui abaixo
   ═══════════════════════════════════════════════════ */
   const firebaseConfig = {
-    apiKey:            "SUA_API_KEY",
-    authDomain:        "SEU_PROJETO.firebaseapp.com",
-    databaseURL:       "https://SEU_PROJETO-default-rtdb.firebaseio.com",
-    projectId:         "SEU_PROJETO",
-    storageBucket:     "SEU_PROJETO.appspot.com",
-    messagingSenderId: "SEU_SENDER_ID",
-    appId:             "SEU_APP_ID"
-  };
+	apiKey: "AIzaSyBx9dqj-ciEI9hy8AZIuh6e6fhDfB9vrRI",
+	authDomain: "cbhm-6ec4a.firebaseapp.com",
+	projectId: "cbhm-6ec4a",
+	storageBucket: "cbhm-6ec4a.firebasestorage.app",
+	messagingSenderId: "833540945377",
+	appId: "1:833540945377:web:fc7ba5d5cda9f86c848ea0",
+	measurementId: "G-Y1M7E8X6XZ"
+};
 
   /* ══════════════════════════════════════════════════
      🤖  GEMINI API KEY
      Obtenha grátis em https://aistudio.google.com/apikey
   ═══════════════════════════════════════════════════ */
-  window.GEMINI_KEY = "SUA_GEMINI_API_KEY";
+  window.GEMINI_KEY = "AIzaSyC26NtNtHSoIS60dsueu7KKdA9Tto5MowI";
 
   const app = initializeApp(firebaseConfig);
   const db  = getDatabase(app);
