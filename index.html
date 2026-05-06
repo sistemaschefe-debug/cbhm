@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VotaAí — Enquetes ao Vivo</title>
+<meta name="description" content="Crie e compartilhe enquetes interativas ao vivo, grátis.">
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&display=swap" rel="stylesheet">
+
+<!-- Firebase SDK (modular CDN build) -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getDatabase, ref, set, get, push, onValue, update, remove }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+  /* ══════════════════════════════════════════════════
+     🔧  CONFIGURAÇÃO — substitua pelos seus valores
+     ══════════════════════════════════════════════════
+     1. Acesse https://console.firebase.google.com
+     2. Crie um projeto → Realtime Database (modo teste)
+     3. Adicione um app Web e copie firebaseConfig
+     4. Cole aqui abaixo
+  ═══════════════════════════════════════════════════ */
+  const firebaseConfig = {
+    apiKey:            "SUA_API_KEY",
+    authDomain:        "SEU_PROJETO.firebaseapp.com",
+    databaseURL:       "https://SEU_PROJETO-default-rtdb.firebaseio.com",
+    projectId:         "SEU_PROJETO",
+    storageBucket:     "SEU_PROJETO.appspot.com",
+    messagingSenderId: "SEU_SENDER_ID",
+    appId:             "SEU_APP_ID"
+  };
+
+  /* ══════════════════════════════════════════════════
+     🤖  GEMINI API KEY
+     Obtenha grátis em https://aistudio.google.com/apikey
+  ═══════════════════════════════════════════════════ */
+  window.GEMINI_KEY = "SUA_GEMINI_API_KEY";
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+  window._db  = db;
+  window._ref = ref;
+  window._set = set;
+  window._get = get;
+  window._push = push;
+  window._onValue = onValue;
+  window._update = update;
+  window._remove = remove;
+  window._firebaseReady = true;
+  document.dispatchEvent(new Event("firebaseReady"));
+</script>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+/* ── reset ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+img,svg{display:block}
+
+/* ── tokens ── */
+:root{
+  --bg:#06060f;
+  --s1:#0e0e1c;
+  --s2:#161627;
+  --s3:#1f1f38;
+  --accent:#635bff;
+  --a2:#00d4aa;
+  --a3:#ff5f7e;
+  --gold:#f5c542;
+  --tx:#eeeef5;
+  --muted:#6b6b9a;
+  --border:rgba(99,91,255,.18);
+  --radius:14px;
+  --fh:'Syne',sans-serif;
+  --fb:'DM Sans',sans-serif;
+  --ease:cubic-bezier(.4,0,.2,1);
+}
+
+body{background:var(--bg);color:var(--tx);font-family:var(--fb);min-height:100vh;overflow-x:hidden}
+
+/* ── noise overlay ── */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;opacity:.03;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:200px;z-index:0}
+
+/* ══ SCREENS ══ */
+.screen{display:none;min-height:100vh;position:relative;z-index:1}
+.screen.active{display:flex;flex-direction:column}
+
+/* ══ LANDING ══ */
+#screenLanding{align-items:center;justify-content:center;text-align:center;padding:2rem}
+.hero-glow{position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(99,91,255,.22) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+.logo-big{font-family:var(--fh);font-size:clamp(2.5rem,8vw,5rem);font-weight:800;letter-spacing:-2px;background:linear-gradient(135deg,var(--accent),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.5rem}
+.tagline{color:var(--muted);font-size:1.1rem;margin-bottom:3rem}
+.landing-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;max-width:720px;margin:0 auto 3rem;text-align:left}
+.lcard{background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;transition:border-color .2s,transform .2s}
+.lcard:hover{border-color:var(--accent);transform:translateY(-4px)}
+.lcard-icon{font-size:2rem;margin-bottom:.75rem}
+.lcard h3{font-family:var(--fh);font-size:1rem;margin-bottom:.4rem}
+.lcard p{font-size:.85rem;color:var(--muted);line-height:1.6}
+.landing-btns{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}
+
+/* ══ SETUP ══ */
+#screenSetup{padding:2rem;max-width:780px;margin:0 auto;width:100%}
+.setup-header{margin-bottom:2rem}
+.setup-header h1{font-family:var(--fh);font-size:2rem;font-weight:700}
+.setup-header p{color:var(--muted);margin-top:.4rem}
+
+.config-box{background:var(--s1);border:1px solid var(--border);border-radius:var(--radius);padding:1.5rem;margin-bottom:1.5rem}
+.config-box h2{font-family:var(--fh);font-size:1rem;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-bottom:1.2rem}
+
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:.4rem}
+.field input,.field textarea,.field select{width:100%;padding:.7rem 1rem;border-radius:10px;border:1px solid var(--border);background:var(--s2);color:var(--tx);font-family:var(--fb);font-size:.95rem;transition:border-color .2s}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--accent)}
+.field textarea{resize:vertical;min-height:80px}
+
+.slide-builder{display:flex;flex-direction:column;gap:.75rem}
+.slide-row{background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:1rem;display:grid;grid-template-columns:1fr auto auto;gap:.75rem;align-items:center}
+.slide-row input{background:var(--s3);border:1px solid transparent;border-radius:8px;padding:.5rem .75rem;color:var(--tx);font-family:var(--fb);font-size:.9rem;width:100%}
+.slide-row input:focus{outline:none;border-color:var(--accent)}
+.slide-badge{font-size:.75rem;padding:.3rem .7rem;border-radius:999px;white-space:nowrap;border:1px solid var(--border);color:var(--muted)}
+
+/* ══ BUTTONS ══ */
+.btn{display:inline-flex;align-items:center;gap:.45rem;padding:.55rem 1.2rem;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--tx);font-family:var(--fb);font-size:.88rem;cursor:pointer;transition:all .18s var(--ease);white-space:nowrap}
+.btn:hover{background:var(--s2);border-color:rgba(99,91,255,.45)}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn-primary:hover{background:#7c74ff;border-color:#7c74ff}
+.btn-danger{border-color:var(--a3);color:var(--a3)}
+.btn-danger:hover{background:rgba(255,95,126,.1)}
+.btn-gem{background:linear-gradient(135deg,#1a1a2e,#0e0e1c);border-color:var(--a2);color:var(--a2)}
+.btn-gem:hover{background:rgba(0,212,170,.1)}
+.btn-lg{padding:.75rem 2rem;font-size:1rem}
+.btn-xl{padding:1rem 2.5rem;font-size:1.1rem;font-family:var(--fh);font-weight:600}
+.btn-live{background:linear-gradient(135deg,var(--a3),var(--accent));border:none;color:#fff;animation:livepulse 2.5s infinite}
+@keyframes livepulse{0%,100%{box-shadow:0 0 0 0 rgba(255,95,126,.35)}50%{box-shadow:0 0 0 10px rgba(255,95,126,0)}}
+
+/* ══ NAV ══ */
+nav{display:flex;align-items:center;gap:1rem;padding:.85rem 1.5rem;border-bottom:1px solid var(--border);background:rgba(6,6,15,.85);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100;flex-wrap:wrap}
+.nav-logo{font-family:var(--fh);font-weight:800;font-size:1.2rem;background:linear-gradient(135deg,var(--accent),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-right:.5rem}
+.nav-session{font-size:.8rem;color:var(--muted);background:var(--s1);padding:.3rem .8rem;border-radius:999px;border:1px solid var(--border)}
+.nav-spacer{flex:1}
+.pin-pill{font-family:var(--fh);font-size:.9rem;letter-spacing:3px;color:var(--a2);background:rgba(0,212,170,.08);border:1px solid rgba(0,212,170,.25);padding:.35rem 1rem;border-radius:999px}
+
+/* ══ PRESENTER ══ */
+#screenPresenter{flex-direction:column}
+.presenter-body{display:grid;grid-template-columns:260px 1fr;flex:1;overflow:hidden}
+@media(max-width:700px){.presenter-body{grid-template-columns:1fr}.sidebar{display:none}}
+
+/* sidebar */
+.sidebar{background:var(--s1);border-right:1px solid var(--border);overflow-y:auto;padding:1rem .75rem;display:flex;flex-direction:column;gap:.4rem}
+.sbar-label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:2px;padding:.5rem .5rem .25rem;font-family:var(--fh)}
+.slide-thumb{display:flex;align-items:center;gap:.7rem;padding:.6rem .75rem;border-radius:10px;border:1px solid transparent;cursor:pointer;transition:all .15s}
+.slide-thumb:hover{background:var(--s2);border-color:var(--border)}
+.slide-thumb.active{background:rgba(99,91,255,.1);border-color:var(--accent)}
+.thumb-num{font-size:.7rem;color:var(--muted);min-width:18px}
+.thumb-icon{font-size:1.1rem}
+.thumb-text{flex:1;min-width:0}
+.thumb-title{font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.thumb-type{font-size:.7rem;color:var(--muted)}
+.sbar-add{margin-top:auto;padding-top:.75rem}
+
+/* main stage */
+.stage{flex:1;overflow-y:auto;padding:1.5rem;display:flex;flex-direction:column;gap:1.25rem}
+.stage-toolbar{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;padding:.75rem 1.5rem;background:var(--s1);border-bottom:1px solid var(--border)}
+.stage-toolbar .spacer{flex:1}
+.stat-chip{font-size:.8rem;color:var(--muted);padding:.3rem .75rem;border-radius:999px;background:var(--s2);border:1px solid var(--border)}
+.stat-chip strong{color:var(--a2)}
+
+/* slide card */
+.slide-card{background:var(--s1);border:1px solid var(--border);border-radius:20px;padding:2rem;animation:fadeUp .3s var(--ease)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.slide-card h2{font-family:var(--fh);font-size:1.5rem;font-weight:700;margin-bottom:.4rem}
+.slide-card .sub{color:var(--muted);font-size:.92rem;margin-bottom:1.5rem;line-height:1.6}
+
+/* options */
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin-bottom:1.5rem}
+.opt{padding:.9rem 1rem;border-radius:12px;border:2px solid var(--border);background:var(--s2);cursor:pointer;transition:all .2s;position:relative;overflow:hidden;text-align:center}
+.opt:hover{border-color:var(--accent);transform:translateY(-2px)}
+.opt-label{font-weight:500;font-size:.95rem;margin-bottom:.3rem;position:relative;z-index:1}
+.opt-pct{font-size:.75rem;color:var(--muted);position:relative;z-index:1}
+.opt-fill{position:absolute;bottom:0;left:0;height:4px;border-radius:0 0 0 0;transition:width .8s var(--ease)}
+
+/* word cloud */
+.wcloud{min-height:180px;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:center;padding:1.25rem;background:var(--s2);border-radius:12px;margin-bottom:1rem}
+.wword{padding:.3rem .85rem;border-radius:999px;font-weight:600;transition:transform .2s}
+.wword:hover{transform:scale(1.12)}
+
+/* stars */
+.stars-big{display:flex;gap:.5rem;justify-content:center;margin:1rem 0}
+.star{font-size:2.8rem;cursor:pointer;color:var(--s3);transition:color .15s,transform .15s;line-height:1}
+.star.on{color:var(--gold)}
+.star:hover{transform:scale(1.2)}
+.rating-avg{font-family:var(--fh);font-size:3.5rem;font-weight:800;color:var(--gold);text-align:center}
+.rating-count{color:var(--muted);font-size:.9rem;text-align:center}
+
+/* responses */
+.resp-list{display:flex;flex-direction:column;gap:.6rem;max-height:260px;overflow-y:auto;margin-bottom:1rem}
+.resp-bubble{padding:.7rem 1rem;background:var(--s2);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;font-size:.92rem;animation:slideIn .3s var(--ease)}
+@keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+
+/* scale */
+.scale-btns{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:center;margin-bottom:1rem}
+.scale-btn{width:52px;height:52px;border-radius:10px;border:2px solid var(--border);background:var(--s2);color:var(--tx);cursor:pointer;font-weight:700;font-size:1rem;transition:all .18s}
+.scale-btn:hover{border-color:var(--accent);transform:translateY(-3px)}
+
+/* chart */
+.chart-wrap{position:relative;height:200px;margin-top:1.25rem}
+
+/* stats row */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-top:1.25rem}
+.stat-box{background:var(--s2);border-radius:10px;padding:.9rem;text-align:center}
+.stat-n{font-family:var(--fh);font-size:1.5rem;font-weight:700;color:var(--a2)}
+.stat-l{font-size:.72rem;color:var(--muted);margin-top:.2rem}
+
+/* inline input */
+.inline-input{display:flex;gap:.6rem;margin-top:1rem}
+.iinput{flex:1;padding:.65rem 1rem;border-radius:10px;border:1px solid var(--border);background:var(--s2);color:var(--tx);font-family:var(--fb);font-size:.95rem}
+.iinput:focus{outline:none;border-color:var(--accent)}
+
+/* ══ SHARE MODAL ══ */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:300;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal{background:var(--s1);border:1px solid var(--border);border-radius:20px;padding:2rem;width:min(480px,100%);position:relative;animation:fadeUp .25s var(--ease)}
+.modal h2{font-family:var(--fh);font-size:1.3rem;margin-bottom:1.25rem}
+.modal .close{position:absolute;top:1rem;right:1.25rem;background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1}
+.modal .close:hover{color:var(--tx)}
+
+.share-link-box{display:flex;gap:.5rem;margin-bottom:1rem}
+.share-link-box input{flex:1;padding:.65rem 1rem;border-radius:10px;border:1px solid var(--border);background:var(--s2);color:var(--tx);font-size:.85rem;font-family:var(--fb)}
+.qr-wrap{display:flex;justify-content:center;margin:1rem 0}
+.qr-wrap canvas{border-radius:10px}
+
+/* ══ VOTER SCREEN ══ */
+#screenVoter{align-items:center;justify-content:center;padding:1.5rem;min-height:100vh}
+.voter-wrap{width:min(460px,100%)}
+.voter-wrap h1{font-family:var(--fh);font-size:1.8rem;font-weight:700;margin-bottom:.4rem}
+.voter-wrap .sub{color:var(--muted);font-size:.9rem;margin-bottom:2rem}
+.voter-card{background:var(--s1);border:1px solid var(--border);border-radius:20px;padding:2rem}
+.voter-card h3{font-family:var(--fh);font-size:1.2rem;margin-bottom:1.25rem}
+
+/* join form */
+.join-form{display:flex;flex-direction:column;gap:.75rem}
+.pin-input{padding:.9rem 1rem;border-radius:10px;border:1px solid var(--border);background:var(--s2);color:var(--tx);font-family:var(--fh);font-size:1.4rem;letter-spacing:6px;text-align:center;width:100%}
+.pin-input:focus{outline:none;border-color:var(--accent)}
+.name-input{padding:.7rem 1rem;border-radius:10px;border:1px solid var(--border);background:var(--s2);color:var(--tx);font-family:var(--fb);font-size:.95rem;width:100%}
+.name-input:focus{outline:none;border-color:var(--accent)}
+
+/* vote feedback */
+.feedback-ok{text-align:center;padding:2rem;color:var(--a2);font-size:1.1rem}
+
+/* ══ AI Panel ══ */
+.ai-panel{background:var(--s1);border:1px solid rgba(0,212,170,.2);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem}
+.ai-panel h3{font-family:var(--fh);font-size:.85rem;color:var(--a2);text-transform:uppercase;letter-spacing:2px;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.ai-suggestion{padding:.75rem 1rem;border-radius:10px;border:1px solid var(--border);background:var(--s2);margin-bottom:.5rem;cursor:pointer;transition:all .2s;font-size:.9rem}
+.ai-suggestion:hover{border-color:var(--a2);background:rgba(0,212,170,.05)}
+.ai-suggestion .s-title{font-weight:500;margin-bottom:.2rem}
+.ai-suggestion .s-type{font-size:.75rem;color:var(--muted)}
+.ai-loading{text-align:center;padding:1rem;color:var(--muted);font-size:.9rem}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--a2);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:.5rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ══ toast ══ */
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:.75rem 1.25rem;font-size:.9rem;z-index:500;animation:toastIn .3s var(--ease);display:flex;align-items:center;gap:.5rem}
+.toast.success{border-color:var(--a2);color:var(--a2)}
+.toast.error{border-color:var(--a3);color:var(--a3)}
+@keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* confetti */
+.cpiece{position:fixed;width:8px;height:8px;border-radius:2px;pointer-events:none;animation:cfall 1.6s ease-in forwards;z-index:600}
+@keyframes cfall{to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+/* ══ utils ══ */
+.hidden{display:none!important}
+.flex{display:flex;align-items:center;gap:.6rem}
+.mt{margin-top:1rem}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ LANDING ═══════════════ -->
+<div class="screen active" id="screenLanding">
+  <div class="hero-glow"></div>
+  <div class="logo-big">⚡ VotaAí</div>
+  <div class="tagline">Enquetes interativas ao vivo — grátis, sem limite de participantes</div>
+
+  <div class="landing-cards">
+    <div class="lcard"><div class="lcard-icon">🔗</div><h3>Link real</h3><p>Compartilhe um URL e participantes entram de qualquer dispositivo.</p></div>
+    <div class="lcard"><div class="lcard-icon">⚡</div><h3>Tempo real</h3><p>Votos aparecem instantaneamente via Firebase Realtime Database.</p></div>
+    <div class="lcard"><div class="lcard-icon">🤖</div><h3>IA Gemini</h3><p>Gere perguntas inteligentes com um clique usando Google AI.</p></div>
+    <div class="lcard"><div class="lcard-icon">📊</div><h3>5 tipos de slide</h3><p>Múltipla escolha, nuvem de palavras, estrelas, aberta e escala.</p></div>
+  </div>
+
+  <div class="landing-btns">
+    <button class="btn btn-primary btn-xl" onclick="showSetup()">🚀 Criar sessão</button>
+    <button class="btn btn-lg" onclick="showJoin()">📱 Entrar com PIN</button>
+  </div>
+</div>
+
+<!-- ═══════════════ SETUP ═══════════════ -->
+<div class="screen" id="screenSetup">
+  <div class="setup-header">
+    <button class="btn" onclick="showLanding()" style="margin-bottom:1rem">← Voltar</button>
+    <h1>Nova Sessão</h1>
+    <p>Configure sua apresentação interativa</p>
+  </div>
+
+  <!-- Firebase config notice -->
+  <div class="config-box" id="firebaseNotice" style="border-color:rgba(245,197,66,.3);background:rgba(245,197,66,.04)">
+    <h2 style="color:var(--gold)">⚠ Configuração necessária</h2>
+    <p style="font-size:.9rem;color:var(--muted);line-height:1.7;margin-bottom:1rem">
+      Para usar Firebase e links reais, edite o <code style="color:var(--a2)">firebaseConfig</code> e
+      <code style="color:var(--a2)">GEMINI_KEY</code> dentro do arquivo <strong>index.html</strong>.<br>
+      Firebase gratuito: <a href="https://console.firebase.google.com" target="_blank" style="color:var(--accent)">console.firebase.google.com</a> &nbsp;|&nbsp;
+      Gemini gratuito: <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--a2)">aistudio.google.com/apikey</a>
+    </p>
+    <p style="font-size:.85rem;color:var(--muted)">Mesmo sem configurar, o app funciona em modo <strong>demo local</strong> para você testar.</p>
+  </div>
+
+  <!-- Session info -->
+  <div class="config-box">
+    <h2>Sessão</h2>
+    <div class="field"><label>Título da apresentação</label>
+      <input id="cfgTitle" placeholder="Ex: Pesquisa de opinião — Time de Produto" value="Pesquisa de Opinião"></div>
+    <div class="field"><label>Seu nome (apresentador)</label>
+      <input id="cfgHost" placeholder="Ex: João Silva" value="Apresentador"></div>
+  </div>
+
+  <!-- AI question generator -->
+  <div class="config-box">
+    <h2>🤖 Gerar perguntas com IA</h2>
+    <div class="field"><label>Tema da sua apresentação (para o Gemini sugerir perguntas)</label>
+      <textarea id="cfgTopic" placeholder="Ex: Metodologias ágeis no desenvolvimento de software" rows="2"></textarea></div>
+    <button class="btn btn-gem" onclick="generateWithGemini()">✨ Gerar slides com Gemini</button>
+    <div id="aiSuggestions" class="hidden" style="margin-top:1rem"></div>
+  </div>
+
+  <!-- Slide builder -->
+  <div class="config-box">
+    <h2>Slides</h2>
+    <div class="slide-builder" id="slideBuilder"></div>
+    <div class="flex mt">
+      <button class="btn" onclick="addSlideRow('mc')">+ Múltipla escolha</button>
+      <button class="btn" onclick="addSlideRow('wordcloud')">+ Nuvem</button>
+      <button class="btn" onclick="addSlideRow('rating')">+ Estrelas</button>
+      <button class="btn" onclick="addSlideRow('open')">+ Aberta</button>
+      <button class="btn" onclick="addSlideRow('scale')">+ Escala</button>
+    </div>
+  </div>
+
+  <button class="btn btn-primary btn-xl" onclick="createSession()" style="align-self:flex-start">🚀 Criar e iniciar sessão</button>
+</div>
+
+<!-- ═══════════════ PRESENTER ═══════════════ -->
+<div class="screen" id="screenPresenter">
+  <nav>
+    <span class="nav-logo">⚡ VotaAí</span>
+    <span class="nav-session" id="navTitle"></span>
+    <div class="nav-spacer"></div>
+    <span class="pin-pill">PIN: <strong id="navPin"></strong></span>
+    <button class="btn btn-live" onclick="openShareModal()">🔗 Compartilhar</button>
+    <button class="btn btn-danger" onclick="endSession()">✕ Encerrar</button>
+  </nav>
+
+  <div class="presenter-body">
+    <!-- sidebar -->
+    <aside class="sidebar">
+      <div class="sbar-label">Slides</div>
+      <div id="sidebarSlides"></div>
+      <div class="sbar-add"><button class="btn" style="width:100%" onclick="showSetup()">+ Nova sessão</button></div>
+    </aside>
+
+    <!-- stage -->
+    <div style="display:flex;flex-direction:column;overflow:hidden">
+      <div class="stage-toolbar">
+        <button class="btn" onclick="prevSlide()">◀</button>
+        <button class="btn" onclick="nextSlide()">▶</button>
+        <button class="btn" onclick="resetCurrentSlide()">↺ Resetar</button>
+        <div class="spacer"></div>
+        <span class="stat-chip">👥 <strong id="tbParticipants">0</strong></span>
+        <span class="stat-chip">⬆ <strong id="tbResponses">0</strong> respostas</span>
+        <span class="stat-chip">⏱ <strong id="tbTimer">00:00</strong></span>
+      </div>
+      <div class="stage" id="stage"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ VOTER ═══════════════ -->
+<div class="screen" id="screenVoter">
+  <div class="voter-wrap">
+    <div class="logo-big" style="font-size:2rem;margin-bottom:.25rem">⚡ VotaAí</div>
+    <div class="sub">Participante</div>
+    <div class="voter-card">
+      <!-- join step -->
+      <div id="voterJoin">
+        <h3>Entrar na sessão</h3>
+        <div class="join-form">
+          <input class="pin-input" id="voterPin" placeholder="PIN" maxlength="6" oninput="this.value=this.value.replace(/\D/,'')">
+          <input class="name-input" id="voterName" placeholder="Seu nome (opcional)">
+          <button class="btn btn-primary" onclick="voterJoin()">Entrar →</button>
+        </div>
+      </div>
+      <!-- active voting step -->
+      <div id="voterActive" class="hidden"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ SHARE MODAL ═══════════════ -->
+<div class="modal-overlay" id="shareModal">
+  <div class="modal">
+    <button class="close" onclick="closeShareModal()">✕</button>
+    <h2>🔗 Compartilhar sessão</h2>
+    <p style="color:var(--muted);font-size:.9rem;margin-bottom:1rem">Participantes acessam este link no celular ou computador:</p>
+    <div class="share-link-box">
+      <input type="text" id="shareUrl" readonly>
+      <button class="btn btn-primary" onclick="copyShareLink()">Copiar</button>
+    </div>
+    <div class="qr-wrap"><canvas id="qrCanvas" width="180" height="180"></canvas></div>
+    <p style="text-align:center;color:var(--muted);font-size:.85rem">PIN: <strong id="sharePinDisplay" style="color:var(--a2);letter-spacing:3px;font-family:var(--fh)"></strong></p>
+    <div class="flex" style="justify-content:center;margin-top:1rem;gap:1rem">
+      <button class="btn" onclick="shareViaNavigator()">📤 Compartilhar</button>
+      <button class="btn" onclick="openWhatsApp()">💬 WhatsApp</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ JOIN MODAL (from landing) ═══════════════ -->
+<div class="modal-overlay" id="joinModal">
+  <div class="modal">
+    <button class="close" onclick="document.getElementById('joinModal').classList.remove('open')">✕</button>
+    <h2>📱 Entrar com PIN</h2>
+    <div class="join-form" style="margin-top:1rem">
+      <input class="pin-input" id="joinPinInput" placeholder="PIN" maxlength="6" oninput="this.value=this.value.replace(/\D/,'')">
+      <input class="name-input" id="joinNameInput" placeholder="Seu nome (opcional)">
+      <button class="btn btn-primary btn-lg" onclick="joinByPin()">Entrar →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+const COLORS = ['#635bff','#00d4aa','#ff5f7e','#f5c542','#4ade80','#fb923c','#e879f9','#60a5fa'];
+const TYPES  = { mc:'Múltipla Escolha', wordcloud:'Nuvem de Palavras', rating:'Avaliação ★', open:'Pergunta Aberta', scale:'Escala 1-10' };
+const ICONS  = { mc:'🔵', wordcloud:'☁️', rating:'⭐', open:'💬', scale:'📊' };
+
+let session = null;      // { id, pin, title, host, slides }
+let currentIdx = 0;
+let chart = null;
+let timerSec = 0;
+let timerInt = null;
+let unsubscribers = [];
+let localVotes = {};     // fallback when Firebase not configured
+let voterSession = null; // voter side
+let voterName = '';
+let voterSlideIdx = 0;
+let voterUnsubscribe = null;
+let demoMode = false;    // true when Firebase not configured
+
+/* ═══════════════════════════════════════════════
+   UTILITIES
+═══════════════════════════════════════════════ */
+function uid(){ return Math.random().toString(36).slice(2,10); }
+function pin4(){ return String(Math.floor(1000+Math.random()*9000)); }
+
+function toast(msg, type='success'){
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 3000);
+}
+
+function confetti(color){
+  for(let i=0;i<14;i++){
+    const el=document.createElement('div');
+    el.className='cpiece';
+    el.style.cssText=`left:${15+Math.random()*70}%;top:${5+Math.random()*40}%;background:${color};transform:rotate(${Math.random()*360}deg);animation-delay:${Math.random()*0.4}s`;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),2200);
+  }
+}
+
+function screen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ═══════════════════════════════════════════════
+   FIREBASE HELPERS
+═══════════════════════════════════════════════ */
+function fbReady(){ return window._firebaseReady && window._db; }
+
+async function fbSet(path, data){
+  if(!fbReady()) return localSet(path, data);
+  await window._set(window._ref(window._db, path), data);
+}
+
+async function fbGet(path){
+  if(!fbReady()) return localGet(path);
+  const snap = await window._get(window._ref(window._db, path));
+  return snap.exists() ? snap.val() : null;
+}
+
+function fbListen(path, cb){
+  if(!fbReady()){ demoMode=true; return ()=>{}; }
+  const r = window._ref(window._db, path);
+  const unsub = window._onValue(r, snap=>cb(snap.exists()?snap.val():null));
+  return unsub;
+}
+
+async function fbUpdate(path, data){
+  if(!fbReady()) return localMerge(path, data);
+  await window._update(window._ref(window._db, path), data);
+}
+
+// ---- local fallback (demo mode) ----
+const LOCAL_DB = {};
+function localSet(p,v){ LOCAL_DB[p]=JSON.parse(JSON.stringify(v)); }
+function localGet(p){ return LOCAL_DB[p]||null; }
+function localMerge(p,v){ LOCAL_DB[p]=Object.assign(LOCAL_DB[p]||{},v); }
+
+/* ═══════════════════════════════════════════════
+   LANDING
+═══════════════════════════════════════════════ */
+function showLanding(){ screen('screenLanding'); }
+function showSetup(){
+  buildSlideRows(defaultSlides());
+  screen('screenSetup');
+}
+function showJoin(){
+  document.getElementById('joinModal').classList.add('open');
+}
+
+/* ═══════════════════════════════════════════════
+   DEFAULT SLIDES
+═══════════════════════════════════════════════ */
+function defaultSlides(){
+  return [
+    { id:uid(), type:'mc',        title:'Qual é seu papel principal?',         options:'Desenvolvedor,Designer,Produto,Outro' },
+    { id:uid(), type:'wordcloud', title:'Qual palavra descreve inovação?',      options:'' },
+    { id:uid(), type:'rating',    title:'Como você avalia esta apresentação?',  options:'' },
+    { id:uid(), type:'open',      title:'Qual sua maior dúvida sobre o tema?',  options:'' },
+    { id:uid(), type:'scale',     title:'Quanto você concorda com a afirmação?',options:'' },
+  ];
+}
+
+/* ═══════════════════════════════════════════════
+   SETUP UI
+═══════════════════════════════════════════════ */
+let setupSlides = [];
+
+function buildSlideRows(slides){
+  setupSlides = slides;
+  renderSetupRows();
+}
+
+function renderSetupRows(){
+  const builder = document.getElementById('slideBuilder');
+  builder.innerHTML = setupSlides.map((s,i)=>`
+    <div class="slide-row" id="row-${s.id}">
+      <input value="${s.title}" placeholder="Pergunta..." onchange="setupSlides[${i}].title=this.value">
+      <span class="slide-badge">${ICONS[s.type]} ${TYPES[s.type]}</span>
+      <button class="btn btn-danger" style="padding:.4rem .8rem;font-size:.8rem" onclick="removeSlideRow('${s.id}')">✕</button>
+    </div>
+  `).join('');
+}
+
+function addSlideRow(type){
+  setupSlides.push({ id:uid(), type, title:'Nova pergunta...', options: type==='mc'?'Opção A,Opção B,Opção C':'' });
+  renderSetupRows();
+}
+
+function removeSlideRow(id){
+  setupSlides = setupSlides.filter(s=>s.id!==id);
+  renderSetupRows();
+}
+
+/* ═══════════════════════════════════════════════
+   GEMINI AI GENERATION
+═══════════════════════════════════════════════ */
+async function generateWithGemini(){
+  const topic = document.getElementById('cfgTopic').value.trim();
+  if(!topic){ toast('Digite um tema para o Gemini gerar perguntas','error'); return; }
+
+  const key = window.GEMINI_KEY;
+  const container = document.getElementById('aiSuggestions');
+  container.classList.remove('hidden');
+  container.innerHTML = `<div class="ai-loading"><span class="spinner"></span>Gemini está criando perguntas...</div>`;
+
+  const prompt = `Você é especialista em dinâmicas de apresentação interativa.
+Dado o tema: "${topic}", crie 5 perguntas engajantes para slides interativos.
+Retorne SOMENTE um array JSON válido, sem markdown, sem explicações extras.
+Formato: [{"title":"pergunta","type":"mc|wordcloud|rating|open|scale","options":"op1,op2,op3 (apenas para mc, senão vazio)"}]
+Tipos: mc=múltipla escolha (obrigatório ter options), wordcloud=nuvem de palavras, rating=estrelas, open=pergunta aberta, scale=escala 1-10`;
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+      { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ contents:[{ parts:[{ text: prompt }] }] }) }
+    );
+    const data = await res.json();
+    const raw  = data.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+    const clean = raw.replace(/```json|```/g,'').trim();
+    const slides = JSON.parse(clean);
+
+    container.innerHTML = `<div class="ai-panel"><h3>🤖 Sugestões do Gemini — clique para adicionar</h3>
+      ${slides.map((s,i)=>`
+        <div class="ai-suggestion" onclick="adoptSuggestion(${i})">
+          <div class="s-title">${s.title}</div>
+          <div class="s-type">${ICONS[s.type]||'📋'} ${TYPES[s.type]||s.type}</div>
+        </div>`).join('')}
+    </div>`;
+    window._geminiSlides = slides;
+    toast('✨ Gemini gerou '+slides.length+' perguntas!');
+  } catch(e){
+    container.innerHTML = `<div class="ai-loading" style="color:var(--a3)">Erro: ${e.message}. Verifique sua GEMINI_KEY.</div>`;
+  }
+}
+
+function adoptSuggestion(i){
+  const s = window._geminiSlides[i];
+  setupSlides.push({ id:uid(), type:s.type, title:s.title, options:s.options||'' });
+  renderSetupRows();
+  toast('Slide adicionado! ✅');
+}
+
+/* ═══════════════════════════════════════════════
+   CREATE SESSION
+═══════════════════════════════════════════════ */
+async function createSession(){
+  const title = document.getElementById('cfgTitle').value.trim()||'Sessão VotaAí';
+  const host  = document.getElementById('cfgHost').value.trim()||'Apresentador';
+  if(!setupSlides.length){ toast('Adicione ao menos um slide','error'); return; }
+
+  const id  = uid();
+  const pin = pin4();
+
+  // Build session object
+  const slides = setupSlides.map(s=>({
+    id: s.id, type: s.type, title: s.title,
+    options: s.type==='mc' ? s.options.split(',').map(o=>o.trim()).filter(Boolean) : [],
+    votes: s.type==='mc' ? Object.fromEntries(s.options.split(',').map((_,i)=>[i,0])) :
+           s.type==='scale'? Object.fromEntries([...Array(10)].map((_,i)=>[i,0])) : {},
+    words: s.type==='wordcloud' ? [] : undefined,
+    ratings: s.type==='rating' ? [] : undefined,
+    responses: s.type==='open' ? [] : undefined,
+  }));
+
+  session = { id, pin, title, host, slides, participants:0, currentSlide:0, active:true, created: Date.now() };
+
+  // Persist to Firebase (or local fallback)
+  await fbSet(`sessions/${id}`, session);
+  if(!fbReady()) demoMode = true;
+
+  startPresenter();
+}
+
+/* ═══════════════════════════════════════════════
+   PRESENTER
+═══════════════════════════════════════════════ */
+function startPresenter(){
+  currentIdx = 0;
+  timerSec = 0;
+  unsubscribers.forEach(u=>u&&u());
+  unsubscribers = [];
+
+  document.getElementById('navTitle').textContent = session.title;
+  document.getElementById('navPin').textContent    = session.pin;
+
+  screen('screenPresenter');
+  renderSidebar();
+  renderStage(currentIdx);
+  startTimer();
+
+  // Listen to realtime updates
+  if(fbReady()){
+    const unsub = fbListen(`sessions/${session.id}`, data=>{
+      if(!data) return;
+      session = data;
+      // Re-render current slide data
+      renderStage(currentIdx);
+      renderSidebar();
+      document.getElementById('tbParticipants').textContent = data.participants||0;
+    });
+    unsubscribers.push(unsub);
+  }
+}
+
+function renderSidebar(){
+  document.getElementById('sidebarSlides').innerHTML = session.slides.map((s,i)=>`
+    <div class="slide-thumb ${i===currentIdx?'active':''}" onclick="goSlide(${i})">
+      <span class="thumb-num">${i+1}</span>
+      <span class="thumb-icon">${ICONS[s.type]}</span>
+      <div class="thumb-text">
+        <div class="thumb-title">${s.title}</div>
+        <div class="thumb-type">${TYPES[s.type]}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function goSlide(i){
+  currentIdx = i;
+  if(chart){ chart.destroy(); chart=null; }
+  renderSidebar();
+  renderStage(i);
+  // update Firebase so voters sync
+  if(fbReady()) fbUpdate(`sessions/${session.id}`,{ currentSlide: i });
+  else session.currentSlide = i;
+}
+
+function prevSlide(){ if(currentIdx>0) goSlide(currentIdx-1); }
+function nextSlide(){ if(currentIdx<session.slides.length-1) goSlide(currentIdx+1); }
+
+function renderStage(i){
+  const s = session.slides[i];
+  if(!s) return;
+  const responses = countResponses(s);
+  document.getElementById('tbResponses').textContent = responses;
+
+  const stage = document.getElementById('stage');
+
+  if(s.type==='mc'){
+    const votes  = s.votes||{};
+    const total  = Object.values(votes).reduce((a,b)=>a+b,0)||1;
+    const optArr = s.options||[];
+    stage.innerHTML = `
+      <div class="slide-card">
+        <h2>${s.title}</h2>
+        <p class="sub">Múltipla escolha — ${countResponses(s)} votos</p>
+        <div class="opts">
+          ${optArr.map((o,j)=>`
+            <div class="opt" onclick="presenterVote(${i},${j})">
+              <div class="opt-label">${o}</div>
+              <div class="opt-pct">${votes[j]||0} votos · ${Math.round((votes[j]||0)/total*100)}%</div>
+              <div class="opt-fill" style="width:${Math.round((votes[j]||0)/total*100)}%;background:${COLORS[j%COLORS.length]}"></div>
+            </div>`).join('')}
+        </div>
+        <div class="chart-wrap"><canvas id="chartCanvas"></canvas></div>
+        ${statsRow(s)}
+      </div>`;
+    setTimeout(()=>renderBarChart(s),30);
+  }
+  else if(s.type==='wordcloud'){
+    stage.innerHTML = `
+      <div class="slide-card">
+        <h2>${s.title}</h2>
+        <p class="sub">Nuvem de palavras — ${(s.words||[]).length} enviadas</p>
+        <div class="wcloud" id="wcContainer">${renderCloud(s.words||[])}</div>
+        <div class="inline-input">
+          <input class="iinput" id="wcInput" placeholder="Digite uma palavra..." maxlength="30" onkeydown="if(event.key==='Enter')presenterWord(${i})">
+          <button class="btn btn-primary" onclick="presenterWord(${i})">Enviar</button>
+        </div>
+        ${statsRow(s)}
+      </div>`;
+  }
+  else if(s.type==='rating'){
+    const avg = calcAvg(s.ratings||[]);
+    stage.innerHTML = `
+      <div class="slide-card">
+        <h2>${s.title}</h2>
+        <p class="sub">Avaliação com estrelas — ${(s.ratings||[]).length} avaliações</p>
+        <div class="rating-avg">${avg.toFixed(1)}</div>
+        <div class="rating-count">${(s.ratings||[]).length} avaliações</div>
+        <div class="stars-big">
+          ${[1,2,3,4,5].map(n=>`<span class="star ${n<=Math.round(avg)?'on':''}" onclick="presenterRate(${i},${n})">★</span>`).join('')}
+        </div>
+        <div class="chart-wrap"><canvas id="chartCanvas"></canvas></div>
+        ${statsRow(s)}
+      </div>`;
+    setTimeout(()=>renderRatingChart(s),30);
+  }
+  else if(s.type==='open'){
+    const resps = s.responses||[];
+    stage.innerHTML = `
+      <div class="slide-card">
+        <h2>${s.title}</h2>
+        <p class="sub">Respostas abertas — ${resps.length} enviadas</p>
+        <div class="resp-list">${resps.length?resps.map(r=>`<div class="resp-bubble">${r}</div>`).join(''):'<div style="color:var(--muted);text-align:center;padding:1.5rem">Aguardando respostas...</div>'}</div>
+        <div class="inline-input">
+          <input class="iinput" id="openInput" placeholder="Adicione uma resposta de teste..." onkeydown="if(event.key==='Enter')presenterOpen(${i})">
+          <button class="btn btn-primary" onclick="presenterOpen(${i})">Enviar</button>
+        </div>
+        ${statsRow(s)}
+      </div>`;
+  }
+  else if(s.type==='scale'){
+    const votes = s.votes||{};
+    const total = Object.values(votes).reduce((a,b)=>a+b,0)||1;
+    const avgScale = Object.entries(votes).reduce((a,[k,v])=>a+(+k+1)*v,0)/total;
+    stage.innerHTML = `
+      <div class="slide-card">
+        <h2>${s.title}</h2>
+        <p class="sub">Escala 1–10 — ${countResponses(s)} votos · Média: <strong style="color:var(--a2)">${isNaN(avgScale)?'-':avgScale.toFixed(1)}</strong></p>
+        <div class="scale-btns">
+          ${[...Array(10)].map((_,j)=>`
+            <button class="scale-btn" onclick="presenterScale(${i},${j})" title="${j+1}" style="background:hsl(${j*24},60%,18%);border-color:hsl(${j*24},60%,35%);color:hsl(${j*24},80%,70%)">
+              ${j+1}
+            </button>`).join('')}
+        </div>
+        <div class="chart-wrap"><canvas id="chartCanvas"></canvas></div>
+        ${statsRow(s)}
+      </div>`;
+    setTimeout(()=>renderScaleChart(s),30);
+  }
+}
+
+function statsRow(s){
+  return `<div class="stats-row">
+    <div class="stat-box"><div class="stat-n">${session.participants||0}</div><div class="stat-l">Participantes</div></div>
+    <div class="stat-box"><div class="stat-n">${countResponses(s)}</div><div class="stat-l">Respostas</div></div>
+    <div class="stat-box"><div class="stat-n">🟢</div><div class="stat-l">Ao Vivo</div></div>
+  </div>`;
+}
+
+function countResponses(s){
+  if(!s) return 0;
+  if(s.type==='mc'||s.type==='scale') return Object.values(s.votes||{}).reduce((a,b)=>a+b,0);
+  if(s.type==='wordcloud') return (s.words||[]).length;
+  if(s.type==='rating')    return (s.ratings||[]).length;
+  if(s.type==='open')      return (s.responses||[]).length;
+  return 0;
+}
+
+function calcAvg(arr){ return arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0; }
+
+/* presenter quick-vote (for testing) */
+async function presenterVote(si, oi){
+  const path = `sessions/${session.id}/slides/${si}/votes/${oi}`;
+  const cur  = (session.slides[si].votes||{})[oi]||0;
+  if(fbReady()) await fbSet(path, cur+1);
+  else { if(!session.slides[si].votes) session.slides[si].votes={}; session.slides[si].votes[oi]=(cur+1); renderStage(si); }
+  confetti(COLORS[oi%COLORS.length]);
+}
+
+async function presenterWord(si){
+  const inp  = document.getElementById('wcInput');
+  const word = inp.value.trim(); if(!word) return;
+  inp.value = '';
+  const words = [...(session.slides[si].words||[]), word];
+  if(fbReady()) await fbSet(`sessions/${session.id}/slides/${si}/words`, words);
+  else { session.slides[si].words = words; renderStage(si); }
+}
+
+async function presenterRate(si, n){
+  const ratings = [...(session.slides[si].ratings||[]), n];
+  if(fbReady()) await fbSet(`sessions/${session.id}/slides/${si}/ratings`, ratings);
+  else { session.slides[si].ratings = ratings; renderStage(si); }
+}
+
+async function presenterOpen(si){
+  const inp  = document.getElementById('openInput');
+  const text = inp.value.trim(); if(!text) return;
+  inp.value = '';
+  const responses = [text, ...(session.slides[si].responses||[])];
+  if(fbReady()) await fbSet(`sessions/${session.id}/slides/${si}/responses`, responses);
+  else { session.slides[si].responses = responses; renderStage(si); }
+}
+
+async function presenterScale(si, vi){
+  const cur = ((session.slides[si].votes)||{})[vi]||0;
+  if(fbReady()) await fbSet(`sessions/${session.id}/slides/${si}/votes/${vi}`, cur+1);
+  else { if(!session.slides[si].votes)session.slides[si].votes={}; session.slides[si].votes[vi]=(cur+1); renderStage(si); }
+  confetti(COLORS[vi%COLORS.length]);
+}
+
+async function resetCurrentSlide(){
+  const s = session.slides[currentIdx];
+  const updates = {};
+  if(s.type==='mc')        updates.votes     = Object.fromEntries(s.options.map((_,i)=>[i,0]));
+  if(s.type==='wordcloud') updates.words     = [];
+  if(s.type==='rating')    updates.ratings   = [];
+  if(s.type==='open')      updates.responses = [];
+  if(s.type==='scale')     updates.votes     = Object.fromEntries([...Array(10)].map((_,i)=>[i,0]));
+  if(fbReady()) await fbUpdate(`sessions/${session.id}/slides/${currentIdx}`, updates);
+  else { Object.assign(session.slides[currentIdx], updates); if(chart){chart.destroy();chart=null;} renderStage(currentIdx); }
+}
+
+/* ═══════════════════════════════════════════════
+   CHARTS
+═══════════════════════════════════════════════ */
+function chartDefaults(){ return { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{ticks:{color:'#6b6b9a'},grid:{color:'#ffffff08'}}, x:{ticks:{color:'#6b6b9a'},grid:{display:false}} } }; }
+
+function renderBarChart(s){
+  const ctx = document.getElementById('chartCanvas'); if(!ctx) return;
+  chart = new Chart(ctx,{ type:'bar', data:{ labels:s.options, datasets:[{ data:Object.values(s.votes||{}), backgroundColor:COLORS.slice(0,s.options.length), borderRadius:8, borderWidth:0 }] }, options:chartDefaults() });
+}
+
+function renderRatingChart(s){
+  const ctx = document.getElementById('chartCanvas'); if(!ctx) return;
+  const dist=[1,2,3,4,5].map(n=>(s.ratings||[]).filter(r=>r===n).length);
+  chart = new Chart(ctx,{ type:'bar', data:{ labels:['1★','2★','3★','4★','5★'], datasets:[{ data:dist, backgroundColor:['#ff5f7e','#fb923c','#f5c542','#4ade80','#00d4aa'], borderRadius:8, borderWidth:0 }] }, options:chartDefaults() });
+}
+
+function renderScaleChart(s){
+  const ctx = document.getElementById('chartCanvas'); if(!ctx) return;
+  chart = new Chart(ctx,{ type:'bar', data:{ labels:[1,2,3,4,5,6,7,8,9,10], datasets:[{ data:Object.values(s.votes||{}), backgroundColor:[...Array(10)].map((_,i)=>`hsl(${i*24},70%,55%)`), borderRadius:8, borderWidth:0 }] }, options:chartDefaults() });
+}
+
+function renderCloud(words){
+  if(!words.length) return '<div style="color:var(--muted)">Aguardando palavras...</div>';
+  const freq={};
+  words.forEach(w=>{ freq[w]=(freq[w]||0)+1; });
+  const max=Math.max(...Object.values(freq));
+  return Object.entries(freq).sort((a,b)=>b[1]-a[1]).map(([w,f])=>{
+    const size=(0.9+(f/max)*2.2).toFixed(2);
+    const col=COLORS[Math.abs([...w].reduce((a,c)=>a+c.charCodeAt(0),0))%COLORS.length];
+    return `<span class="wword" style="font-size:${size}rem;background:${col}1a;color:${col};border:1px solid ${col}44">${w}</span>`;
+  }).join('');
+}
+
+/* ═══════════════════════════════════════════════
+   SHARE / LINK
+═══════════════════════════════════════════════ */
+function getShareUrl(){
+  const base = window.location.origin + window.location.pathname;
+  return `${base}?join=${session.pin}`;
+}
+
+function openShareModal(){
+  const url = getShareUrl();
+  document.getElementById('shareUrl').value = url;
+  document.getElementById('sharePinDisplay').textContent = session.pin;
+  drawQR(url);
+  document.getElementById('shareModal').classList.add('open');
+}
+function closeShareModal(){ document.getElementById('shareModal').classList.remove('open'); }
+
+function copyShareLink(){
+  navigator.clipboard.writeText(document.getElementById('shareUrl').value)
+    .then(()=>toast('Link copiado! 🔗'))
+    .catch(()=>{ document.getElementById('shareUrl').select(); document.execCommand('copy'); toast('Link copiado!'); });
+}
+
+function shareViaNavigator(){
+  if(navigator.share){
+    navigator.share({ title:'VotaAí — '+session.title, url: getShareUrl() }).catch(()=>{});
+  } else { copyShareLink(); }
+}
+
+function openWhatsApp(){
+  const url = getShareUrl();
+  const msg = encodeURIComponent(`📊 *${session.title}*\nParticipe da votação ao vivo!\nPIN: ${session.pin}\n👉 ${url}`);
+  window.open(`https://wa.me/?text=${msg}`,'_blank');
+}
+
+/* ═══════════════════════════════════════════════
+   QR CODE (lightweight vanilla draw)
+═══════════════════════════════════════════════ */
+function drawQR(url){
+  const canvas = document.getElementById('qrCanvas'); if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,180,180);
+  ctx.fillStyle='#000000';
+  // Symbolic QR-like pattern (for demo — in production use qrcode.js)
+  const seed = url.split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+  const rand  = i => ((Math.sin(i*seed)*10000)%1+1)%1;
+  const cell  = 10; const off = 10;
+  for(let r=0;r<16;r++) for(let c=0;c<16;c++){
+    // finder patterns
+    const corner = (r<3&&c<3)||(r<3&&c>12)||(r>12&&c<3);
+    const cornerRing = (r<=3&&c<=3)||(r<=3&&c>=12)||(r>=12&&c<=3);
+    if(corner){ if(r===0||r===2||c===0||c===2||(r===1&&c===1)){ ctx.fillRect(off+c*cell,off+r*cell,cell-1,cell-1); } }
+    else if(!cornerRing && rand(r*16+c)<0.45){ ctx.fillRect(off+c*cell,off+r*cell,cell-1,cell-1); }
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   VOTER SIDE
+═══════════════════════════════════════════════ */
+async function joinByPin(){
+  const pin  = document.getElementById('joinPinInput').value.trim();
+  const name = document.getElementById('joinNameInput').value.trim()||'Anônimo';
+  if(!pin){ toast('Digite o PIN','error'); return; }
+  document.getElementById('joinModal').classList.remove('open');
+  document.getElementById('voterPin').value  = pin;
+  document.getElementById('voterName').value = name;
+  screen('screenVoter');
+  voterJoin();
+}
+
+async function voterJoin(){
+  const pin  = document.getElementById('voterPin').value.trim();
+  const name = document.getElementById('voterName').value.trim()||'Anônimo';
+  if(!pin){ toast('Digite o PIN','error'); return; }
+  voterName = name;
+
+  let data = null;
+  if(fbReady()){
+    // find session by PIN
+    const snap = await window._get(window._ref(window._db,'sessions'));
+    if(snap.exists()){
+      const all = snap.val();
+      data = Object.values(all).find(s=>String(s.pin)===String(pin))||null;
+    }
+  } else {
+    // demo mode: use current session if pin matches
+    if(session && String(session.pin)===String(pin)) data = session;
+  }
+
+  if(!data){ toast('Sessão não encontrada. Verifique o PIN.','error'); return; }
+
+  voterSession = data;
+  voterSlideIdx = data.currentSlide||0;
+
+  // increment participants
+  if(fbReady()){
+    await fbUpdate(`sessions/${data.id}`,{ participants: (data.participants||0)+1 });
+    // listen for slide changes
+    if(voterUnsubscribe) voterUnsubscribe();
+    voterUnsubscribe = fbListen(`sessions/${data.id}`, updated=>{
+      if(!updated) return;
+      voterSession = updated;
+      if(updated.currentSlide !== voterSlideIdx){
+        voterSlideIdx = updated.currentSlide;
+        renderVoterSlide(voterSlideIdx);
+      }
+    });
+  }
+
+  document.getElementById('voterJoin').classList.add('hidden');
+  document.getElementById('voterActive').classList.remove('hidden');
+  renderVoterSlide(voterSlideIdx);
+}
+
+function renderVoterSlide(i){
+  const s = voterSession.slides[i];
+  if(!s){ document.getElementById('voterActive').innerHTML='<div class="feedback-ok">Sessão encerrada. Obrigado! 🎉</div>'; return; }
+  const el = document.getElementById('voterActive');
+
+  if(s.type==='mc'){
+    el.innerHTML = `<h3>${s.title}</h3>
+      <div style="display:flex;flex-direction:column;gap:.5rem">
+        ${(s.options||[]).map((o,j)=>`<button class="opt" style="text-align:left" onclick="voterVoteMC(${i},${j})">${o}</button>`).join('')}
+      </div>`;
+  }
+  else if(s.type==='wordcloud'){
+    el.innerHTML = `<h3>${s.title}</h3>
+      <div class="inline-input" style="margin-top:0">
+        <input class="iinput" id="vwInput" placeholder="Sua palavra..." maxlength="30" onkeydown="if(event.key==='Enter')voterWord(${i})">
+        <button class="btn btn-primary" onclick="voterWord(${i})">Enviar</button>
+      </div>`;
+  }
+  else if(s.type==='rating'){
+    el.innerHTML = `<h3>${s.title}</h3>
+      <div class="stars-big" id="vStars">
+        ${[1,2,3,4,5].map(n=>`<span class="star" onclick="voterRate(${i},${n});document.querySelectorAll('#vStars .star').forEach((el,j)=>el.classList.toggle('on',j<${n}))">★</span>`).join('')}
+      </div>`;
+  }
+  else if(s.type==='open'){
+    el.innerHTML = `<h3>${s.title}</h3>
+      <div class="inline-input" style="margin-top:0;flex-direction:column">
+        <textarea class="iinput" id="vOpenInput" placeholder="Sua resposta..." rows="3" style="border-radius:10px"></textarea>
+        <button class="btn btn-primary" onclick="voterOpen(${i})">Enviar resposta</button>
+      </div>`;
+  }
+  else if(s.type==='scale'){
+    el.innerHTML = `<h3>${s.title}</h3>
+      <div class="scale-btns" style="margin-top:1rem">
+        ${[...Array(10)].map((_,j)=>`<button class="scale-btn" onclick="voterScale(${i},${j})">${j+1}</button>`).join('')}
+      </div>`;
+  }
+}
+
+function voterDone(msg='✅ Enviado!'){
+  document.getElementById('voterActive').innerHTML=`<div class="feedback-ok">${msg}<br><br><button class="btn" onclick="renderVoterSlide(voterSlideIdx)">Próxima ▶</button></div>`;
+}
+
+async function voterVoteMC(si, oi){
+  const cur = (voterSession.slides[si].votes||{})[oi]||0;
+  if(fbReady()) await fbSet(`sessions/${voterSession.id}/slides/${si}/votes/${oi}`, cur+1);
+  else if(session&&session.slides[si]){ session.slides[si].votes[oi]=(cur+1); if(currentIdx===si){if(chart){chart.destroy();chart=null;}renderStage(si);} }
+  voterDone('✅ Voto registrado!');
+  confetti(COLORS[oi%COLORS.length]);
+}
+
+async function voterWord(si){
+  const w = document.getElementById('vwInput')?.value.trim(); if(!w) return;
+  const words = [...(voterSession.slides[si].words||[]), w];
+  if(fbReady()) await fbSet(`sessions/${voterSession.id}/slides/${si}/words`, words);
+  else if(session&&session.slides[si]){ session.slides[si].words=words; if(currentIdx===si)renderStage(si); }
+  voterDone('✅ Palavra enviada!');
+}
+
+async function voterRate(si, n){
+  const ratings=[...(voterSession.slides[si].ratings||[]),n];
+  if(fbReady()) await fbSet(`sessions/${voterSession.id}/slides/${si}/ratings`, ratings);
+  else if(session&&session.slides[si]){ session.slides[si].ratings=ratings; if(currentIdx===si){if(chart){chart.destroy();chart=null;}renderStage(si);} }
+  setTimeout(()=>voterDone('✅ Avaliação enviada!'), 400);
+}
+
+async function voterOpen(si){
+  const text = document.getElementById('vOpenInput')?.value.trim(); if(!text) return;
+  const responses=[text,...(voterSession.slides[si].responses||[])];
+  if(fbReady()) await fbSet(`sessions/${voterSession.id}/slides/${si}/responses`, responses);
+  else if(session&&session.slides[si]){ session.slides[si].responses=responses; if(currentIdx===si)renderStage(si); }
+  voterDone('✅ Resposta enviada!');
+}
+
+async function voterScale(si, vi){
+  const cur=((voterSession.slides[si].votes)||{})[vi]||0;
+  if(fbReady()) await fbSet(`sessions/${voterSession.id}/slides/${si}/votes/${vi}`,cur+1);
+  else if(session&&session.slides[si]){ if(!session.slides[si].votes)session.slides[si].votes={}; session.slides[si].votes[vi]=(cur+1); if(currentIdx===si){if(chart){chart.destroy();chart=null;}renderStage(si);} }
+  voterDone(`✅ Nota ${vi+1} registrada!`);
+  confetti(COLORS[vi%COLORS.length]);
+}
+
+/* ═══════════════════════════════════════════════
+   TIMER
+═══════════════════════════════════════════════ */
+function startTimer(){
+  if(timerInt) clearInterval(timerInt);
+  timerSec = 0;
+  timerInt = setInterval(()=>{
+    timerSec++;
+    const m=String(Math.floor(timerSec/60)).padStart(2,'0');
+    const s=String(timerSec%60).padStart(2,'0');
+    const el=document.getElementById('tbTimer');
+    if(el) el.textContent=`${m}:${s}`;
+  },1000);
+}
+
+function endSession(){
+  if(!confirm('Encerrar a sessão?')) return;
+  unsubscribers.forEach(u=>u&&u());
+  clearInterval(timerInt);
+  if(fbReady()&&session) fbUpdate(`sessions/${session.id}`,{active:false}).catch(()=>{});
+  session = null;
+  showLanding();
+}
+
+/* ═══════════════════════════════════════════════
+   URL ROUTING (join via link)
+═══════════════════════════════════════════════ */
+function handleRoute(){
+  const params = new URLSearchParams(window.location.search);
+  const joinPin = params.get('join');
+  if(joinPin){
+    screen('screenVoter');
+    document.getElementById('voterPin').value = joinPin;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════ */
+handleRoute();
+</script>
+</body>
+</html>
