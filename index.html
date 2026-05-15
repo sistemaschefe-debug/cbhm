@@ -2572,10 +2572,10 @@ async function saveUser(){
     return;
   }
 
-  const existing = users.find(u=>u.id===editingUserId);
+  const existingUser = users.find(u=>u.id===editingUserId);
   const user = {
     id: editingUserId || 'u'+Date.now(),
-    uid: existing?.uid || null,
+    uid: existingUser?.uid || null,
     rank,
     role,
     name,
