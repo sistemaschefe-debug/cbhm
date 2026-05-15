@@ -13,6 +13,8 @@
   import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, set, get, push, onValue, update, remove, serverTimestamp }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   /* ══════════════════════════════════════════════
      🔧 CONFIGURE AQUI — console.firebase.google.com
@@ -33,17 +35,36 @@
   window.GEMINI_KEY = "SUA_GEMINI_API_KEY";
 
   try {
-    const app = initializeApp(firebaseConfig);
-    const db  = getDatabase(app);
-    window._db  = db;
-    window._ref = ref;
-    window._set = set;
-    window._get = get;
-    window._push = push;
-    window._onValue = onValue;
-    window._update  = update;
-    window._remove  = remove;
-    window._ts = serverTimestamp;
+    const app  = initializeApp(firebaseConfig);
+    const db   = getDatabase(app);
+    const auth = getAuth(app);
+
+    /* DB helpers */
+    window._db       = db;
+    window._ref      = ref;
+    window._set      = set;
+    window._get      = get;
+    window._push     = push;
+    window._onValue  = onValue;
+    window._update   = update;
+    window._remove   = remove;
+    window._ts       = serverTimestamp;
+    window._fbReady  = true;
+
+    /* Auth helpers */
+    window._auth     = auth;
+    window._signIn   = (email, pass) => signInWithEmailAndPassword(auth, email, pass);
+    window._signOut  = ()            => signOut(auth);
+
+    /* React to auth state changes */
+    onAuthStateChanged(auth, user => {
+      window._currentUser = user || null;
+      // If user is already logged in (e.g. page refresh), restore admin panel
+      if(user && document.getElementById('sAdmin').classList.contains('active')){
+        // already showing admin — nothing to do
+      }
+    });
+
     window._fbReady = true;
   } catch(e) {
     window._fbReady = false;
@@ -1282,18 +1303,25 @@ nav {
     <h2>⚔ ACESSO RESTRITO</h2>
     <div class="divider-sm" style="margin:0 0 1.5rem"></div>
     <div class="field">
-      <label>Usuário</label>
-      <input type="text" id="loginUser" placeholder="admin" autocomplete="username">
+      <label>E-mail do administrador</label>
+      <input type="email" id="loginUser" placeholder="admin@cbhm.com.br" autocomplete="username">
     </div>
     <div class="field">
       <label>Senha</label>
       <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <div id="loginErr" class="hidden" style="color:#e07070;font-size:.85rem;margin-bottom:1rem;padding:.5rem .75rem;border-radius:var(--r);background:rgba(139,26,26,.2);border:1px solid var(--red)"></div>
-    <button class="btn btn-gold" style="width:100%;justify-content:center" onclick="doLogin()">Entrar</button>
-    <p style="font-size:.8rem;color:var(--muted);margin-top:1rem;text-align:center;font-style:italic">
-      Credenciais padrão: admin / cbhm2026
-    </p>
+    <div id="loginLoading" class="hidden" style="text-align:center;padding:.5rem;color:var(--muted);font-size:.88rem;margin-bottom:.75rem">
+      <span style="display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:.5rem"></span>
+      Autenticando no Firebase...
+    </div>
+    <button class="btn btn-gold" style="width:100%;justify-content:center" id="loginBtn" onclick="doLogin()">Entrar</button>
+    <div style="margin-top:1.25rem;padding:.9rem 1rem;background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.15);border-radius:var(--r);font-size:.8rem;color:var(--muted);line-height:1.7">
+      <strong style="color:var(--gold2);display:block;margin-bottom:.4rem">⚙ Como configurar o acesso:</strong>
+      No Firebase Console → <strong style="color:var(--tx)">Authentication → Sign-in method → Email/Password → Ativar</strong><br>
+      Depois → <strong style="color:var(--tx)">Users → Add user</strong> → cadastre o e-mail e senha do administrador<br>
+      <span style="font-size:.75rem;margin-top:.3rem;display:block;font-style:italic">Em modo demo (sem Firebase), qualquer e-mail + senha "cbhm2026" funciona.</span>
+    </div>
   </div>
 </div>
 
@@ -1382,31 +1410,48 @@ nav {
         <h1>DASHBOARD</h1>
         <p class="sub">Visão geral do Campeonato Brasileiro de História Militar 2026</p>
 
-        <!-- Firebase rules fix notice -->
-        <div id="firebaseRulesNotice" class="card" style="border-color:rgba(245,197,66,.35);background:rgba(245,197,66,.04);margin-bottom:1.5rem">
+        <!-- Firebase rules notice -->
+        <div id="firebaseRulesNotice" class="card" style="border-color:rgba(0,212,170,.25);background:rgba(0,212,170,.03);margin-bottom:1.5rem">
           <div style="display:flex;align-items:flex-start;gap:1rem">
-            <span style="font-size:1.5rem;flex-shrink:0">⚠️</span>
+            <span style="font-size:1.5rem;flex-shrink:0">🔐</span>
             <div style="flex:1">
-              <div class="card-title" style="color:var(--gold2);margin-bottom:.6rem">PERMISSÃO NEGADA — FIREBASE RULES</div>
+              <div class="card-title" style="color:#00d4aa;margin-bottom:.6rem">REGRAS DE SEGURANÇA — CONFIGURAÇÃO CORRETA</div>
               <p style="font-size:.88rem;color:var(--silver);line-height:1.8;margin-bottom:1rem">
-                Se você vê o erro <code style="color:var(--gold);background:var(--bg3);padding:.1rem .4rem;border-radius:4px">PERMISSION_DENIED</code> no console,
-                suas regras do Realtime Database estão bloqueando escrita. Corrija em 30 segundos:
+                O app agora usa <strong style="color:var(--tx)">Firebase Authentication</strong>. Suas regras atuais estão corretas —
+                só precisam permitir leitura pública para o placar e dados de sessão ao vivo (equipes participantes acessam sem login).
+                Use as regras abaixo:
               </p>
-              <ol style="font-size:.88rem;color:var(--silver);line-height:2;padding-left:1.2rem;margin-bottom:1rem">
-                <li>Acesse <a href="https://console.firebase.google.com" target="_blank" style="color:var(--gold)">console.firebase.google.com</a></li>
-                <li>Selecione seu projeto → <strong style="color:var(--tx)">Realtime Database</strong> → aba <strong style="color:var(--tx)">Regras</strong></li>
-                <li>Substitua todo o conteúdo pelo JSON abaixo e clique em <strong style="color:var(--tx)">Publicar</strong></li>
-              </ol>
-              <pre style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:1rem;font-size:.85rem;color:var(--gold2);overflow-x:auto;margin-bottom:1rem">{
+              <pre style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:1rem;font-size:.83rem;color:var(--gold2);overflow-x:auto;margin-bottom:1rem;line-height:1.7">{
   "rules": {
-    ".read": true,
-    ".write": true
+    "admins": {
+      ".read":  "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".write": false
+    },
+    "config": {
+      ".read":  true,
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"
+    },
+    "questions": {
+      ".read":  "auth != null && root.child('admins').child(auth.uid).val() === true",
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"
+    },
+    "teams": {
+      ".read":  true,
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"
+    },
+    "activeSession": {
+      ".read":  true,
+      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"
+    }
   }
 }</pre>
-              <p style="font-size:.8rem;color:var(--muted);font-style:italic">
-                ⚠ Estas regras são para <strong>desenvolvimento/teste</strong>. Para produção, adicione autenticação antes de publicar o evento.
-              </p>
-              <button class="btn btn-sm" style="margin-top:.5rem" onclick="document.getElementById('firebaseRulesNotice').style.display='none'">✓ Entendido, ocultar aviso</button>
+              <div style="font-size:.85rem;color:var(--muted);line-height:1.8;margin-bottom:1rem">
+                <strong style="color:var(--gold2)">Para cadastrar o UID do administrador no banco:</strong><br>
+                1. Vá em <strong style="color:var(--tx)">Authentication → Users</strong> → copie o UID do seu usuário<br>
+                2. Vá em <strong style="color:var(--tx)">Realtime Database → Data → (+) Adicionar nó</strong><br>
+                3. Crie: <code style="color:var(--gold);background:var(--bg3);padding:.1rem .4rem;border-radius:4px">admins → {SEU_UID} → true</code>
+              </div>
+              <button class="btn btn-sm" onclick="document.getElementById('firebaseRulesNotice').style.display='none'">✓ Entendido, ocultar</button>
             </div>
           </div>
         </div>
@@ -2118,30 +2163,82 @@ function openLogin(){ openOverlay('loginOverlay'); }
 function openJoinTeam(){ openOverlay('joinOverlay'); }
 
 /* ════════════════════════════════
-   AUTH
+   AUTH — Firebase Authentication
 ════════════════════════════════ */
-// Credentials stored in Firebase or local fallback
-const CREDENTIALS = { admin:'cbhm2026' }; // change in production!
+async function doLogin(){
+  const email  = document.getElementById('loginUser').value.trim();
+  const pass   = document.getElementById('loginPass').value;
+  const errEl  = document.getElementById('loginErr');
+  const loadEl = document.getElementById('loginLoading');
+  const btnEl  = document.getElementById('loginBtn');
 
-function doLogin(){
-  const u = document.getElementById('loginUser').value.trim();
-  const p = document.getElementById('loginPass').value;
-  const errEl = document.getElementById('loginErr');
   errEl.classList.add('hidden');
 
-  if(CREDENTIALS[u]===p){
+  if(!email || !pass){
+    errEl.textContent = 'Preencha e-mail e senha.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  /* ── Firebase Auth ── */
+  if(window._signIn){
+    loadEl.classList.remove('hidden');
+    btnEl.disabled = true;
+    try {
+      const cred = await window._signIn(email, pass);
+      window._currentUser = cred.user;
+
+      // Check if this UID is listed as admin in /admins
+      const isAdmin = await dbGet('admins/' + cred.user.uid);
+      if(isAdmin !== true){
+        // Sign them out and reject
+        await window._signOut();
+        window._currentUser = null;
+        throw new Error('Seu usuário não tem perfil de administrador. Contacte o responsável pelo sistema.');
+      }
+
+      loadEl.classList.add('hidden');
+      btnEl.disabled = false;
+      adminLogged = true;
+      closeOverlay('loginOverlay');
+      showScreen('sAdmin');
+      loadAdminData();
+      toast('Bem-vindo, ' + (cred.user.displayName || email) + '!', 'ok');
+
+    } catch(e){
+      loadEl.classList.add('hidden');
+      btnEl.disabled = false;
+      // Translate Firebase error codes to Portuguese
+      const msg = {
+        'auth/invalid-email':          'E-mail inválido.',
+        'auth/user-not-found':         'Usuário não encontrado.',
+        'auth/wrong-password':         'Senha incorreta.',
+        'auth/invalid-credential':     'E-mail ou senha incorretos.',
+        'auth/too-many-requests':      'Muitas tentativas. Aguarde alguns minutos.',
+        'auth/network-request-failed': 'Erro de rede. Verifique sua conexão.',
+      }[e.code] || e.message;
+      errEl.textContent = msg;
+      errEl.classList.remove('hidden');
+    }
+    return;
+  }
+
+  /* ── Demo mode fallback (sem Firebase) ── */
+  if(pass === 'cbhm2026'){
     adminLogged = true;
     closeOverlay('loginOverlay');
     showScreen('sAdmin');
     loadAdminData();
-    toast('Bem-vindo, '+u+'!','ok');
+    toast('Modo demo — bem-vindo!', 'ok');
   } else {
-    errEl.textContent='Credenciais inválidas. Tente novamente.';
+    errEl.textContent = 'Senha incorreta. Em modo demo use: cbhm2026';
     errEl.classList.remove('hidden');
   }
 }
 
-function logout(){
+async function logout(){
+  if(window._signOut) await window._signOut().catch(()=>{});
+  window._currentUser = null;
   adminLogged = false;
   showScreen('sLanding');
 }
