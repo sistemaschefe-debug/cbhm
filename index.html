@@ -313,7 +313,7 @@ nav {
   white-space: nowrap;
 }
 .nav-sep { flex:1; }
-.nav-badge {
+.nav-badge, .nav-user {
   font-size:.75rem;
   font-family:var(--fh);
   letter-spacing:1px;
@@ -321,6 +321,10 @@ nav {
   border-radius:999px;
   border:1px solid var(--border);
   color:var(--muted);
+}
+
+.nav-user {
+  background: rgba(201,168,76,.05);
 }
 
 /* ════════ MODAL ════════ */
@@ -1358,15 +1362,62 @@ nav {
   </div>
 </div>
 
+<!-- HELP MODAL -->
+<div class="overlay" id="helpOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeOverlay('helpOverlay')">✕</button>
+    <h2 id="helpModalTitle">Ajuda</h2>
+    <div id="helpModalBody" style="color:var(--silver);line-height:1.8;font-size:.92rem;margin-top:1rem"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:1.5rem">
+      <button class="btn btn-gold" onclick="closeOverlay('helpOverlay')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div class="overlay" id="profileOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeOverlay('profileOverlay')">✕</button>
+    <h2>👤 Meu Perfil</h2>
+    <div class="field">
+      <label>Posto / Graduação</label>
+      <input type="text" id="profileRank" placeholder="Ex: 1º Tenente">
+    </div>
+    <div class="field">
+      <label>Nome</label>
+      <input type="text" id="profileName" placeholder="Ex: João da Silva">
+    </div>
+    <div class="field">
+      <label>E-mail</label>
+      <input type="email" id="profileEmail" placeholder="usuario@exemplo.com">
+    </div>
+    <div class="field">
+      <label>Disciplina</label>
+      <input type="text" id="profileDiscipline" placeholder="Ex: História Militar">
+    </div>
+    <div class="field">
+      <label>Nova senha</label>
+      <input type="password" id="profilePassword" placeholder="Deixe em branco para manter a atual">
+    </div>
+    <div class="flex" style="justify-content:flex-end;gap:.75rem">
+      <button class="btn" onclick="closeOverlay('profileOverlay')">Cancelar</button>
+      <button class="btn btn-gold" onclick="saveProfile()">Salvar perfil</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══════════════════════════════════════════
      ADMIN PANEL
 ══════════════════════════════════════════ -->
 <div class="screen" id="sAdmin">
   <nav>
     <span class="nav-logo">⚔ CBHM 2026</span>
-    <span class="nav-badge">Painel do Administrador</span>
+    <span class="nav-badge" id="adminRoleBadge">Painel do Administrador</span>
+    <span class="nav-user" id="adminUserLabel">Visitante</span>
     <div class="nav-sep"></div>
     <span id="sessionCodeBadge" class="nav-badge hidden"></span>
+    <button class="btn btn-sm" onclick="showHelp()">❔ Ajuda</button>
+    <button class="btn btn-sm" onclick="openProfileModal()">👤 Perfil</button>
     <button class="btn btn-sm" onclick="logout()">Sair</button>
   </nav>
 
@@ -1375,28 +1426,31 @@ nav {
     <aside class="admin-sidebar">
       <div class="sidebar-section">
         <div class="sidebar-label">Gestão</div>
-        <div class="sidebar-item active" onclick="adminTab(this,'tabDashboard')">
+        <div class="sidebar-item active" data-tab="tabDashboard" onclick="adminTab(this,'tabDashboard')">
           <span class="si-icon">📊</span> Dashboard
         </div>
-        <div class="sidebar-item" onclick="adminTab(this,'tabLanding')">
+        <div class="sidebar-item" data-tab="tabLanding" onclick="adminTab(this,'tabLanding')">
           <span class="si-icon">🖼</span> Landing Page
         </div>
-        <div class="sidebar-item" onclick="adminTab(this,'tabQuestions')">
+        <div class="sidebar-item" data-tab="tabQuestions" onclick="adminTab(this,'tabQuestions')">
           <span class="si-icon">📝</span> Questões
         </div>
-        <div class="sidebar-item" onclick="adminTab(this,'tabGemini')">
+        <div class="sidebar-item" data-tab="tabUsers" onclick="adminTab(this,'tabUsers')">
+          <span class="si-icon">👥</span> Usuários
+        </div>
+        <div class="sidebar-item" data-tab="tabGemini" onclick="adminTab(this,'tabGemini')">
           <span class="si-icon">🤖</span> Gemini IA
         </div>
-        <div class="sidebar-item" onclick="adminTab(this,'tabTeams')">
+        <div class="sidebar-item" data-tab="tabTeams" onclick="adminTab(this,'tabTeams')">
           <span class="si-icon">🏛</span> Equipes
         </div>
       </div>
       <div class="sidebar-section">
         <div class="sidebar-label">Competição</div>
-        <div class="sidebar-item" onclick="adminTab(this,'tabSession')">
+        <div class="sidebar-item" data-tab="tabSession" onclick="adminTab(this,'tabSession')">
           <span class="si-icon">⚡</span> Sessão ao Vivo
         </div>
-        <div class="sidebar-item" onclick="adminTab(this,'tabScoreboard')">
+        <div class="sidebar-item" data-tab="tabScoreboard" onclick="adminTab(this,'tabScoreboard')">
           <span class="si-icon">🏆</span> Placar
         </div>
       </div>
@@ -1498,11 +1552,6 @@ nav {
               <span style="font-family:var(--fh);font-size:.75rem;color:var(--muted)">21–30s</span>
               <span style="color:var(--silver)">Resposta de 21 a 30 segundos</span>
               <span style="font-family:var(--fh);color:var(--gold);font-size:1.1rem">10 pts</span>
-            </div>
-            <div class="team-row" style="grid-template-columns:auto 1fr auto;border-color:rgba(201,168,76,.4);background:rgba(201,168,76,.05)">
-              <span style="font-family:var(--fh);font-size:.75rem;color:var(--gold)">⭐</span>
-              <span style="color:var(--gold2)">Bônus: 3 acertos consecutivos em até 5s</span>
-              <span style="font-family:var(--fh);color:var(--gold);font-size:1.1rem">90 pts</span>
             </div>
           </div>
         </div>
@@ -1782,6 +1831,61 @@ APMBB</textarea>
         <div id="teamList"></div>
       </div>
 
+      <!-- USERS -->
+      <div id="tabUsers" class="hidden">
+        <h1>USUÁRIOS</h1>
+        <p class="sub">Cadastre e gerencie os perfis internos por função e disciplina</p>
+
+        <div class="card" style="margin-bottom:1.5rem;border-color:rgba(201,168,76,.25)">
+          <div class="card-title" style="margin-bottom:1rem">➕ Criar / editar usuário</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+            <div class="field" style="margin:0">
+              <label>Posto / Graduação</label>
+              <input type="text" id="userRank" placeholder="Ex: 1º Tenente">
+            </div>
+            <div class="field" style="margin:0">
+              <label>Perfil</label>
+              <select id="userRole">
+                <option value="">Selecione...</option>
+                <option>Administrador</option>
+                <option>Gerente</option>
+                <option>Professor</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Nome completo</label>
+            <input type="text" id="userName" placeholder="Ex: João da Silva">
+          </div>
+          <div class="field">
+            <label>CPF</label>
+            <input type="text" id="userCpf" placeholder="000.000.000-00" oninput="updateUserPasswordHint(this.value)">
+          </div>
+          <div class="field">
+            <label>E-mail</label>
+            <input type="email" id="userEmail" placeholder="usuario@exemplo.com">
+          </div>
+          <div class="field">
+            <label>Disciplina</label>
+            <input type="text" id="userDiscipline" placeholder="Ex: História Militar">
+          </div>
+          <div class="field">
+            <label>Senha padrão</label>
+            <input type="text" id="userPwdHint" readonly placeholder="Será gerada a partir do CPF">
+          </div>
+          <div class="flex" style="justify-content:flex-end;gap:.75rem">
+            <button class="btn" onclick="resetUserForm()">Cancelar</button>
+            <button class="btn btn-gold" onclick="saveUser()">Salvar usuário</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="margin-bottom:1rem">Usuários cadastrados</div>
+          <div id="userList"></div>
+        </div>
+      </div>
+
       <!-- SESSION -->
       <div id="tabSession" class="hidden">
         <h1>SESSÃO AO VIVO</h1>
@@ -1918,14 +2022,6 @@ APMBB</textarea>
         <div class="answer-grid" id="answerGrid"></div>
       </div>
 
-      <!-- bonus streak indicator -->
-      <div id="streakBar" class="hidden" style="margin-top:1rem;padding:.75rem 1.2rem;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.25);border-radius:var(--r);display:flex;align-items:center;gap:.75rem">
-        <span style="font-size:1.2rem">⭐</span>
-        <div>
-          <div style="font-family:var(--fh);font-size:.8rem;color:var(--gold2)">SEQUÊNCIA BÔNUS</div>
-          <div id="streakText" style="font-size:.85rem;color:var(--muted)"></div>
-        </div>
-      </div>
     </div>
 
     <!-- RIGHT: timer + teams -->
@@ -2056,15 +2152,6 @@ APMBB</textarea>
     <span class="proj-aman" id="projFooterRight">Res Non Verba</span>
   </div>
 
-  <!-- bonus overlay -->
-  <div id="projStreakOverlay" style="position:absolute;inset:0;z-index:50;
-       background:rgba(6,8,16,.93);backdrop-filter:blur(8px);
-       display:none;flex-direction:column;align-items:center;justify-content:center;gap:1rem">
-    <div style="font-size:clamp(3rem,8vw,6rem)">⭐</div>
-    <div class="proj-streak-text" id="projStreakText">SEQUÊNCIA BÔNUS!</div>
-    <div class="proj-streak-sub" id="projStreakSub">90 pontos conquistados</div>
-  </div>
-
   <!-- correct glow bar -->
   <div class="proj-reveal-overlay" id="projRevealBar"></div>
 </div>
@@ -2087,15 +2174,18 @@ const SCHOOLS = ['AMAN','EPCAr','EsPCEx','CN','AFA','EN','EsSA','APMBB'];
 const SCORING = { // seconds -> points
   5:30, 10:25, 15:20, 20:15, 30:10, 99:0
 };
-const BONUS_POINTS = 90;
 const QUESTION_TIME = 30;
 const CIRCUMFERENCE = 2 * Math.PI * 62; // ring radius
 
 let adminLogged    = false;
 let questions      = [];
 let teams          = [];
+let users          = [];
 let activeSession  = null;
 let quizState      = null;  // { currentQ, timer, answers }
+let editingUserId  = null;
+let currentProfileId = null;
+let currentUserProfile = null;
 let timerInterval  = null;
 
 /* ════════════════════════════════
@@ -2141,12 +2231,64 @@ function showScreen(id){
   document.getElementById(id).classList.add('active');
 }
 
+function canAccessTab(tab){
+  const role = currentUserProfile?.role || 'Administrador';
+  const accessMap = {
+    tabDashboard: ['Administrador','Gerente','Professor'],
+    tabLanding:   ['Administrador'],
+    tabQuestions: ['Administrador'],
+    tabUsers:     ['Administrador'],
+    tabGemini:    ['Administrador'],
+    tabTeams:     ['Administrador','Gerente'],
+    tabSession:   ['Administrador','Gerente'],
+    tabScoreboard:['Administrador','Gerente','Professor'],
+  };
+  return accessMap[tab]?.includes(role) ?? false;
+}
+
+function refreshAdminSidebar(){
+  document.querySelectorAll('#sAdmin .sidebar-item').forEach(item=>{
+    const tab = item.getAttribute('data-tab');
+    if(!tab) return;
+    item.classList.toggle('hidden', !canAccessTab(tab));
+  });
+}
+
+function selectDefaultAdminTab(){
+  const validItem = Array.from(document.querySelectorAll('#sAdmin .sidebar-item'))
+    .find(item => !item.classList.contains('hidden') && item.getAttribute('data-tab'));
+  if(validItem){
+    adminTab(validItem, validItem.getAttribute('data-tab'));
+  }
+}
+
+function renderAdminHeader(){
+  const roleBadge = document.getElementById('adminRoleBadge');
+  const userLabel = document.getElementById('adminUserLabel');
+  if(roleBadge){
+    const role = currentUserProfile?.role || 'Administrador';
+    roleBadge.textContent = role === 'Administrador'
+      ? 'Painel do Administrador'
+      : role === 'Gerente'
+        ? 'Painel do Gerente'
+        : 'Painel do Professor';
+  }
+  if(userLabel){
+    userLabel.textContent = currentUserProfile?.name ? `Olá, ${currentUserProfile.name}` : 'Olá, usuário';
+  }
+}
+
 function adminTab(el, tab){
+  if(!canAccessTab(tab)){
+    toast('Acesso negado. Seu perfil não tem permissão para esta área.','err');
+    return;
+  }
   document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
   el.classList.add('active');
   document.querySelectorAll('#sAdmin .admin-content > div').forEach(d=>d.classList.add('hidden'));
   document.getElementById(tab).classList.remove('hidden');
   if(tab==='tabQuestions')  renderQuestions();
+  if(tab==='tabUsers')      renderUsers();
   if(tab==='tabTeams')      renderTeams();
   if(tab==='tabScoreboard') renderAdminScoreboard();
   if(tab==='tabDashboard')  refreshDashboard();
@@ -2188,13 +2330,28 @@ async function doLogin(){
       const cred = await window._signIn(email, pass);
       window._currentUser = cred.user;
 
-      // Check if this UID is listed as admin in /admins
       const isAdmin = await dbGet('admins/' + cred.user.uid);
-      if(isAdmin !== true){
-        // Sign them out and reject
+      await loadUsers();
+      const profile = users.find(u=>u.uid===cred.user.uid || u.id===cred.user.uid || u.email?.toLowerCase()===email.toLowerCase());
+
+      if(!isAdmin && !profile){
         await window._signOut();
         window._currentUser = null;
-        throw new Error('Seu usuário não tem perfil de administrador. Contacte o responsável pelo sistema.');
+        throw new Error('Seu usuário não está cadastrado como administrador ou perfil interno. Contate o responsável.');
+      }
+
+      currentUserProfile = profile
+        ? { ...profile, uid: cred.user.uid, email: cred.user.email || email }
+        : { id: cred.user.uid, uid: cred.user.uid, role:'Administrador', rank:'Administrador', name: cred.user.displayName || '', email: cred.user.email || email, discipline:'', password:'' };
+
+      if(profile && !profile.uid){
+        profile.uid = cred.user.uid;
+        if(fb()) await dbSet('users/'+profile.id, profile);
+      }
+
+      if(isAdmin && !profile){
+        users.push(currentUserProfile);
+        if(fb()) await dbSet('users/'+currentUserProfile.id, currentUserProfile);
       }
 
       loadEl.classList.add('hidden');
@@ -2203,12 +2360,11 @@ async function doLogin(){
       closeOverlay('loginOverlay');
       showScreen('sAdmin');
       loadAdminData();
-      toast('Bem-vindo, ' + (cred.user.displayName || email) + '!', 'ok');
+      toast('Bem-vindo, ' + (currentUserProfile.name || email) + '!', 'ok');
 
     } catch(e){
       loadEl.classList.add('hidden');
       btnEl.disabled = false;
-      // Translate Firebase error codes to Portuguese
       const msg = {
         'auth/invalid-email':          'E-mail inválido.',
         'auth/user-not-found':         'Usuário não encontrado.',
@@ -2226,6 +2382,7 @@ async function doLogin(){
   /* ── Demo mode fallback (sem Firebase) ── */
   if(pass === 'cbhm2026'){
     adminLogged = true;
+    currentUserProfile = { id:'demo', uid:'demo', role:'Administrador', rank:'Administrador', name:'Demo Admin', email, discipline:'', password:'' };
     closeOverlay('loginOverlay');
     showScreen('sAdmin');
     loadAdminData();
@@ -2240,6 +2397,7 @@ async function logout(){
   if(window._signOut) await window._signOut().catch(()=>{});
   window._currentUser = null;
   adminLogged = false;
+  currentUserProfile = null;
   showScreen('sLanding');
 }
 
@@ -2265,6 +2423,10 @@ async function loadAdminData(){
   // Listen to active session
   dbListen('activeSession', data=>{ activeSession=data; updateSessionUI(); });
 
+  await loadUsers();
+  refreshAdminSidebar();
+  renderAdminHeader();
+  selectDefaultAdminTab();
   refreshDashboard();
 }
 
@@ -2358,6 +2520,236 @@ function renderQuestions(){
       </div>
     </div>
   `).join('');
+}
+
+async function loadUsers(){
+  const userData = await dbGet('users');
+  if(userData){
+    users = Array.isArray(userData)
+      ? userData.map(u => ({ ...u, id: u.id || ('u'+Date.now()), uid: u.uid || null }))
+      : Object.entries(userData).map(([id,v]) => ({ ...v, id, uid: v.uid || null }));
+  } else {
+    users = [];
+  }
+  renderUsers();
+}
+
+function updateUserPasswordHint(cpf){
+  const digits = (cpf || '').replace(/\D/g,'');
+  const hint = digits.length >= 6 ? digits.slice(0,3) + digits.slice(-3) : '';
+  setVal('userPwdHint', hint);
+  return hint;
+}
+
+function resetUserForm(){
+  editingUserId = null;
+  setVal('userRank','');
+  setVal('userRole','');
+  setVal('userName','');
+  setVal('userCpf','');
+  setVal('userEmail','');
+  setVal('userDiscipline','');
+  setVal('userPwdHint','');
+}
+
+async function saveUser(){
+  const rank       = document.getElementById('userRank').value.trim();
+  const role       = document.getElementById('userRole').value;
+  const name       = document.getElementById('userName').value.trim();
+  const cpf        = document.getElementById('userCpf').value.trim();
+  const email      = document.getElementById('userEmail').value.trim();
+  const discipline = document.getElementById('userDiscipline').value.trim();
+  const password   = updateUserPasswordHint(cpf);
+
+  if(!rank || !role || !name || !cpf || !email || !discipline){
+    toast('Preencha todos os campos do usuário','err');
+    return;
+  }
+
+  const digits = cpf.replace(/\D/g,'');
+  if(digits.length < 11){
+    toast('CPF inválido. Use 11 dígitos','err');
+    return;
+  }
+
+  const existing = users.find(u=>u.id===editingUserId);
+  const user = {
+    id: editingUserId || 'u'+Date.now(),
+    uid: existing?.uid || null,
+    rank,
+    role,
+    name,
+    cpf,
+    email,
+    discipline,
+    password,
+    updated: Date.now(),
+  };
+
+  const existing = users.find(u=>u.id===user.id);
+  if(existing){
+    Object.assign(existing, user);
+  } else {
+    users.push(user);
+  }
+
+  if(fb()){
+    await dbSet('users/'+user.id, user);
+  } else {
+    lsSet('users', users);
+  }
+
+  renderUsers();
+  resetUserForm();
+  toast(`Usuário ${name} salvo com sucesso`,'ok');
+}
+
+function editUser(id){
+  const user = users.find(u=>u.id===id);
+  if(!user) return;
+  editingUserId = id;
+  setVal('userRank', user.rank || '');
+  setVal('userRole', user.role || '');
+  setVal('userName', user.name || '');
+  setVal('userCpf', user.cpf || '');
+  setVal('userEmail', user.email || '');
+  setVal('userDiscipline', user.discipline || '');
+  setVal('userPwdHint', user.password || updateUserPasswordHint(user.cpf));
+}
+
+async function deleteUser(id){
+  if(!confirm('Excluir este usuário?')) return;
+  users = users.filter(u=>u.id!==id);
+  if(fb()){
+    await window._remove(window._ref(window._db,'users/'+id));
+  } else {
+    lsSet('users', users);
+  }
+  renderUsers();
+  toast('Usuário excluído','ok');
+}
+
+function renderUsers(){
+  const el = document.getElementById('userList');
+  if(!el) return;
+  if(!users.length){
+    el.innerHTML = '<p style="color:var(--muted);font-style:italic;padding:.5rem">Nenhum usuário cadastrado.</p>';
+    return;
+  }
+
+  el.innerHTML = users.map((u,i)=>`
+    <div class="card" style="padding:1rem;margin-bottom:.9rem;display:grid;grid-template-columns:1fr auto;gap:1rem;align-items:start">
+      <div>
+        <div class="card-title" style="margin-bottom:.55rem">${u.name} — ${u.role || 'Sem perfil'}</div>
+        <div style="font-size:.88rem;color:var(--silver);line-height:1.6">
+          <strong>Posto:</strong> ${u.rank || '—'}<br>
+          <strong>CPF:</strong> ${u.cpf || '—'}<br>
+          <strong>E-mail:</strong> ${u.email || '—'}<br>
+          <strong>Disciplina:</strong> ${u.discipline || '—'}<br>
+          <strong>Senha padrão:</strong> ${u.password || '—'}
+        </div>
+      </div>
+      <div class="flex" style="flex-direction:column;align-items:flex-end;gap:.5rem">
+        <button class="btn btn-sm btn-icon" onclick="editUser('${u.id}')">✏ Editar</button>
+        <button class="btn btn-sm btn-icon btn-danger" onclick="deleteUser('${u.id}')">🗑 Excluir</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openProfileModal(){
+  const uid = window._currentUser?.uid || null;
+  const email = window._currentUser?.email?.toLowerCase();
+  let profile = users.find(u=>u.id===uid || u.uid===uid || (email && u.email?.toLowerCase()===email));
+
+  if(!profile && uid){
+    profile = { id: uid, uid, rank:'Administrador', role:'Administrador', name: window._currentUser?.displayName || '', email: window._currentUser?.email || '', discipline:'', password:'' };
+  }
+  if(!profile){
+    profile = { rank:'Administrador', role:'Administrador', name:'', email:'', discipline:'', password:'' };
+  }
+
+  setVal('profileRank', profile.rank || '');
+  setVal('profileName', profile.name || '');
+  setVal('profileEmail', profile.email || '');
+  setVal('profileDiscipline', profile.discipline || '');
+  setVal('profilePassword', '');
+  currentProfileId = profile.id || null;
+  currentUserProfile = profile;
+  const titleEl = document.querySelector('#profileOverlay h2');
+  if(titleEl){
+    titleEl.textContent = profile.name ? `👤 Meu Perfil — ${profile.name}` : '👤 Meu Perfil';
+  }
+  openOverlay('profileOverlay');
+}
+
+async function saveProfile(){
+  const rank       = document.getElementById('profileRank').value.trim();
+  const name       = document.getElementById('profileName').value.trim();
+  const email      = document.getElementById('profileEmail').value.trim();
+  const discipline = document.getElementById('profileDiscipline').value.trim();
+  const password   = document.getElementById('profilePassword').value;
+  const uid        = window._currentUser?.uid || currentProfileId || null;
+
+  if(!rank || !name || !email){
+    toast('Preencha nome, e-mail e posto/graduação','err');
+    return;
+  }
+
+  const existing = users.find(u=>u.id===currentProfileId || u.uid===uid || u.email?.toLowerCase()===email.toLowerCase());
+  const profile = {
+    id: currentProfileId || existing?.id || uid || ('u'+Date.now()),
+    uid,
+    rank,
+    role: currentUserProfile?.role || existing?.role || 'Administrador',
+    name,
+    email,
+    discipline,
+    password: password ? password : (existing?.password || ''),
+    updated: Date.now(),
+  };
+
+  if(existing){ Object.assign(existing, profile); }
+  else { users.push(profile); }
+  currentUserProfile = profile;
+  currentProfileId = profile.id;
+
+  if(fb()){
+    await dbSet('users/'+profile.id, profile);
+  } else {
+    lsSet('users', users);
+  }
+
+  toast('Perfil atualizado','ok');
+  closeOverlay('profileOverlay');
+}
+
+function showHelp(){
+  const current = document.querySelector('#sAdmin .admin-content > div:not(.hidden)');
+  const topic = current?.id || 'tabDashboard';
+  const title = {
+    tabDashboard: 'Ajuda — Dashboard',
+    tabLanding: 'Ajuda — Landing Page',
+    tabQuestions: 'Ajuda — Questões',
+    tabUsers: 'Ajuda — Usuários',
+    tabTeams: 'Ajuda — Equipes',
+    tabSession: 'Ajuda — Sessão ao Vivo',
+    tabScoreboard: 'Ajuda — Placar',
+  }[topic] || 'Ajuda';
+
+  const body = {
+    tabDashboard: 'Veja aqui o resumo da competição e o fluxo de trabalho. Use o menu à esquerda para navegar entre as áreas.',
+    tabLanding: 'Edite o texto, logotipo e as instituições exibidas na página inicial. Clique em Salvar para persistir as alterações.',
+    tabQuestions: 'Cadastre, edite e exclua questões de múltipla escolha. Use o botão + Nova Questão para adicionar e atualizar seu banco de questões.',
+    tabUsers: 'Cadastre perfis de usuários com Posto/Grad, CPF, e-mail, disciplina e perfil. A senha padrão é gerada automaticamente a partir do CPF.',
+    tabTeams: 'Gerencie as equipes participantes, suas imagens e pontuação. Adicione uma nova equipe e use os controles para atualizar ou remover registros.',
+    tabSession: 'Crie e controle a sessão ao vivo. Defina código e número de questões, abra o projetor e inicie o quiz.',
+    tabScoreboard: 'Veja o ranking geral das equipes em tempo real. Esta página mostra a classificação atual da competição.',
+  }[topic] || 'Use o menu à esquerda para navegar e acesse as funções de cada área. O botão Perfil permite editar seus dados.';
+
+  document.getElementById('helpModalTitle').textContent = title;
+  document.getElementById('helpModalBody').textContent = body;
+  openOverlay('helpOverlay');
 }
 
 /* ════════════════════════════════
@@ -2512,7 +2904,6 @@ function renderQuizQuestion(){
   `).join('');
 
   renderTeamsPanel();
-  updateStreakBar();
   startTimer();
 }
 
@@ -2592,23 +2983,8 @@ function scoreTeam(teamId, correct, elapsed){
   const ts = quizState.teamScores;
   if(!ts[teamId]) return;
   const pts = correct ? getPoints(elapsed) : 0;
+  ts[teamId].score += pts;
 
-  if(correct){
-    ts[teamId].streak++;
-    if(ts[teamId].streak>=3){
-      const bonus = BONUS_POINTS - ts[teamId].score; // give total 90 pts for this round
-      ts[teamId].score += BONUS_POINTS;
-      ts[teamId].streak = 0;
-      toast('⭐ BÔNUS! '+ts[teamId].name+' acertou 3 seguidas em 5s! +90 pts','ok');
-      confetti('#c9a84c');
-    } else {
-      ts[teamId].score += pts;
-    }
-  } else {
-    ts[teamId].streak = 0;
-  }
-
-  // persist
   const t = teams.find(t=>t.id===teamId);
   if(t){ t.score=ts[teamId].score; dbUpdate('teams/'+teamId,{score:t.score}); }
   renderTeamsPanel();
@@ -2626,18 +3002,6 @@ function renderTeamsPanel(){
       <div class="tp-score">${t.score}<span style="font-size:.65rem;color:var(--muted)"> pts</span></div>
     </div>
   `).join('') || '<p style="color:var(--muted);font-style:italic;font-size:.85rem">Nenhuma equipe registrada.</p>';
-}
-
-function updateStreakBar(){
-  const bar = document.getElementById('streakBar');
-  const txt = document.getElementById('streakText');
-  const best = Object.values(quizState?.teamScores||{}).reduce((a,t)=>Math.max(a,t.streak),0);
-  if(best>0){
-    bar.classList.remove('hidden');
-    txt.textContent = `Melhor sequência atual: ${best} acertos consecutivos em ≤5s. ${3-best} para o bônus!`;
-  } else {
-    bar.classList.add('hidden');
-  }
 }
 
 function endQuiz(){
@@ -3383,16 +3747,6 @@ function projShowScoreboard(){
   confetti('#c9a84c'); setTimeout(()=>confetti('#e8c97a'),400);
 }
 
-/* ── bonus streak overlay on projector ── */
-function projShowStreak(teamName, pts){
-  const ov  = document.getElementById('projStreakOverlay');
-  document.getElementById('projStreakText').textContent  = `⭐ BÔNUS! ${teamName}`;
-  document.getElementById('projStreakSub').textContent   = `3 acertos consecutivos em ≤5s — +${pts} pontos!`;
-  ov.style.display = 'flex';
-  playFanfare();
-  setTimeout(()=>{ ov.style.display='none'; projUpdateScoreboard(); }, 3200);
-}
-
 /* ── sound ── */
 function getAudioCtx(){
   if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
@@ -3442,12 +3796,6 @@ const _origScoreTeam = scoreTeam;
 scoreTeam = function(teamId, correct, elapsed){
   _origScoreTeam(teamId, correct, elapsed);
   if(projOpen) projUpdateScoreboard();
-  // check for bonus
-  if(correct && quizState?.teamScores?.[teamId]?.streak===0){
-    // streak was just reset after 3 — means bonus fired
-    const t = quizState.teamScores[teamId];
-    if(projOpen) projShowStreak(t.name, BONUS_POINTS);
-  }
 };
 
 const _origEndQuiz = endQuiz;
