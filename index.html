@@ -2383,13 +2383,20 @@ async function doLogin(){
 
   /* ── Firebase Auth ── */
   if(window._signIn){
+    console.log('🔐 doLogin credentials:', { email, passLength: pass.length });
     loadEl.classList.remove('hidden');
     btnEl.disabled = true;
     try {
       const cred = await window._signIn(email, pass);
       window._currentUser = cred.user;
 
-      const isAdmin = await dbGet('admins/' + cred.user.uid);
+      let isAdmin = false;
+      try {
+        isAdmin = await dbGet('admins/' + cred.user.uid);
+      } catch(err) {
+        console.warn('Could not read admin marker, proceeding with profile-only login', err);
+      }
+
       if(isAdmin){
         await loadUsers();
       } else {
@@ -2433,7 +2440,7 @@ async function doLogin(){
         'auth/invalid-email':          'E-mail inválido.',
         'auth/user-not-found':         'Usuário não encontrado.',
         'auth/wrong-password':         'Senha incorreta.',
-        'auth/invalid-credential':     'E-mail ou senha incorretos.',
+        'auth/invalid-credential':     'Credenciais inválidas. Verifique e-mail e senha.',
         'auth/too-many-requests':      'Muitas tentativas. Aguarde alguns minutos.',
         'auth/network-request-failed': 'Erro de rede. Verifique sua conexão.',
       }[e.code] || e.message;
