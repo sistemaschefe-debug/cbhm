@@ -2468,10 +2468,29 @@ async function doSignup(){
     loadEl.classList.remove('hidden');
     try{
       const cred = await window._createUser(email, pass);
-      console.log('User created', cred.user);
-      // add a pending account request in DB for manual approval
-      const payload = { uid: cred.user.uid, email: email, name: cred.user.displayName||'', role: role || 'Administrador', created: Date.now() };
+      console.log('User created in Firebase Auth', cred.user.uid);
+      
+      // 1. Gravar o perfil básico em users/ (pendente de aprovação)
+      const profile = {
+        id: cred.user.uid,
+        uid: cred.user.uid,
+        email: email,
+        name: '',            // usuário preenche depois no Perfil
+        role: role || 'Administrador',
+        rank: '',
+        discipline: '',
+        password: '',
+        status: 'pending',   // pendente de aprovação
+        created: Date.now()
+      };
+      if(fb()) await dbSet('users/' + cred.user.uid, profile);
+      console.log('Profile created in users/', cred.user.uid);
+
+      // 2. Gravar solicitação pendente em pendingAdmins (para o admin aprovar)
+      const payload = { uid: cred.user.uid, email: email, name:'', role: role || 'Administrador', created: Date.now() };
       if(fb()) await dbPush('pendingAdmins', payload);
+      console.log('Pending approval request added');
+
       loadEl.classList.add('hidden');
       closeOverlay('signupOverlay');
       toast('Conta criada. Aguarde aprovação do administrador.');
@@ -2863,15 +2882,19 @@ async function saveUser(){
     users.push(user);
   }
 
-  if(fb()){
+  const isFirebase = fb();
+  console.log('saveUser', { isFirebase, user });
+
+  if(isFirebase){
     await dbSet('users/'+user.id, user);
   } else {
     lsSet('users', users);
+    console.warn('Firebase não ativo; usuário salvo apenas em localStorage.');
   }
 
   renderUsers();
   resetUserForm();
-  toast(`Usuário ${name} salvo com sucesso`,'ok');
+  toast(`Usuário ${name} salvo com sucesso${isFirebase ? '' : ' (salvo localmente - Firebase desconectado)'}`,'ok');
 }
 
 function editUser(id){
