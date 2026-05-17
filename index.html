@@ -70,7 +70,8 @@
     window._fbReady = true;
   } catch(e) {
     window._fbReady = false;
-    console.warn('Firebase não configurado — modo demo ativo');
+    console.error('❌ Firebase initialization failed:', e);
+    window.dispatchEvent(new Event('firebaseReady'));
   }
   document.dispatchEvent(new Event('appReady'));
 </script>
@@ -2453,6 +2454,7 @@ async function doLogin(){
 }
 
 async function doSignup(){
+  console.log('📋 doSignup() called; Firebase ready:', !!fb());
   const email = document.getElementById('signupEmail').value.trim();
   const pass  = document.getElementById('signupPass').value;
   const pass2 = document.getElementById('signupPass2').value;
@@ -2465,10 +2467,12 @@ async function doSignup(){
   if(pass !== pass2){ errEl.textContent='As senhas não conferem.'; errEl.classList.remove('hidden'); return; }
 
   if(window._createUser){
+    console.log('✏️ Starting Firebase signup for:', email);
     loadEl.classList.remove('hidden');
     try{
+      console.log('🔐 Calling createUserWithEmailAndPassword...');
       const cred = await window._createUser(email, pass);
-      console.log('User created in Firebase Auth', cred.user.uid);
+      console.log('✅ User created in Firebase Auth', cred.user.uid);
       
       // 1. Gravar o perfil básico em users/ (pendente de aprovação)
       const profile = {
@@ -2484,18 +2488,19 @@ async function doSignup(){
         created: Date.now()
       };
       if(fb()) await dbSet('users/' + cred.user.uid, profile);
-      console.log('Profile created in users/', cred.user.uid);
+      console.log('✅ Profile created in users/');
 
       // 2. Gravar solicitação pendente em pendingAdmins (para o admin aprovar)
       const payload = { uid: cred.user.uid, email: email, name:'', role: role || 'Administrador', created: Date.now() };
+      console.log('📋 Writing pending approval request...');
       if(fb()) await dbPush('pendingAdmins', payload);
-      console.log('Pending approval request added');
+      console.log('✅ Pending approval request added');
 
       loadEl.classList.add('hidden');
       closeOverlay('signupOverlay');
       toast('Conta criada. Aguarde aprovação do administrador.');
     } catch(e){
-      console.error('Signup error', e.code, e.message, e);
+      console.error('❌ Signup error:', e.code, e.message, e);
       loadEl.classList.add('hidden');
       const msg = { 'auth/invalid-email':'E-mail inválido.','auth/email-already-in-use':'E-mail já cadastrado.','auth/weak-password':'Senha fraca.' }[e.code] || e.message;
       errEl.textContent = `${msg} ${e.code ? '(' + e.code + ')' : ''}`.trim();
@@ -2504,7 +2509,8 @@ async function doSignup(){
     return;
   }
 
-  errEl.textContent = 'Cadastro indisponível em modo demo.';
+  console.warn('⚠️ Firebase not ready or _createUser not defined');
+  errEl.textContent = 'Cadastro indisponível. Verifique se o Firebase está configurado.';
   errEl.classList.remove('hidden');
 }
 
