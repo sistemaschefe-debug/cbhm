@@ -400,13 +400,13 @@ nav {
 .radio-opt input { accent-color:var(--gold); width:16px;height:16px;flex-shrink:0; }
 
 /* ════════ ADMIN PANEL ════════ */
-#sAdmin { background: var(--bg); display:flex; flex-direction:column; }
+#sAdmin { background: var(--bg); }
 .admin-body {
   display: grid;
   grid-template-columns: 260px 1fr;
-  flex: 1;
-  overflow: hidden;
-  min-height: 0;
+  flex:1;
+  overflow:hidden;
+  height: calc(100vh - 58px);
 }
 @media(max-width:700px){.admin-body{grid-template-columns:1fr}.admin-sidebar{display:none}}
 
@@ -1539,18 +1539,6 @@ nav {
     "activeSession": {
       ".read":  true,
       ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"
-    },
-    "users": {
-      ".read":  "auth != null && root.child('admins').child(auth.uid).val() === true",
-      ".write": "auth != null"
-    },
-    "pendingAdmins": {
-      ".read":  "auth != null && root.child('admins').child(auth.uid).val() === true",
-      ".write": "auth != null"
-    },
-    "approvals": {
-      ".read":  "auth != null && root.child('admins').child(auth.uid).val() === true",
-      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"
     }
   }
 }</pre>
@@ -2413,7 +2401,7 @@ async function doLogin(){
       if(isAdmin){
         await loadUsers();
       } else {
-        await loadUsers();
+        await loadUsers(cred.user.uid);
       }
       let profile = users.find(u=>u.uid===cred.user.uid || u.id===cred.user.uid || u.email?.toLowerCase()===email.toLowerCase());
       if(profile && profile.role === 'Administrador'){
@@ -2575,7 +2563,7 @@ async function loadAdminData(){
     await loadUsers();
     await loadPendingAdmins();
   } else {
-    await loadUsers();
+    await loadUsers(currentUserProfile?.uid || window._currentUser?.uid);
     pendingAdmins = [];
   }
   refreshAdminSidebar();
@@ -2993,7 +2981,7 @@ function renderUsers(){
   el.innerHTML = users.map((u,i)=>`
     <div class="card" style="padding:1rem;margin-bottom:.9rem;display:grid;grid-template-columns:1fr auto;gap:1rem;align-items:start">
       <div>
-        <div class="card-title" style="margin-bottom:.55rem">${u.name || u.email || '(sem nome)'} — ${u.role || 'Sem perfil'}${u.status==='pending'?' <span style="color:#e8a000;font-size:.75rem">⏳ pendente</span>':''}</div>
+        <div class="card-title" style="margin-bottom:.55rem">${u.name} — ${u.role || 'Sem perfil'}</div>
         <div style="font-size:.88rem;color:var(--silver);line-height:1.6">
           <strong>Posto:</strong> ${u.rank || '—'}<br>
           <strong>CPF:</strong> ${u.cpf || '—'}<br>
