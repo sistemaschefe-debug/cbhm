@@ -13,7 +13,7 @@
   import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, set, get, push, onValue, update, remove, serverTimestamp }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+  import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   /* ══════════════════════════════════════════════
@@ -54,6 +54,7 @@
     /* Auth helpers */
     window._auth     = auth;
     window._signIn   = (email, pass) => signInWithEmailAndPassword(auth, email, pass);
+    window._createUser = (email, pass) => createUserWithEmailAndPassword(auth, email, pass);
     window._signOut  = ()            => signOut(auth);
 
     /* React to auth state changes */
@@ -1320,6 +1321,9 @@ nav {
       Autenticando no Firebase...
     </div>
     <button class="btn btn-gold" style="width:100%;justify-content:center" id="loginBtn" onclick="doLogin()">Entrar</button>
+    <div style="margin-top:.6rem;text-align:center;font-size:.85rem">
+      <a href="#" onclick="openOverlay('signupOverlay');return false;">Solicitar conta / Criar conta</a>
+    </div>
     <div style="margin-top:1.25rem;padding:.9rem 1rem;background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.15);border-radius:var(--r);font-size:.8rem;color:var(--muted);line-height:1.7">
       <strong style="color:var(--gold2);display:block;margin-bottom:.4rem">⚙ Como configurar o acesso:</strong>
       No Firebase Console → <strong style="color:var(--tx)">Authentication → Sign-in method → Email/Password → Ativar</strong><br>
@@ -1327,6 +1331,43 @@ nav {
       <span style="font-size:.75rem;margin-top:.3rem;display:block;font-style:italic">Em modo demo (sem Firebase), qualquer e-mail + senha "cbhm2026" funciona.</span>
     </div>
   </div>
+
+    <!-- ══════════════════════════════════════════
+         SIGNUP MODAL
+    ══════════════════════════════════════════ -->
+    <div class="overlay" id="signupOverlay">
+      <div class="modal">
+        <button class="modal-close" onclick="closeOverlay('signupOverlay')">✕</button>
+        <h2>📝 Solicitar Conta</h2>
+        <div class="field">
+          <label>E-mail</label>
+          <input type="email" id="signupEmail" placeholder="seu@exemplo.com" autocomplete="email">
+        </div>
+        <div class="field">
+          <label>Senha</label>
+          <input type="password" id="signupPass" placeholder="••••••••">
+        </div>
+        <div class="field">
+          <label>Confirme a senha</label>
+          <input type="password" id="signupPass2" placeholder="••••••••">
+        </div>
+        <div class="field">
+          <label>Papel desejado</label>
+          <select id="signupRole">
+            <option value="Administrador">Administrador</option>
+            <option value="Gerente">Gerente</option>
+            <option value="Professor">Professor</option>
+          </select>
+        </div>
+        <div id="signupErr" class="hidden" style="color:#e07070;font-size:.85rem;margin-bottom:1rem;padding:.5rem .75rem;border-radius:var(--r);background:rgba(139,26,26,.2);border:1px solid var(--red)"></div>
+        <div id="signupLoading" class="hidden" style="text-align:center;padding:.5rem;color:var(--muted);font-size:.88rem;margin-bottom:.75rem">
+          <span style="display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:.5rem"></span>
+          Criando conta...
+        </div>
+        <button class="btn btn-gold" style="width:100%;justify-content:center" onclick="doSignup()">Criar conta</button>
+        <div style="margin-top:1rem;font-size:.85rem;color:var(--muted)">Sua conta será criada e marcada como <strong>pendente</strong>. Um administrador deverá aprová-la para conceder o papel solicitado.</div>
+      </div>
+    </div>
 </div>
 
 <!-- ══════════════════════════════════════════
@@ -1881,8 +1922,23 @@ APMBB</textarea>
         </div>
 
         <div class="card">
-          <div class="card-title" style="margin-bottom:1rem">Usuários cadastrados</div>
-          <div id="userList"></div>
+            <div class="card-title" style="margin-bottom:1rem">Solicitações de conta pendentes</div>
+              <div id="pendingRequests"></div>
+            </div>
+            <div class="card" style="margin-top:1rem;border-color:rgba(201,168,76,.15);background:rgba(201,168,76,.02)">
+              <div class="card-title" style="margin-bottom:.6rem">Como aprovar manualmente via Firebase Console</div>
+              <div style="color:var(--muted);font-size:.9rem;line-height:1.6">1. Abra <strong>Firebase Console</strong> → selecione seu projeto.<br>
+              2. Vá em <strong>Authentication → Users</strong>, encontre o e-mail do solicitante e copie o <strong>UID</strong>.<br>
+              3. Vá em <strong>Realtime Database → Data</strong> (ou Firestore, conforme seu uso).<br>
+              4. Em Realtime DB, clique em (+) para <strong>Adicionar nó</strong> com chave <code>admins</code> (se não existir).<br>
+              5. Dentro de <code>admins</code>, crie uma chave com o UID copiado e valor <code>true</code>.<br>
+              6. Opcional: crie/atualize <code>users/&lt;UID&gt;</code> com os campos do perfil (nome, email, role:'Administrador').<br>
+              7. Após isso, o usuário terá acesso administrativo; no cliente ele pode fazer logout/login para atualizar o token.</div>
+            </div>
+          </div>
+          <div class="card" style="margin-top:1rem">
+            <div class="card-title" style="margin-bottom:1rem">Usuários cadastrados</div>
+            <div id="userList"></div>
         </div>
       </div>
 
@@ -2289,6 +2345,7 @@ function adminTab(el, tab){
   document.getElementById(tab).classList.remove('hidden');
   if(tab==='tabQuestions')  renderQuestions();
   if(tab==='tabUsers')      renderUsers();
+  if(tab==='tabUsers')      renderPendingAdmins();
   if(tab==='tabTeams')      renderTeams();
   if(tab==='tabScoreboard') renderAdminScoreboard();
   if(tab==='tabDashboard')  refreshDashboard();
@@ -2363,6 +2420,7 @@ async function doLogin(){
       toast('Bem-vindo, ' + (currentUserProfile.name || email) + '!', 'ok');
 
     } catch(e){
+      console.error('Firebase sign-in error', e);
       loadEl.classList.add('hidden');
       btnEl.disabled = false;
       const msg = {
@@ -2391,6 +2449,43 @@ async function doLogin(){
     errEl.textContent = 'Senha incorreta. Em modo demo use: cbhm2026';
     errEl.classList.remove('hidden');
   }
+}
+
+async function doSignup(){
+  const email = document.getElementById('signupEmail').value.trim();
+  const pass  = document.getElementById('signupPass').value;
+  const pass2 = document.getElementById('signupPass2').value;
+  const role  = document.getElementById('signupRole').value;
+  const errEl = document.getElementById('signupErr');
+  const loadEl = document.getElementById('signupLoading');
+
+  errEl.classList.add('hidden');
+  if(!email || !pass){ errEl.textContent='Preencha e-mail, senha e papel.'; errEl.classList.remove('hidden'); return; }
+  if(pass !== pass2){ errEl.textContent='As senhas não conferem.'; errEl.classList.remove('hidden'); return; }
+
+  if(window._createUser){
+    loadEl.classList.remove('hidden');
+    try{
+      const cred = await window._createUser(email, pass);
+      console.log('User created', cred.user);
+      // add a pending account request in DB for manual approval
+      const payload = { uid: cred.user.uid, email: email, name: cred.user.displayName||'', role: role || 'Administrador', created: Date.now() };
+      if(fb()) await dbPush('pendingAdmins', payload);
+      loadEl.classList.add('hidden');
+      closeOverlay('signupOverlay');
+      toast('Conta criada. Aguarde aprovação do administrador.');
+    } catch(e){
+      console.error('Signup error', e);
+      loadEl.classList.add('hidden');
+      const msg = { 'auth/invalid-email':'E-mail inválido.','auth/email-already-in-use':'E-mail já cadastrado.','auth/weak-password':'Senha fraca.' }[e.code] || e.message;
+      errEl.textContent = msg;
+      errEl.classList.remove('hidden');
+    }
+    return;
+  }
+
+  errEl.textContent = 'Cadastro indisponível em modo demo.';
+  errEl.classList.remove('hidden');
 }
 
 async function logout(){
@@ -2424,6 +2519,7 @@ async function loadAdminData(){
   dbListen('activeSession', data=>{ activeSession=data; updateSessionUI(); });
 
   await loadUsers();
+  await loadPendingAdmins();
   refreshAdminSidebar();
   renderAdminHeader();
   selectDefaultAdminTab();
@@ -2532,6 +2628,179 @@ async function loadUsers(){
     users = [];
   }
   renderUsers();
+}
+
+let pendingAdmins = [];
+async function loadPendingAdmins(){
+  const pData = await dbGet('pendingAdmins');
+  if(pData){
+    pendingAdmins = Array.isArray(pData)
+      ? pData.map((v,i)=>({ ...v, id: v.id || ('p'+i) }))
+      : Object.entries(pData).map(([id,v])=>({ ...v, id }));
+  } else {
+    pendingAdmins = [];
+  }
+  renderPendingAdmins();
+}
+
+function renderPendingAdmins(){
+  const el = document.getElementById('pendingRequests');
+  if(!el) return;
+  if(!pendingAdmins.length){
+    if(!fb()){
+      el.innerHTML = `
+        <div style="display:flex;flex-direction:column;gap:.75rem;color:var(--muted);padding:.75rem;border:1px solid var(--border);border-radius:var(--r)">
+          <div>Nenhuma solicitação pendente.</div>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+            <button class="btn btn-sm" onclick="seedDemoPendingAdmins()">Simular solicitações de demo</button>
+            <button class="btn btn-sm btn-danger" onclick="clearDemoPendingAdmins()">Limpar solicitações de demo</button>
+          </div>
+        </div>
+      `;
+    } else {
+      el.innerHTML = '<p style="color:var(--muted);font-style:italic;padding:.5rem">Nenhuma solicitação pendente.</p>';
+    }
+    return;
+  }
+
+  const header = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">\
+    <div style="font-weight:600">${pendingAdmins.length} solicitação(s) pendente(s)</div>\
+    <div><button class="btn btn-sm" onclick="approveAllPending()">✅ Aprovar tudo como solicitado</button></div>\
+  </div>`;
+
+  el.innerHTML = header + pendingAdmins.map(p=>`\
+    <div class="card" style="padding:1rem;margin-bottom:.8rem;display:grid;grid-template-columns:1fr auto;gap:1rem;align-items:center">\
+      <div>\
+        <div class="card-title" style="margin-bottom:.4rem">${p.email}</div>\
+        <div style="font-size:.88rem;color:var(--silver);margin-bottom:.25rem">Solicitado em: ${new Date(p.created||Date.now()).toLocaleString()}</div>\
+        <div style="font-size:.88rem;color:var(--silver);margin-bottom:.45rem">Papel solicitado: <strong>${p.role||'Administrador'}</strong></div>\
+        <div style="display:grid;grid-template-columns:1fr auto;gap:.75rem;align-items:center">\
+          <div style="display:flex;gap:.5rem;align-items:center">\
+            <label style="font-size:.85rem;color:var(--muted);min-width:60px">Nome:</label>\
+            <input type="text" id="pending-name-${p.id}" value="${(p.name||'').replace(/"/g,'&quot;')}" style="flex:1;padding:.4rem;border:1px solid var(--border);border-radius:6px">\
+          </div>\
+          <div style="display:flex;gap:.5rem;align-items:center">\
+            <label style="font-size:.85rem;color:var(--muted);min-width:60px">Papel:</label>\
+            <select id="pending-role-${p.id}" style="padding:.4rem;border:1px solid var(--border);border-radius:6px">
+              <option value="Administrador" ${p.role==='Administrador'?'selected':''}>Administrador</option>
+              <option value="Gerente" ${p.role==='Gerente'?'selected':''}>Gerente</option>
+              <option value="Professor" ${p.role==='Professor'?'selected':''}>Professor</option>
+            </select>\
+          </div>\
+          <button class="btn btn-sm" style="justify-self:end" onclick="savePendingMeta('${p.id}')">Salvar</button>\
+        </div>\
+        <div style="margin-top:.5rem;font-size:.82rem;color:var(--muted)">Salve o nome e o papel antes de aprovar esta solicitação.</div>\
+      </div>\
+      <div class="flex" style="flex-direction:column;align-items:flex-end;gap:.5rem">\
+        <button class="btn btn-sm" onclick="approvePending('${p.id}','${p.uid||p.id}','${p.email||''}')">✅ Aprovar como solicitado</button>\
+        <button class="btn btn-sm btn-danger" onclick="rejectPending('${p.id}')">✖ Rejeitar</button>\
+      </div>\
+    </div>\
+  `).join('');
+}
+
+async function savePendingMeta(id){
+  const nameEl = document.getElementById('pending-name-'+id);
+  const roleEl = document.getElementById('pending-role-'+id);
+  if(!nameEl || !roleEl) return;
+  const name = nameEl.value.trim();
+  const role = roleEl.value;
+  try{
+    if(fb()){
+      await dbUpdate('pendingAdmins/'+id, { name, role });
+    } else {
+      let arr = lsGet('pendingAdmins')||[];
+      const p = arr.find(x=>x.id===id);
+      if(p){ p.name = name; p.role = role; lsSet('pendingAdmins', arr); }
+    }
+    toast('Dados salvos','ok');
+    await loadPendingAdmins();
+  } catch(e){ console.error('savePendingMeta error', e); toast('Erro ao salvar dados','err'); }
+}
+
+async function seedDemoPendingAdmins(){
+  const now = Date.now();
+  const sample = [
+    { id:'p_demo_1', uid:'demo-user-1', email:'admin1@cbhm-demo.com', name:'Ana Pereira', role:'Administrador', created:now - 200000 },
+    { id:'p_demo_2', uid:'demo-user-2', email:'admin2@cbhm-demo.com', name:'Carlos Souza', role:'Gerente', created:now - 120000 },
+    { id:'p_demo_3', uid:'demo-user-3', email:'admin3@cbhm-demo.com', name:'Marina Alves', role:'Professor', created:now - 60000 },
+  ];
+  lsSet('pendingAdmins', sample);
+  toast('Solicitações de demo criadas.');
+  await loadPendingAdmins();
+}
+
+async function clearDemoPendingAdmins(){
+  lsSet('pendingAdmins', []);
+  toast('Solicitações de demo limpas.');
+  await loadPendingAdmins();
+}
+
+async function approvePendingInternal(p){
+  const uid = p.uid || p.id;
+  const email = p.email || '';
+  const name = p.name || (document.getElementById('pending-name-'+p.id)?.value || '');
+  const role = p.role || (document.getElementById('pending-role-'+p.id)?.value || 'Administrador');
+  const approvedBy = window._currentUser?.uid || 'console';
+  const approvedAt = Date.now();
+
+  if(fb()){
+    // mark admin flag only for Administrador
+    if(role === 'Administrador'){
+      await dbSet('admins/'+uid, true);
+    }
+    const profile = { id: uid, uid: uid, role, rank: role === 'Administrador' ? 'Administrador' : '', name: name || '', email: email || '', discipline:'', password:'', approvedBy, approvedAt };
+    await dbSet('users/'+uid, profile);
+    await dbPush('approvals', { pendingId: p.id, uid, email, role, approvedBy, approvedAt });
+    await dbSet('pendingAdmins/'+p.id, null);
+  } else {
+    let arr = lsGet('pendingAdmins')||[];
+    arr = arr.filter(x=>x.id!==p.id);
+    lsSet('pendingAdmins', arr);
+    const usersArr = lsGet('users')||[];
+    usersArr.push({ id: uid, uid, role, rank: role === 'Administrador' ? 'Administrador' : '', name, email, discipline:'', password:'' , approvedBy, approvedAt });
+    lsSet('users', usersArr);
+  }
+}
+
+async function approvePending(id, uid, email){
+  const p = pendingAdmins.find(x=>x.id===id) || { id, uid, email, role:'Administrador' };
+  const role = p.role || 'Administrador';
+  if(!confirm(`Aprovar esta conta como ${role}?`)) return;
+  try{
+    await approvePendingInternal(p);
+    toast(`Conta aprovada como ${role} e registrada`,`ok`);
+    await loadUsers();
+    await loadPendingAdmins();
+  } catch(e){ console.error('approvePending error', e); toast('Erro ao aprovar: '+e.message,'err'); }
+}
+
+async function approveAllPending(){
+  if(!pendingAdmins.length) return; 
+  if(!confirm('Aprovar todas as solicitações pendentes usando os papeis solicitados?')) return;
+  try{
+    for(const p of pendingAdmins){
+      try{ await approvePendingInternal(p); } catch(e){ console.error('approveAllPending item error',p,e); }
+    }
+    toast('Todas as solicitações foram aprovadas','ok');
+    await loadUsers();
+    await loadPendingAdmins();
+  } catch(e){ console.error('approveAllPending error', e); toast('Erro ao aprovar em lote: '+e.message,'err'); }
+}
+
+async function rejectPending(id){
+  if(!confirm('Rejeitar e remover esta solicitação?')) return;
+  try{
+    if(fb()){
+      await dbSet('pendingAdmins/'+id, null);
+    } else {
+      let arr = lsGet('pendingAdmins')||[];
+      arr = arr.filter(p=>p.id!==id);
+      lsSet('pendingAdmins', arr);
+    }
+    toast('Solicitação removida','ok');
+    await loadPendingAdmins();
+  } catch(e){ console.error('rejectPending error', e); toast('Erro ao rejeitar: '+e.message,'err'); }
 }
 
 function updateUserPasswordHint(cpf){
