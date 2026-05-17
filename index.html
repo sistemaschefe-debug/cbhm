@@ -2390,7 +2390,11 @@ async function doLogin(){
       window._currentUser = cred.user;
 
       const isAdmin = await dbGet('admins/' + cred.user.uid);
-      await loadUsers();
+      if(isAdmin){
+        await loadUsers();
+      } else {
+        await loadUsers(cred.user.uid);
+      }
       const profile = users.find(u=>u.uid===cred.user.uid || u.id===cred.user.uid || u.email?.toLowerCase()===email.toLowerCase());
 
       if(!isAdmin && !profile){
@@ -2544,8 +2548,13 @@ async function loadAdminData(){
   // Listen to active session
   dbListen('activeSession', data=>{ activeSession=data; updateSessionUI(); });
 
-  await loadUsers();
-  await loadPendingAdmins();
+  if(currentUserProfile?.admin){
+    await loadUsers();
+    await loadPendingAdmins();
+  } else {
+    await loadUsers(currentUserProfile?.uid || window._currentUser?.uid);
+    pendingAdmins = [];
+  }
   refreshAdminSidebar();
   renderAdminHeader();
   selectDefaultAdminTab();
@@ -2644,26 +2653,48 @@ function renderQuestions(){
   `).join('');
 }
 
-async function loadUsers(){
-  const userData = await dbGet('users');
-  if(userData){
+async function loadUsers(onlyUid){
+  if(fb()){
+    try {
+      if(onlyUid){
+        const userData = await dbGet('users/' + onlyUid);
+        users = userData ? [{ ...userData, id: onlyUid, uid: userData.uid || onlyUid }] : [];
+      } else {
+        const userData = await dbGet('users');
+        if(userData){
+          users = Array.isArray(userData)
+            ? userData.map(u => ({ ...u, id: u.id || ('u'+Date.now()), uid: u.uid || null }))
+            : Object.entries(userData).map(([id,v]) => ({ ...v, id, uid: v.uid || null }));
+        } else {
+          users = [];
+        }
+      }
+    } catch(e){
+      console.warn('loadUsers failed, falling back to empty list', e);
+      users = [];
+    }
+  } else {
+    const userData = lsGet('users') || [];
     users = Array.isArray(userData)
       ? userData.map(u => ({ ...u, id: u.id || ('u'+Date.now()), uid: u.uid || null }))
       : Object.entries(userData).map(([id,v]) => ({ ...v, id, uid: v.uid || null }));
-  } else {
-    users = [];
   }
   renderUsers();
 }
 
 let pendingAdmins = [];
 async function loadPendingAdmins(){
-  const pData = await dbGet('pendingAdmins');
-  if(pData){
-    pendingAdmins = Array.isArray(pData)
-      ? pData.map((v,i)=>({ ...v, id: v.id || ('p'+i) }))
-      : Object.entries(pData).map(([id,v])=>({ ...v, id }));
-  } else {
+  try {
+    const pData = await dbGet('pendingAdmins');
+    if(pData){
+      pendingAdmins = Array.isArray(pData)
+        ? pData.map((v,i)=>({ ...v, id: v.id || ('p'+i) }))
+        : Object.entries(pData).map(([id,v])=>({ ...v, id }));
+    } else {
+      pendingAdmins = [];
+    }
+  } catch(e){
+    console.warn('loadPendingAdmins failed, user may not have permission', e);
     pendingAdmins = [];
   }
   renderPendingAdmins();
