@@ -2411,8 +2411,8 @@ async function doLogin(){
       }
 
       currentUserProfile = profile
-        ? { ...profile, uid: cred.user.uid, email: cred.user.email || email }
-        : { id: cred.user.uid, uid: cred.user.uid, role:'Administrador', rank:'Administrador', name: cred.user.displayName || '', email: cred.user.email || email, discipline:'', password:'' };
+        ? { ...profile, uid: cred.user.uid, email: cred.user.email || email, admin: !!isAdmin }
+        : { id: cred.user.uid, uid: cred.user.uid, role:'Administrador', rank:'Administrador', name: cred.user.displayName || '', email: cred.user.email || email, discipline:'', password:'', admin: true };
 
       if(profile && !profile.uid){
         profile.uid = cred.user.uid;
