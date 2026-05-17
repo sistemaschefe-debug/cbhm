@@ -2341,6 +2341,7 @@ function adminTab(el, tab){
     toast('Acesso negado. Seu perfil não tem permissão para esta área.','err');
     return;
   }
+  showScreen('sAdmin');
   document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
   el.classList.add('active');
   document.querySelectorAll('#sAdmin .admin-content > div').forEach(d=>d.classList.add('hidden'));
@@ -2402,7 +2403,10 @@ async function doLogin(){
       } else {
         await loadUsers(cred.user.uid);
       }
-      const profile = users.find(u=>u.uid===cred.user.uid || u.id===cred.user.uid || u.email?.toLowerCase()===email.toLowerCase());
+      let profile = users.find(u=>u.uid===cred.user.uid || u.id===cred.user.uid || u.email?.toLowerCase()===email.toLowerCase());
+      if(profile && profile.role === 'Administrador'){
+        isAdmin = true;
+      }
 
       if(!isAdmin && !profile){
         await window._signOut();
@@ -2555,7 +2559,7 @@ async function loadAdminData(){
   // Listen to active session
   dbListen('activeSession', data=>{ activeSession=data; updateSessionUI(); });
 
-  if(currentUserProfile?.admin){
+  if(currentUserProfile?.admin || currentUserProfile?.role === 'Administrador'){
     await loadUsers();
     await loadPendingAdmins();
   } else {
