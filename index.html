@@ -50,6 +50,7 @@
     window._remove   = remove;
     window._ts       = serverTimestamp;
     window._fbReady  = true;
+    console.log('Firebase initialized:', { projectId: firebaseConfig.projectId, authDomain: firebaseConfig.authDomain, databaseURL: firebaseConfig.databaseURL });
 
     /* Auth helpers */
     window._auth     = auth;
@@ -2475,10 +2476,10 @@ async function doSignup(){
       closeOverlay('signupOverlay');
       toast('Conta criada. Aguarde aprovação do administrador.');
     } catch(e){
-      console.error('Signup error', e);
+      console.error('Signup error', e.code, e.message, e);
       loadEl.classList.add('hidden');
       const msg = { 'auth/invalid-email':'E-mail inválido.','auth/email-already-in-use':'E-mail já cadastrado.','auth/weak-password':'Senha fraca.' }[e.code] || e.message;
-      errEl.textContent = msg;
+      errEl.textContent = `${msg} ${e.code ? '(' + e.code + ')' : ''}`.trim();
       errEl.classList.remove('hidden');
     }
     return;
