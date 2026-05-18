@@ -1,71 +1,108 @@
-# ⚡ CBHM — Guia Completo de Deploy Gratuito
+# ⚡ CBHM 2026 — Guia Completo de Deploy Gratuito
 # site: https://cbhm-rose.vercel.app/
+
 ## O que está incluído no app
 
 | Recurso | Status |
 |---|---|
-| 5 tipos de slide (MC, Nuvem, Estrelas, Aberta, Escala) | ✅ |
-| Firebase Realtime Database (votos ao vivo) | ✅ |
-| Link de compartilhamento real por PIN | ✅ |
-| QR Code para participantes | ✅ |
-| Gemini AI — gera perguntas automaticamente | ✅ |
-| Compartilhar via WhatsApp / Web Share API | ✅ |
-| Modo demo local (sem Firebase) | ✅ |
+| Quiz ao vivo com timer e pontuação | ✅ |
+| Sessão com participantes em tempo real | ✅ |
+| Placar geral e pódio | ✅ |
+| Gemini AI — gera questões automaticamente | ✅ |
+| Modo projetor (tela cheia para telão) | ✅ |
+| Painel admin com perfis e permissões | ✅ |
+| Banco de dados Supabase (sem regras manuais) | ✅ |
+| Modo demo local (sem banco de dados) | ✅ |
 | Responsivo (mobile + desktop) | ✅ |
 
 ---
 
-## PASSO 1 — Firebase (banco em tempo real)
+## PASSO 1 — Supabase (banco de dados gratuito)
 
-### 1.1 Criar projeto Firebase
-1. Acesse https://console.firebase.google.com
-2. Clique em **"Adicionar projeto"** → dê um nome → Next → Criar
-3. No menu lateral: **Build → Realtime Database**
-4. Clique em **"Criar banco de dados"** → escolha localização → **"Iniciar no modo de teste"**
+> O app foi migrado do Firebase para o **Supabase** — mais simples, sem regras manuais de permissão, painel visual intuitivo e plano gratuito generoso.
 
-### 1.2 Registrar app Web
-1. Clique no ícone `</>` (Web) na página principal do projeto
-2. Dê um apelido → clique em **"Registrar app"**
-3. Copie o objeto `firebaseConfig` que aparecer
+### 1.1 Criar conta e projeto
 
-### 1.3 Colar no index.html
-Abra o `index.html` e substitua a seção:
+1. Acesse **https://supabase.com** e clique em **"Start your project"**
+2. Faça login com GitHub ou e-mail
+3. Clique em **"New project"**
+   - Dê um nome (ex: `cbhm2026`)
+   - Escolha uma senha para o banco (guarde em lugar seguro)
+   - Escolha a região mais próxima (ex: `South America (São Paulo)`)
+4. Aguarde ~1 minuto enquanto o projeto é criado
+
+### 1.2 Criar a tabela de dados
+
+1. No menu lateral, clique em **"SQL Editor"**
+2. Clique em **"New query"**
+3. Cole o SQL abaixo e clique em **"Run"** (▶):
+
+```sql
+-- Cria a tabela principal de dados (key-value com JSON)
+CREATE TABLE IF NOT EXISTS kv (
+  key   text PRIMARY KEY,
+  value jsonb
+);
+
+-- Permite leitura e escrita sem autenticação (app público)
+ALTER TABLE kv ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "acesso_publico_leitura"
+  ON kv FOR SELECT USING (true);
+
+CREATE POLICY "acesso_publico_escrita"
+  ON kv FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "acesso_publico_update"
+  ON kv FOR UPDATE USING (true);
+
+CREATE POLICY "acesso_publico_delete"
+  ON kv FOR DELETE USING (true);
+```
+
+4. Você verá **"Success. No rows returned"** — isso é correto ✅
+
+### 1.3 Ativar o Realtime (para atualizações ao vivo)
+
+1. No menu lateral, clique em **"Database"** → **"Replication"**
+2. Na seção **"Tables"**, ative a tabela **`kv`** clicando no toggle
+3. O status ficará verde — realtime ativado ✅
+
+### 1.4 Obter as credenciais
+
+1. No menu lateral, clique em **"Project Settings"** (ícone de engrenagem)
+2. Clique em **"API"**
+3. Você verá dois valores importantes:
+   - **Project URL** → algo como `https://abcxyz.supabase.co`
+   - **anon / public key** → uma chave longa começando com `eyJ...`
+
+### 1.5 Colar no index.html
+
+Abra o `index.html` e substitua as linhas no topo do arquivo:
 
 ```javascript
-const firebaseConfig = {
-  apiKey:            "SUA_API_KEY",           // ← cole aqui
-  authDomain:        "SEU_PROJETO.firebaseapp.com",
-  databaseURL:       "https://SEU_PROJETO-default-rtdb.firebaseio.com",
-  projectId:         "SEU_PROJETO",
-  storageBucket:     "SEU_PROJETO.appspot.com",
-  messagingSenderId: "SEU_SENDER_ID",
-  appId:             "SEU_APP_ID"
-};
+window.SUPABASE_URL  = 'https://SEU_PROJETO.supabase.co';  // ← cole a Project URL
+window.SUPABASE_KEY  = 'SUA_ANON_KEY';                      // ← cole a anon key
 ```
 
-### 1.4 Regras do banco (modo teste — 30 dias grátis)
-No Firebase Console → Realtime Database → **Regras**:
-
-```json
-{
-  "rules": {
-    ".read": true,
-    ".write": true
-  }
-}
+**Exemplo:**
+```javascript
+window.SUPABASE_URL  = 'https://abcxyz123.supabase.co';
+window.SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
 ```
-> ⚠️ Para produção, adicione autenticação. Para testes, isso é suficiente.
+
+> ✅ **Não precisa configurar regras de permissão manualmente** — o SQL acima já cuida de tudo.
 
 ---
 
 ## PASSO 2 — Gemini API Key (grátis)
 
-1. Acesse https://aistudio.google.com/apikey
+1. Acesse **https://aistudio.google.com/apikey**
 2. Clique em **"Create API key"** → copie a chave
 3. No `index.html`, substitua:
 
 ```javascript
-window.GEMINI_KEY = "SUA_GEMINI_API_KEY";  // ← cole aqui
+window.GEMINI_KEY = 'SUA_GEMINI_API_KEY';  // ← cole aqui
 ```
 
 **Limite gratuito Gemini 2.0 Flash:** 1.500 req/dia, 60 req/min — mais que suficiente.
@@ -79,25 +116,25 @@ window.GEMINI_KEY = "SUA_GEMINI_API_KEY";  // ← cole aqui
 ```bash
 # 1. Instale o Git: https://git-scm.com
 # 2. Crie conta em github.com
-# 3. Crie um repositório público chamado "votaai"
+# 3. Crie um repositório público chamado "cbhm2026"
 
 git init
-git add index.html
-git commit -m "VotaAí app"
+git add index.html README.md
+git commit -m "CBHM 2026 app"
 git branch -M main
-git remote add origin https://github.com/SEU_USUARIO/votaai.git
+git remote add origin https://github.com/SEU_USUARIO/cbhm2026.git
 git push -u origin main
 ```
 
 4. No GitHub: **Settings → Pages → Source: Deploy from branch → main → / (root)**
-5. Seu app estará em: `https://SEU_USUARIO.github.io/votaai`
+5. Seu app estará em: `https://SEU_USUARIO.github.io/cbhm2026`
 
 ---
 
 ### 🔵 Opção B: Netlify (drag & drop — 30 segundos)
 
-1. Acesse https://netlify.com → crie conta gratuita
-2. Arraste a pasta `votaai/` para a área de deploy
+1. Acesse **https://netlify.com** → crie conta gratuita
+2. Arraste a pasta com o `index.html` para a área de deploy
 3. Pronto! URL: `https://nome-aleatorio.netlify.app`
 4. Para URL personalizada: **Site settings → Change site name**
 
@@ -107,93 +144,91 @@ git push -u origin main
 
 ```bash
 npm install -g vercel
-cd votaai
 vercel
 # Siga as instruções → seu app estará em yourapp.vercel.app
 ```
 
 ---
 
-### 🔴 Opção D: Firebase Hosting (integrado com seu banco)
-
-```bash
-npm install -g firebase-tools
-firebase login
-firebase init hosting
-# Selecione seu projeto → public directory: . → single-page app: Yes
-firebase deploy
-```
-App em: `https://SEU_PROJETO.web.app`
-
----
-
 ## Como usar o app
 
-### Apresentador
-1. Clique em **"Criar sessão"**
-2. Digite um tema e clique em **"✨ Gerar slides com Gemini"** (opcional)
-3. Edite/adicione slides manualmente
-4. Clique em **"🚀 Criar e iniciar sessão"**
-5. Compartilhe o link ou PIN com os participantes
-6. Use os botões de navegação para trocar de slide em tempo real
+### Administrador
+1. Na landing page, clique em **"🔐 Acesso Restrito"**
+2. Use as credenciais de admin (definidas no código)
+3. Configure questões, equipes e sessão no painel lateral
+4. Em **Sessão ao Vivo**, crie uma sessão e inicie o quiz
+5. Use o **Modo Projetor** para exibir no telão (F11 = tela cheia)
 
-### Participante
-1. Acessa o link compartilhado OU vai até o site e clica em **"Entrar com PIN"**
-2. Digita o PIN de 4 dígitos
-3. Vota/responde os slides em tempo real
-4. Quando o apresentador troca de slide, o participante é notificado
+### Participante / Equipe
+1. Acessa a URL do app
+2. Clica em **"🏛 Entrar como Equipe"**
+3. Preenche escola, nome da equipe e código da sessão
+4. Aguarda o início da competição
 
 ---
 
-## Limites do plano gratuito Firebase
+## Limites do plano gratuito Supabase
 
-| Recurso | Limite gratuito (Spark) |
+| Recurso | Limite gratuito |
 |---|---|
-| Realtime Database armazenamento | 1 GB |
-| Transferência de dados | 10 GB/mês |
-| Conexões simultâneas | 100 |
-| Hospedagem (Firebase Hosting) | 10 GB/mês |
+| Banco de dados (PostgreSQL) | 500 MB |
+| Transferência de dados | 5 GB/mês |
+| Conexões simultâneas | Ilimitadas (pooling) |
+| Realtime (websockets) | 200 conexões simultâneas |
+| Projetos ativos | 2 projetos |
 
-Para sessões de até 100 pessoas simultâneas, o plano gratuito é mais que suficiente.
+Para o CBHM com até 200 participantes simultâneos, o plano gratuito é mais que suficiente.
 
 ---
 
-## Estrutura dos dados no Firebase
+## Estrutura dos dados no Supabase
+
+O app usa uma tabela `kv` (chave-valor com JSON) com as seguintes chaves:
 
 ```
-sessions/
-  {sessionId}/
-    id: "abc123"
-    pin: "4829"
-    title: "Pesquisa de Opinião"
-    host: "João"
-    participants: 42
-    currentSlide: 0
-    active: true
-    slides/
-      0/
-        type: "mc"
-        title: "Qual tecnologia você usa?"
-        options: ["React", "Vue", "Angular"]
-        votes: { "0": 15, "1": 8, "2": 5 }
-      1/
-        type: "wordcloud"
-        title: "Descreva inovação"
-        words: ["criatividade", "tecnologia", ...]
+questions        → array de questões de múltipla escolha
+teams            → array de equipes participantes
+activeSession    → objeto da sessão ao vivo (slides, respostas, participantes)
+settings__landing → configurações da landing page
 ```
+
+Você pode visualizar e editar os dados diretamente no painel do Supabase:
+**Table Editor → kv**
+
+---
+
+## Diferenças em relação ao Firebase (anterior)
+
+| Aspecto | Firebase (antes) | Supabase (agora) |
+|---|---|---|
+| Configuração de permissões | Regras JSON manuais | SQL simples (já incluído) |
+| URL do banco | Precisava de `databaseURL` separada | Apenas URL + anon key |
+| Painel visual | Limitado | Completo (SQL Editor, Table Editor) |
+| Realtime | Via `onValue` | Via canal PostgreSQL |
+| Fallback sem banco | localStorage | localStorage (mantido) |
+| Plano gratuito | 1 GB / 100 conexões | 500 MB / 200 conexões |
 
 ---
 
 ## Dúvidas frequentes
 
-**Q: Funciona sem Firebase?**
-Sim! O app tem modo demo local para testes. Votos ficam na memória do navegador.
+**Q: O app funciona sem Supabase configurado?**
+Sim! Se `SUPABASE_URL` contiver `SEU_PROJETO`, o app entra automaticamente em modo demo (localStorage). Tudo funciona localmente, mas dados não são compartilhados entre dispositivos.
 
 **Q: Posso ter múltiplas sessões simultâneas?**
-Sim, cada sessão tem um ID único e PIN próprio.
+Sim, cada sessão tem um código único. Apenas uma sessão pode estar ativa no banco por vez (a `activeSession` é substituída).
 
-**Q: Como personalizar o domínio?**
-No Netlify/Vercel, configure um domínio próprio gratuitamente. No GitHub Pages, configure um CNAME.
+**Q: Os dados ficam salvos entre sessões?**
+Sim. Questões e equipes ficam salvas no Supabase permanentemente. A sessão ao vivo é sobrescrita a cada nova sessão criada.
+
+**Q: Como resetar os dados?**
+No painel Supabase → **Table Editor → kv** → selecione as linhas e delete, ou use o SQL Editor:
+```sql
+DELETE FROM kv WHERE key IN ('questions', 'teams', 'activeSession');
+```
 
 **Q: O link compartilhado funciona no celular?**
 Sim! O app é 100% responsivo. Participantes acessam pelo navegador do celular, sem instalar nada.
+
+**Q: E se o Realtime não funcionar?**
+O app tem fallback automático para polling a cada 2 segundos — os participantes ainda veem as atualizações, com leve delay.
