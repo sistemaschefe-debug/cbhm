@@ -1,4 +1,4 @@
-# ⚡ VotaAí — Guia Completo de Deploy Gratuito
+# ⚡ CBHM — Guia Completo de Deploy Gratuito
 # site: https://cbhm-rose.vercel.app/
 ## O que está incluído no app
 
