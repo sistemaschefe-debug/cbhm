@@ -3,74 +3,50 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CBHM 2026 — Campeonato Brasileiro de História Militar</title>
+<title>Campeonato Brasileiro de História Militar</title>
 <meta name="description" content="Campeonato Brasileiro de História Militar 2026 — Academia Militar das Agulhas Negras">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-<!-- Firebase -->
-<script type="module">
-  import { initializeApp }    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, set, get, push, onValue, update, remove, serverTimestamp }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
-  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ══════════════════════════════════════════════
+   🔧 CONFIGURE AQUI — supabase.com → seu projeto
+   1. Crie conta em https://supabase.com (grátis)
+   2. New Project → anote a URL e a anon key
+   3. Cole os valores abaixo
+   Veja o README.md para o passo a passo completo
+══════════════════════════════════════════════ */
+window.SUPABASE_URL  = 'https://SEU_PROJETO.supabase.co';   // ← cole aqui
+window.SUPABASE_KEY  = 'SUA_ANON_KEY';                       // ← cole aqui
 
-  /* ══════════════════════════════════════════════
-     🔧 CONFIGURE AQUI — console.firebase.google.com
-  ══════════════════════════════════════════════ */
-  const firebaseConfig = {
-  apiKey: "AIzaSyBx9dqj-ciEI9hy8AZIuh6e6fhDfB9vrRI",
-  authDomain: "cbhm-6ec4a.firebaseapp.com",
-  databaseURL: "https://cbhm-6ec4a-default-rtdb.firebaseio.com",
-  projectId: "cbhm-6ec4a",
-  storageBucket: "cbhm-6ec4a.firebasestorage.app",
-  messagingSenderId: "833540945377",
-  appId: "1:833540945377:web:fc7ba5d5cda9f86c848ea0",
-  measurementId: "G-Y1M7E8X6XZ"
-};
-  /* ══════════════════════════════════════════════
-     🤖 GEMINI API KEY — grátis em aistudio.google.com/apikey
-  ══════════════════════════════════════════════ */
-  window.GEMINI_KEY = "AIzaSyC26NtNtHSoIS60dsueu7KKdA9Tto5MowI";
+/* ══════════════════════════════════════════════
+   🤖 GEMINI API KEY — grátis em aistudio.google.com/apikey
+══════════════════════════════════════════════ */
+window.GEMINI_KEY = 'AIzaSyC26NtNtHSoIS60dsueu7KKdA9Tto5MowI';
 
+(async function initSupabase(){
+  const isConfigured = !window.SUPABASE_URL.includes('SEU_PROJETO')
+                    && !window.SUPABASE_KEY.includes('SUA_ANON');
+  if(!isConfigured){
+    console.warn('Supabase não configurado — modo demo (localStorage) ativo');
+    window._sbReady = false;
+    document.dispatchEvent(new Event('appReady'));
+    return;
+  }
   try {
-    const app  = initializeApp(firebaseConfig);
-    const db   = getDatabase(app);
-    const auth = getAuth(app);
-
-    /* DB helpers */
-    window._db       = db;
-    window._ref      = ref;
-    window._set      = set;
-    window._get      = get;
-    window._push     = push;
-    window._onValue  = onValue;
-    window._update   = update;
-    window._remove   = remove;
-    window._ts       = serverTimestamp;
-    window._fbReady  = true;
-
-    /* Auth helpers */
-    window._auth     = auth;
-    window._signIn   = (email, pass) => signInWithEmailAndPassword(auth, email, pass);
-    window._signOut  = ()            => signOut(auth);
-
-    /* React to auth state changes */
-    onAuthStateChanged(auth, user => {
-      window._currentUser = user || null;
-      // If user is already logged in (e.g. page refresh), restore admin panel
-      if(user && document.getElementById('sAdmin').classList.contains('active')){
-        // already showing admin — nothing to do
-      }
-    });
-
-    window._fbReady = true;
-  } catch(e) {
-    window._fbReady = false;
-    console.warn('Firebase não configurado — modo demo ativo');
+    window._sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+    window._sbReady = true;
+    console.log('✅ Supabase conectado');
+  } catch(e){
+    console.error('Supabase falhou:', e);
+    window._sbReady = false;
   }
   document.dispatchEvent(new Event('appReady'));
+})();
 </script>
 
 <style>
@@ -164,7 +140,7 @@ body::after {
   border: 2px solid var(--gold);
   display:flex;align-items:center;justify-content:center;
   position:relative;
-  animation: rotateSlow 30s linear infinite;
+  animation: rotateSlow 30s linear infinite reverse;
   box-shadow: 0 0 30px rgba(201,168,76,.25), inset 0 0 20px rgba(201,168,76,.05);
 }
 .emblem-ring::before {
@@ -177,6 +153,12 @@ body::after {
   font-size: 3rem;
   animation: rotateSlow 30s linear infinite reverse;
   filter: drop-shadow(0 0 12px rgba(201,168,76,.6));
+}
+.emblem-logo {
+  width: 78px;
+  height: 78px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 12px rgba(201,168,76,.45));
 }
 @keyframes rotateSlow { to { transform: rotate(360deg); } }
 
@@ -311,9 +293,20 @@ nav {
   letter-spacing: 2px;
   color: var(--gold);
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
 }
+.nav-logo-img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 8px rgba(201,168,76,.35));
+}
+.nav-logo-text { display: inline-block; }
 .nav-sep { flex:1; }
-.nav-badge, .nav-user {
+.nav-badge {
   font-size:.75rem;
   font-family:var(--fh);
   letter-spacing:1px;
@@ -321,10 +314,6 @@ nav {
   border-radius:999px;
   border:1px solid var(--border);
   color:var(--muted);
-}
-
-.nav-user {
-  background: rgba(201,168,76,.05);
 }
 
 /* ════════ MODAL ════════ */
@@ -519,6 +508,32 @@ nav {
 .team-name { flex:1;font-family:var(--fh);font-size:.9rem;letter-spacing:.5px; }
 .team-school { font-size:.78rem;color:var(--muted);font-style:italic; }
 .team-score { font-family:var(--fh);font-size:1.2rem;font-weight:700;color:var(--gold2); }
+.team-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 10px;
+  border: 1px solid var(--border2);
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--bg2);
+}
+.team-avatar-sm {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--bg2);
+}
+.team-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gold);
+  font-size: 1.2rem;
+  background: rgba(201,168,76,.08);
+}
 
 /* ════════ QUIZ ENGINE ════════ */
 #sQuiz {
@@ -1251,6 +1266,95 @@ nav {
 .sw-bar:nth-child(4){height:12px;animation-delay:.45s}
 .sw-bar:nth-child(5){height:6px;animation-delay:.6s}
 @keyframes swAnim{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+
+/* ════════ SLIDES / PARTICIPANT MODE ════════ */
+.session-metrics-grid { display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1rem;margin-bottom:1rem; }
+@media(max-width:900px){ .session-metrics-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:520px){ .session-metrics-grid { grid-template-columns:1fr; } }
+.metric-card { background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1rem; }
+.metric-value { font-family:var(--fh);font-size:1.5rem;color:var(--gold2);font-weight:700; }
+.metric-label { font-size:.75rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:.2rem; }
+.slide-builder { display:grid;grid-template-columns:1.1fr .9fr;gap:1rem;align-items:start; }
+@media(max-width:980px){ .slide-builder { grid-template-columns:1fr; } }
+.slide-list { display:flex;flex-direction:column;gap:.75rem; }
+.slide-row { display:flex;gap:.75rem;align-items:flex-start;background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:.85rem 1rem; }
+.slide-row.active { border-color:var(--gold);box-shadow:0 0 16px rgba(201,168,76,.12); }
+.slide-row.dragging { opacity:.55; border-style:dashed; }
+.slide-row.drop-target { border-color:var(--green2); box-shadow:0 0 0 2px rgba(45,122,78,.25) inset; }
+.slide-type-chip { display:inline-flex;align-items:center;padding:.2rem .55rem;border-radius:999px;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);color:var(--gold2);font-size:.72rem;letter-spacing:1px;text-transform:uppercase; }
+.slide-title { font-family:var(--fh);font-size:.95rem;color:var(--gold3);margin-bottom:.15rem; }
+.slide-sub { font-size:.82rem;color:var(--muted); }
+.slide-actions { margin-left:auto;display:flex;gap:.4rem;align-items:flex-start;flex-wrap:wrap; }
+.participant-shell { display:grid;grid-template-columns:minmax(0,1.2fr) minmax(280px,.8fr);gap:1rem;flex:1;min-height:0; }
+@media(max-width:980px){ .participant-shell { grid-template-columns:1fr; } }
+.participant-panel,.vote-panel,.chart-panel,.qr-box { background:var(--bg2);border:1px solid var(--border);border-radius:16px; }
+.participant-panel { padding:1rem; }
+.participant-header { display:flex;justify-content:space-between;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem; }
+.session-pill { display:inline-flex;align-items:center;gap:.35rem;padding:.25rem .6rem;border-radius:999px;border:1px solid var(--border);color:var(--muted);font-size:.75rem;letter-spacing:1px; }
+.slide-stage { min-height:280px;padding:1rem;border-radius:14px;background:var(--bg3);border:1px solid var(--border);display:flex;flex-direction:column;gap:1rem; }
+.slide-question { font-family:var(--fh);font-size:clamp(1.2rem,2vw,2rem);color:var(--gold3);line-height:1.35; }
+.slide-meta { font-size:.82rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase; }
+.vote-panel { padding:1rem;display:flex;flex-direction:column;gap:1rem; }
+.vote-grid { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem; }
+@media(max-width:520px){ .vote-grid { grid-template-columns:1fr; } }
+.vote-btn { width:100%;padding:1rem;border-radius:14px;border:1px solid var(--border);background:var(--bg3);color:var(--tx);font-family:var(--fb);font-size:1rem;cursor:pointer;transition:all .18s;min-height:56px; }
+.vote-btn:hover { border-color:var(--gold);transform:translateY(-2px);background:rgba(201,168,76,.05); }
+.vote-btn.selected { border-color:var(--gold);background:rgba(201,168,76,.12); }
+.vote-btn.correct { border-color:var(--green2);background:rgba(45,122,78,.14);color:#9beba7; }
+.vote-btn.wrong { border-color:var(--red2);background:rgba(139,26,26,.14);color:#e07070; }
+.vote-note { font-size:.82rem;color:var(--muted);line-height:1.5; }
+.chart-panel { padding:1rem;min-height:280px; }
+.chart-panel h3 { font-family:var(--fh);font-size:.95rem;color:var(--gold2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:.75rem; }
+.cloud-wrap { display:flex;flex-wrap:wrap;gap:.5rem;min-height:70px; }
+.cloud-item { display:inline-flex;align-items:center;justify-content:center;padding:.4rem .7rem;border-radius:999px;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.15);color:var(--gold3);font-family:var(--fh); }
+.scale-track { display:flex;gap:.5rem;flex-wrap:wrap; }
+.scale-label { display:flex;flex-direction:column;align-items:center;gap:.2rem;flex:1;min-width:44px; }
+.scale-dot { width:44px;height:44px;border-radius:50%;border:1px solid var(--border);background:var(--bg3);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .18s;font-family:var(--fh); }
+.scale-dot:hover { border-color:var(--gold);transform:translateY(-2px); }
+.scale-dot.selected { background:rgba(201,168,76,.16);border-color:var(--gold); }
+.qr-box { padding:1rem;display:flex;flex-direction:column;align-items:center;gap:.75rem; }
+.qr-code { width:220px;height:220px;background:#fff;padding:.5rem;border-radius:14px; }
+.pin-badge { font-family:var(--fh);font-size:1.2rem;letter-spacing:4px;color:var(--gold2); }
+.timer-pill { display:inline-flex;align-items:center;gap:.35rem;padding:.3rem .65rem;border-radius:999px;background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.18);color:var(--gold2);font-family:var(--fh);letter-spacing:1px; }
+.participant-mini { font-size:.78rem;color:var(--muted); }
+.participant-join { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem; }
+@media(max-width:720px){ .participant-join { grid-template-columns:1fr; } }
+
+/* ════════ PARTICIPANT PROJECTOR ════════ */
+#sParticipantProjector {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: none;
+  flex-direction: column;
+  background:
+    radial-gradient(ellipse 120% 60% at 50% -10%, rgba(139,26,26,.42) 0%, transparent 55%),
+    radial-gradient(ellipse 90% 50% at 50% 110%, rgba(201,168,76,.12) 0%, transparent 55%),
+    #070a12;
+}
+#sParticipantProjector.open { display:flex; }
+.pp-header {
+  display:flex;align-items:center;justify-content:space-between;gap:1rem;
+  padding:1rem 1.5rem;border-bottom:1px solid var(--border);
+  background:rgba(7,10,18,.72);backdrop-filter:blur(8px);
+}
+.pp-title { font-family:var(--fh);font-size:1rem;letter-spacing:2px;color:var(--gold2); }
+.pp-meta { font-size:.8rem;color:var(--muted); }
+.pp-body {
+  flex:1;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(340px,.8fr);gap:1rem;
+  padding:1rem;min-height:0;
+}
+@media(max-width:1000px){ .pp-body { grid-template-columns:1fr; } }
+.pp-card { background:rgba(13,17,24,.85);border:1px solid var(--border);border-radius:16px;padding:1rem; }
+.pp-question { font-family:var(--fh);font-size:clamp(1.4rem,2.7vw,2.4rem);color:var(--gold3);line-height:1.3;margin-bottom:.5rem; }
+.pp-sub { color:var(--muted);font-size:.85rem;margin-bottom:1rem; }
+.pp-cloud { min-height:80px; }
+.pp-chart-wrap { position:relative;min-height:360px; }
+.pp-stats { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem;margin-top:.75rem; }
+@media(max-width:640px){ .pp-stats { grid-template-columns:1fr; } }
+.pp-stat { background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:.75rem; }
+.pp-stat-v { font-family:var(--fh);font-size:1.3rem;color:var(--gold2); }
+.pp-stat-l { font-size:.72rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase; }
 </style>
 </head>
 <body>
@@ -1259,19 +1363,17 @@ nav {
      LANDING
 ══════════════════════════════════════════ -->
 <div class="screen active" id="sLanding">
-  <!-- logo area: either custom image or default animated emblem -->
-  <div class="emblem" id="landingLogoWrap">
-    <div class="emblem-ring" id="landingLogoDefault">
-      <span class="emblem-star" id="landingLogoEmoji">⚔</span>
+  <div class="emblem">
+    <div class="emblem-ring">
+      <img id="landingLogoImg" class="emblem-logo hidden" alt="Logotipo CBHM">
+      <span id="landingLogoFallback" class="emblem-star">⚔</span>
     </div>
-    <img id="landingLogoImg" src="" alt="Logo"
-      style="display:none;width:120px;height:120px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);box-shadow:0 0 30px rgba(201,168,76,.3)">
   </div>
 
   <div class="landing-subtitle" id="landingSubtitle">Academia Militar das Agulhas Negras</div>
-  <div class="landing-title"    id="landingTitle">Campeonato Brasileiro de<br>História Militar</div>
-  <div class="landing-year"     id="landingYear">2026</div>
-  <div class="landing-loc"      id="landingLoc">AMAN — Resende, Rio de Janeiro</div>
+  <div class="landing-title" id="landingTitle">Campeonato Brasileiro de<br>História Militar</div>
+  <div class="landing-year" id="landingYear">2026</div>
+  <div class="landing-loc" id="landingLoc">AMAN — Resende, Rio de Janeiro</div>
 
   <div class="divider"></div>
 
@@ -1289,11 +1391,12 @@ nav {
   <div class="landing-btns">
     <button class="btn btn-gold btn-lg" onclick="openLogin()">🔐 Acesso Restrito</button>
     <button class="btn btn-lg" onclick="openJoinTeam()">🏛 Entrar como Equipe</button>
+    <button class="btn btn-lg" onclick="openParticipantHub()">👤 Modo Participante</button>
     <button class="btn btn-lg" onclick="showScreen('sScoreboard'); loadScoreboard()">📊 Placar Geral</button>
   </div>
 
   <div class="divider-sm" style="margin-top:3rem"></div>
-  <p id="landingTagline" style="color:var(--muted);font-size:.82rem;letter-spacing:1px;margin-top:1rem;font-style:italic">
+  <p style="color:var(--muted);font-size:.82rem;letter-spacing:1px;margin-top:1rem;font-style:italic">
     Formando líderes pela História · Res Non Verba
   </p>
 </div>
@@ -1307,25 +1410,18 @@ nav {
     <h2>⚔ ACESSO RESTRITO</h2>
     <div class="divider-sm" style="margin:0 0 1.5rem"></div>
     <div class="field">
-      <label>E-mail do administrador</label>
-      <input type="email" id="loginUser" placeholder="admin@cbhm.com.br" autocomplete="username">
+      <label>Usuário</label>
+      <input type="text" id="loginUser" placeholder="admin" autocomplete="username">
     </div>
     <div class="field">
       <label>Senha</label>
       <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
     <div id="loginErr" class="hidden" style="color:#e07070;font-size:.85rem;margin-bottom:1rem;padding:.5rem .75rem;border-radius:var(--r);background:rgba(139,26,26,.2);border:1px solid var(--red)"></div>
-    <div id="loginLoading" class="hidden" style="text-align:center;padding:.5rem;color:var(--muted);font-size:.88rem;margin-bottom:.75rem">
-      <span style="display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:.5rem"></span>
-      Autenticando no Firebase...
-    </div>
-    <button class="btn btn-gold" style="width:100%;justify-content:center" id="loginBtn" onclick="doLogin()">Entrar</button>
-    <div style="margin-top:1.25rem;padding:.9rem 1rem;background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.15);border-radius:var(--r);font-size:.8rem;color:var(--muted);line-height:1.7">
-      <strong style="color:var(--gold2);display:block;margin-bottom:.4rem">⚙ Como configurar o acesso:</strong>
-      No Firebase Console → <strong style="color:var(--tx)">Authentication → Sign-in method → Email/Password → Ativar</strong><br>
-      Depois → <strong style="color:var(--tx)">Users → Add user</strong> → cadastre o e-mail e senha do administrador<br>
-      <span style="font-size:.75rem;margin-top:.3rem;display:block;font-style:italic">Em modo demo (sem Firebase), qualquer e-mail + senha "cbhm2026" funciona.</span>
-    </div>
+    <button class="btn btn-gold" style="width:100%;justify-content:center" onclick="doLogin()">Entrar</button>
+    <p style="font-size:.8rem;color:var(--muted);margin-top:1rem;text-align:center;font-style:italic">
+      Credenciais padrão: admin / cbhm2026
+    </p>
   </div>
 </div>
 
@@ -1362,62 +1458,18 @@ nav {
   </div>
 </div>
 
-<!-- HELP MODAL -->
-<div class="overlay" id="helpOverlay">
-  <div class="modal">
-    <button class="modal-close" onclick="closeOverlay('helpOverlay')">✕</button>
-    <h2 id="helpModalTitle">Ajuda</h2>
-    <div id="helpModalBody" style="color:var(--silver);line-height:1.8;font-size:.92rem;margin-top:1rem"></div>
-    <div style="display:flex;justify-content:flex-end;margin-top:1.5rem">
-      <button class="btn btn-gold" onclick="closeOverlay('helpOverlay')">Fechar</button>
-    </div>
-  </div>
-</div>
-
-<!-- PROFILE MODAL -->
-<div class="overlay" id="profileOverlay">
-  <div class="modal">
-    <button class="modal-close" onclick="closeOverlay('profileOverlay')">✕</button>
-    <h2>👤 Meu Perfil</h2>
-    <div class="field">
-      <label>Posto / Graduação</label>
-      <input type="text" id="profileRank" placeholder="Ex: 1º Tenente">
-    </div>
-    <div class="field">
-      <label>Nome</label>
-      <input type="text" id="profileName" placeholder="Ex: João da Silva">
-    </div>
-    <div class="field">
-      <label>E-mail</label>
-      <input type="email" id="profileEmail" placeholder="usuario@exemplo.com">
-    </div>
-    <div class="field">
-      <label>Disciplina</label>
-      <input type="text" id="profileDiscipline" placeholder="Ex: História Militar">
-    </div>
-    <div class="field">
-      <label>Nova senha</label>
-      <input type="password" id="profilePassword" placeholder="Deixe em branco para manter a atual">
-    </div>
-    <div class="flex" style="justify-content:flex-end;gap:.75rem">
-      <button class="btn" onclick="closeOverlay('profileOverlay')">Cancelar</button>
-      <button class="btn btn-gold" onclick="saveProfile()">Salvar perfil</button>
-    </div>
-  </div>
-</div>
-
 <!-- ══════════════════════════════════════════
      ADMIN PANEL
 ══════════════════════════════════════════ -->
 <div class="screen" id="sAdmin">
   <nav>
-    <span class="nav-logo">⚔ CBHM 2026</span>
-    <span class="nav-badge" id="adminRoleBadge">Painel do Administrador</span>
-    <span class="nav-user" id="adminUserLabel">Visitante</span>
+    <span class="nav-logo" id="adminNavLogo">
+      <img id="adminNavLogoImg" class="nav-logo-img hidden" alt="Logotipo do CBHM">
+      <span id="adminNavLogoText" class="nav-logo-text">⚔</span>
+    </span>
+    <span class="nav-badge">Painel do Administrador</span>
     <div class="nav-sep"></div>
     <span id="sessionCodeBadge" class="nav-badge hidden"></span>
-    <button class="btn btn-sm" onclick="showHelp()">❔ Ajuda</button>
-    <button class="btn btn-sm" onclick="openProfileModal()">👤 Perfil</button>
     <button class="btn btn-sm" onclick="logout()">Sair</button>
   </nav>
 
@@ -1426,31 +1478,28 @@ nav {
     <aside class="admin-sidebar">
       <div class="sidebar-section">
         <div class="sidebar-label">Gestão</div>
-        <div class="sidebar-item active" data-tab="tabDashboard" onclick="adminTab(this,'tabDashboard')">
+        <div class="sidebar-item active" onclick="adminTab(this,'tabDashboard')">
           <span class="si-icon">📊</span> Dashboard
         </div>
-        <div class="sidebar-item" data-tab="tabLanding" onclick="adminTab(this,'tabLanding')">
-          <span class="si-icon">🖼</span> Landing Page
-        </div>
-        <div class="sidebar-item" data-tab="tabQuestions" onclick="adminTab(this,'tabQuestions')">
+        <div class="sidebar-item" onclick="adminTab(this,'tabQuestions')">
           <span class="si-icon">📝</span> Questões
         </div>
-        <div class="sidebar-item" data-tab="tabUsers" onclick="adminTab(this,'tabUsers')">
-          <span class="si-icon">👥</span> Usuários
-        </div>
-        <div class="sidebar-item" data-tab="tabGemini" onclick="adminTab(this,'tabGemini')">
+        <div class="sidebar-item" onclick="adminTab(this,'tabGemini')">
           <span class="si-icon">🤖</span> Gemini IA
         </div>
-        <div class="sidebar-item" data-tab="tabTeams" onclick="adminTab(this,'tabTeams')">
+        <div class="sidebar-item" onclick="adminTab(this,'tabTeams')">
           <span class="si-icon">🏛</span> Equipes
+        </div>
+        <div class="sidebar-item" onclick="adminTab(this,'tabLanding')">
+          <span class="si-icon">🛠</span> Página Principal
         </div>
       </div>
       <div class="sidebar-section">
         <div class="sidebar-label">Competição</div>
-        <div class="sidebar-item" data-tab="tabSession" onclick="adminTab(this,'tabSession')">
+        <div class="sidebar-item" onclick="adminTab(this,'tabSession')">
           <span class="si-icon">⚡</span> Sessão ao Vivo
         </div>
-        <div class="sidebar-item" data-tab="tabScoreboard" onclick="adminTab(this,'tabScoreboard')">
+        <div class="sidebar-item" onclick="adminTab(this,'tabScoreboard')">
           <span class="si-icon">🏆</span> Placar
         </div>
       </div>
@@ -1463,52 +1512,6 @@ nav {
       <div id="tabDashboard">
         <h1>DASHBOARD</h1>
         <p class="sub">Visão geral do Campeonato Brasileiro de História Militar 2026</p>
-
-        <!-- Firebase rules notice -->
-        <div id="firebaseRulesNotice" class="card" style="border-color:rgba(0,212,170,.25);background:rgba(0,212,170,.03);margin-bottom:1.5rem">
-          <div style="display:flex;align-items:flex-start;gap:1rem">
-            <span style="font-size:1.5rem;flex-shrink:0">🔐</span>
-            <div style="flex:1">
-              <div class="card-title" style="color:#00d4aa;margin-bottom:.6rem">REGRAS DE SEGURANÇA — CONFIGURAÇÃO CORRETA</div>
-              <p style="font-size:.88rem;color:var(--silver);line-height:1.8;margin-bottom:1rem">
-                O app agora usa <strong style="color:var(--tx)">Firebase Authentication</strong>. Suas regras atuais estão corretas —
-                só precisam permitir leitura pública para o placar e dados de sessão ao vivo (equipes participantes acessam sem login).
-                Use as regras abaixo:
-              </p>
-              <pre style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);padding:1rem;font-size:.83rem;color:var(--gold2);overflow-x:auto;margin-bottom:1rem;line-height:1.7">{
-  "rules": {
-    "admins": {
-      ".read":  "auth != null && root.child('admins').child(auth.uid).val() === true",
-      ".write": false
-    },
-    "config": {
-      ".read":  true,
-      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"
-    },
-    "questions": {
-      ".read":  "auth != null && root.child('admins').child(auth.uid).val() === true",
-      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"
-    },
-    "teams": {
-      ".read":  true,
-      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"
-    },
-    "activeSession": {
-      ".read":  true,
-      ".write": "auth != null && root.child('admins').child(auth.uid).val() === true"
-    }
-  }
-}</pre>
-              <div style="font-size:.85rem;color:var(--muted);line-height:1.8;margin-bottom:1rem">
-                <strong style="color:var(--gold2)">Para cadastrar o UID do administrador no banco:</strong><br>
-                1. Vá em <strong style="color:var(--tx)">Authentication → Users</strong> → copie o UID do seu usuário<br>
-                2. Vá em <strong style="color:var(--tx)">Realtime Database → Data → (+) Adicionar nó</strong><br>
-                3. Crie: <code style="color:var(--gold);background:var(--bg3);padding:.1rem .4rem;border-radius:4px">admins → {SEU_UID} → true</code>
-              </div>
-              <button class="btn btn-sm" onclick="document.getElementById('firebaseRulesNotice').style.display='none'">✓ Entendido, ocultar</button>
-            </div>
-          </div>
-        </div>
         <div class="stats-grid">
           <div class="stat-card"><div class="stat-n" id="dTotalQ">0</div><div class="stat-l">Questões</div></div>
           <div class="stat-card"><div class="stat-n" id="dTotalT">0</div><div class="stat-l">Equipes</div></div>
@@ -1552,6 +1555,11 @@ nav {
               <span style="font-family:var(--fh);font-size:.75rem;color:var(--muted)">21–30s</span>
               <span style="color:var(--silver)">Resposta de 21 a 30 segundos</span>
               <span style="font-family:var(--fh);color:var(--gold);font-size:1.1rem">10 pts</span>
+            </div>
+            <div class="team-row" style="grid-template-columns:auto 1fr auto;border-color:rgba(201,168,76,.4);background:rgba(201,168,76,.05)">
+              <span style="font-family:var(--fh);font-size:.75rem;color:var(--gold)">⭐</span>
+              <span style="color:var(--gold2)">Bônus: 3 acertos consecutivos em até 5s</span>
+              <span style="font-family:var(--fh);color:var(--gold);font-size:1.1rem">90 pts</span>
             </div>
           </div>
         </div>
@@ -1648,6 +1656,58 @@ nav {
         </div>
       </div>
 
+      <!-- PÁGINA PRINCIPAL -->
+      <div id="tabLanding" class="hidden">
+        <h1>PÁGINA PRINCIPAL</h1>
+        <p class="sub">Edite os textos da competição, logotipo e escolas exibidas na página inicial</p>
+
+        <div class="card">
+          <div class="card-title" style="margin-bottom:1rem">TEXTOS DA COMPETIÇÃO</div>
+          <div class="field">
+            <label>Subtítulo</label>
+            <input type="text" id="lpSubtitle" placeholder="Academia Militar das Agulhas Negras">
+          </div>
+          <div class="field">
+            <label>Título</label>
+            <textarea id="lpTitle" rows="2" placeholder="Campeonato Brasileiro de História Militar"></textarea>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div class="field" style="margin:0">
+              <label>Ano</label>
+              <input type="text" id="lpYear" placeholder="2026">
+            </div>
+            <div class="field" style="margin:0">
+              <label>Local</label>
+              <input type="text" id="lpLoc" placeholder="AMAN — Resende, Rio de Janeiro">
+            </div>
+          </div>
+          <div class="field mt2">
+            <label>Escolas (separadas por vírgula ou nova linha)</label>
+            <textarea id="lpSchools" rows="3" placeholder="AMAN, EPCAr, EsPCEx"></textarea>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="margin-bottom:1rem">LOGOTIPO</div>
+          <div class="field">
+            <label>URL do logotipo</label>
+            <input type="url" id="lpLogoUrl" placeholder="https://.../logo.png">
+          </div>
+          <div class="field">
+            <label>Ou envie um arquivo de imagem</label>
+            <input type="file" id="lpLogoFile" accept="image/*" onchange="previewLandingLogoFile()">
+          </div>
+          <div class="flex" style="align-items:center">
+            <img id="lpLogoPreview" alt="Prévia do logotipo" class="team-avatar-sm hidden">
+            <span style="font-size:.82rem;color:var(--muted)">A prévia usa o último valor de URL ou arquivo selecionado.</span>
+          </div>
+          <div class="flex mt2" style="flex-wrap:wrap">
+            <button class="btn btn-gold" onclick="saveLandingConfigFromAdmin()">💾 Salvar Página Principal</button>
+            <button class="btn" onclick="resetLandingConfig()">↺ Restaurar padrão</button>
+          </div>
+        </div>
+      </div>
+
       <!-- QUESTIONS -->
       <div id="tabQuestions" class="hidden">
         <h1>QUESTÕES</h1>
@@ -1661,229 +1721,41 @@ nav {
         <div id="questionList"></div>
       </div>
 
-      <!-- LANDING PAGE EDITOR -->
-      <div id="tabLanding" class="hidden">
-        <h1>🖼 LANDING PAGE</h1>
-        <p class="sub">Edite os textos, logotipo e visual da página inicial em tempo real</p>
-
-        <!-- live preview badge -->
-        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:1.5rem;padding:.75rem 1.2rem;
-          background:rgba(201,168,76,.05);border:1px solid rgba(201,168,76,.2);border-radius:var(--r)">
-          <span class="proj-pulse-dot"></span>
-          <span style="font-size:.85rem;color:var(--muted)">As alterações são aplicadas <strong style="color:var(--gold2)">ao vivo</strong> na Landing Page. Clique em
-            <button class="btn btn-sm btn-gold" style="margin:0 .25rem" onclick="saveLandingConfig()">💾 Salvar</button>
-            para persistir no Firebase / localStorage.</span>
-        </div>
-
-        <!-- LOGOTIPO -->
-        <div class="card" style="margin-bottom:1rem">
-          <div class="card-title" style="margin-bottom:1.2rem">🏅 LOGOTIPO / BRASÃO</div>
-          <div style="display:grid;grid-template-columns:auto 1fr;gap:1.5rem;align-items:start">
-
-            <!-- current logo preview -->
-            <div style="text-align:center">
-              <div style="width:100px;height:100px;border-radius:50%;border:2px solid var(--border2);overflow:hidden;
-                display:flex;align-items:center;justify-content:center;background:var(--bg3);margin-bottom:.6rem" id="logoPreviewWrap">
-                <span id="logoPreviewEmoji" style="font-size:2.5rem">⚔</span>
-                <img id="logoPreviewImg" src="" style="display:none;width:100%;height:100%;object-fit:cover">
-              </div>
-              <div style="font-size:.72rem;color:var(--muted);font-family:var(--fh);letter-spacing:1px">PRÉVIA</div>
-            </div>
-
-            <div style="display:flex;flex-direction:column;gap:.9rem">
-              <!-- upload image -->
-              <div>
-                <label style="display:block;font-size:.8rem;font-family:var(--fh);letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:.4rem">Upload de imagem (PNG/JPG/SVG)</label>
-                <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
-                  <label style="display:inline-flex;align-items:center;gap:.5rem;padding:.55rem 1.2rem;border-radius:var(--r);border:1px solid var(--border);background:var(--bg3);cursor:pointer;font-family:var(--fh);font-size:.78rem;letter-spacing:1px;color:var(--silver);transition:all .2s"
-                    onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='rgba(201,168,76,.18)'">
-                    📁 Escolher arquivo
-                    <input type="file" accept="image/*" style="display:none" onchange="handleLogoUpload(this)">
-                  </label>
-                  <button class="btn btn-sm btn-danger" onclick="removeLogo()">✕ Remover imagem</button>
-                </div>
-              </div>
-              <!-- or use emoji -->
-              <div>
-                <label style="display:block;font-size:.8rem;font-family:var(--fh);letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:.4rem">Ou usar emoji / símbolo</label>
-                <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-                  ${['⚔','🎖','🏅','⭐','🦅','🛡','🎯','🏛','🌟','⚜'].map(e=>
-                    `<button onclick="setLogoEmoji('${e}')" style="width:38px;height:38px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);font-size:1.3rem;cursor:pointer;transition:all .15s" onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='rgba(201,168,76,.18)'">${e}</button>`
-                  ).join('')}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- TEXTOS -->
-        <div class="card" style="margin-bottom:1rem">
-          <div class="card-title" style="margin-bottom:1.2rem">✏️ TEXTOS DA COMPETIÇÃO</div>
-          <div style="display:grid;gap:.85rem">
-            <div class="field" style="margin:0">
-              <label>Subtítulo (linha acima do título principal)</label>
-              <input type="text" id="lpSubtitle" value="Academia Militar das Agulhas Negras"
-                oninput="liveUpdateText('landingSubtitle',this.value)">
-            </div>
-            <div class="field" style="margin:0">
-              <label>Título Principal</label>
-              <input type="text" id="lpTitle" value="Campeonato Brasileiro de História Militar"
-                oninput="liveUpdateTitle(this.value)">
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.85rem">
-              <div class="field" style="margin:0">
-                <label>Ano do Evento</label>
-                <input type="text" id="lpYear" value="2026"
-                  oninput="liveUpdateText('landingYear',this.value)">
-              </div>
-              <div class="field" style="margin:0">
-                <label>Local / Localização</label>
-                <input type="text" id="lpLoc" value="AMAN — Resende, Rio de Janeiro"
-                  oninput="liveUpdateText('landingLoc',this.value)">
-              </div>
-            </div>
-            <div class="field" style="margin:0">
-              <label>Rodapé / Tagline</label>
-              <input type="text" id="lpTagline" value="Formando líderes pela História · Res Non Verba"
-                oninput="liveUpdateText('landingTagline',this.value)">
-            </div>
-          </div>
-        </div>
-
-        <!-- ESCOLAS / BADGES -->
-        <div class="card" style="margin-bottom:1rem">
-          <div class="card-title" style="margin-bottom:1.2rem">🏛 ESTABELECIMENTOS PARTICIPANTES</div>
-          <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">Exibidos como badges na landing page. Um por linha.</p>
-          <textarea id="lpSchools" rows="8"
-            style="width:100%;padding:.75rem 1rem;border-radius:var(--r);border:1px solid var(--border);background:var(--bg3);color:var(--tx);font-family:var(--fb);font-size:.95rem;resize:vertical"
-            oninput="liveUpdateSchools(this.value)">AMAN
-EPCAr
-EsPCEx
-CN
-AFA
-EN
-EsSA
-APMBB</textarea>
-        </div>
-
-        <!-- save button -->
-        <div style="display:flex;gap:.75rem;flex-wrap:wrap">
-          <button class="btn btn-gold btn-lg" onclick="saveLandingConfig()">💾 Salvar configurações</button>
-          <button class="btn btn-lg" onclick="showScreen('sLanding')">👁 Ver Landing Page</button>
-          <button class="btn btn-lg btn-danger" onclick="resetLandingConfig()">↺ Restaurar padrão</button>
-        </div>
-      </div>
-
       <!-- TEAMS -->
       <div id="tabTeams" class="hidden">
         <h1>EQUIPES</h1>
-        <p class="sub">Gerencie as equipes participantes e suas imagens</p>
-
-        <!-- add team form -->
-        <div class="card" style="margin-bottom:1.5rem;border-color:rgba(201,168,76,.25)">
-          <div class="card-title" style="margin-bottom:1.2rem">➕ ADICIONAR NOVA EQUIPE</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.85rem;margin-bottom:.85rem">
-            <div class="field" style="margin:0">
-              <label>Nome da Equipe</label>
-              <input type="text" id="newTeamName" placeholder="Ex: Equipe Hawk — AMAN">
-            </div>
-            <div class="field" style="margin:0">
-              <label>Estabelecimento de Ensino</label>
-              <select id="newTeamSchool">
-                <option value="">Selecione...</option>
-                <option>AMAN — Academia Militar das Agulhas Negras</option>
-                <option>EPCAr — Escola Preparatória de Cadetes do Ar</option>
-                <option>EsPCEx — Escola Preparatória de Cadetes do Exército</option>
-                <option>CN — Colégio Naval</option>
-                <option>AFA — Academia da Força Aérea</option>
-                <option>EN — Escola Naval</option>
-                <option>EsSA — Escola de Sargentos das Armas</option>
-                <option>APMBB — Academia de Polícia Militar Barro Branco</option>
-              </select>
-            </div>
-          </div>
-          <div class="field" style="margin-bottom:.85rem">
-            <label>Imagem da Equipe (brasão, foto, escudo — PNG/JPG)</label>
-            <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
-              <!-- preview -->
-              <div id="newTeamImgPreview" style="width:64px;height:64px;border-radius:50%;border:2px solid var(--border);
-                background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:1.5rem;overflow:hidden;flex-shrink:0">🏛</div>
-              <div style="display:flex;flex-direction:column;gap:.5rem">
-                <label style="display:inline-flex;align-items:center;gap:.5rem;padding:.5rem 1rem;border-radius:var(--r);
-                  border:1px solid var(--border);background:var(--bg3);cursor:pointer;font-family:var(--fh);font-size:.77rem;letter-spacing:1px;color:var(--silver)"
-                  onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='rgba(201,168,76,.18)'">
-                  📁 Upload de imagem
-                  <input type="file" accept="image/*" style="display:none" onchange="handleNewTeamImg(this)">
-                </label>
-                <button class="btn btn-sm btn-danger" onclick="clearNewTeamImg()">✕ Remover</button>
-              </div>
-            </div>
-          </div>
-          <div class="flex">
-            <button class="btn btn-gold" onclick="adminAddTeam()">➕ Adicionar Equipe</button>
-          </div>
-        </div>
-
-        <!-- team list with image edit -->
-        <div style="font-family:var(--fh);font-size:.7rem;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:.75rem">
-          Equipes cadastradas
-        </div>
-        <div id="teamList"></div>
-      </div>
-
-      <!-- USERS -->
-      <div id="tabUsers" class="hidden">
-        <h1>USUÁRIOS</h1>
-        <p class="sub">Cadastre e gerencie os perfis internos por função e disciplina</p>
-
-        <div class="card" style="margin-bottom:1.5rem;border-color:rgba(201,168,76,.25)">
-          <div class="card-title" style="margin-bottom:1rem">➕ Criar / editar usuário</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
-            <div class="field" style="margin:0">
-              <label>Posto / Graduação</label>
-              <input type="text" id="userRank" placeholder="Ex: 1º Tenente">
-            </div>
-            <div class="field" style="margin:0">
-              <label>Perfil</label>
-              <select id="userRole">
-                <option value="">Selecione...</option>
-                <option>Administrador</option>
-                <option>Gerente</option>
-                <option>Professor</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="field">
-            <label>Nome completo</label>
-            <input type="text" id="userName" placeholder="Ex: João da Silva">
-          </div>
-          <div class="field">
-            <label>CPF</label>
-            <input type="text" id="userCpf" placeholder="000.000.000-00" oninput="updateUserPasswordHint(this.value)">
-          </div>
-          <div class="field">
-            <label>E-mail</label>
-            <input type="email" id="userEmail" placeholder="usuario@exemplo.com">
-          </div>
-          <div class="field">
-            <label>Disciplina</label>
-            <input type="text" id="userDiscipline" placeholder="Ex: História Militar">
-          </div>
-          <div class="field">
-            <label>Senha padrão</label>
-            <input type="text" id="userPwdHint" readonly placeholder="Será gerada a partir do CPF">
-          </div>
-          <div class="flex" style="justify-content:flex-end;gap:.75rem">
-            <button class="btn" onclick="resetUserForm()">Cancelar</button>
-            <button class="btn btn-gold" onclick="saveUser()">Salvar usuário</button>
-          </div>
-        </div>
+        <p class="sub">Equipes registradas na competição</p>
 
         <div class="card">
-          <div class="card-title" style="margin-bottom:1rem">Usuários cadastrados</div>
-          <div id="userList"></div>
+          <div class="card-title" style="margin-bottom:1rem">NOVA EQUIPE</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div class="field" style="margin:0">
+              <label>Nome da Equipe</label>
+              <input type="text" id="teamNameAdmin" placeholder="Ex: Equipe Alfa">
+            </div>
+            <div class="field" style="margin:0">
+              <label>Escola</label>
+              <input type="text" id="teamSchoolAdmin" placeholder="Ex: AMAN">
+            </div>
+          </div>
+          <div class="field mt">
+            <label>Imagem do card (URL)</label>
+            <input type="url" id="teamImgUrlAdmin" placeholder="https://.../equipe.png">
+          </div>
+          <div class="field">
+            <label>Ou envie um arquivo de imagem</label>
+            <input type="file" id="teamImgFileAdmin" accept="image/*" onchange="previewAdminTeamImageFile()">
+          </div>
+          <div class="flex" style="align-items:center">
+            <img id="teamImgPreviewAdmin" alt="Prévia da equipe" class="team-avatar-sm hidden">
+            <span style="font-size:.82rem;color:var(--muted)">A imagem será exibida nos cards da equipe.</span>
+          </div>
+          <div class="mt2">
+            <button class="btn btn-gold" onclick="addTeamFromAdmin()">+ Inserir Equipe</button>
+          </div>
         </div>
+
+        <div id="teamList"></div>
       </div>
 
       <!-- SESSION -->
@@ -1891,11 +1763,94 @@ APMBB</textarea>
         <h1>SESSÃO AO VIVO</h1>
         <p class="sub">Gerencie e inicie a competição em tempo real</p>
 
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">SLIDES DA SESSÃO</div>
+              <div class="card-meta">Múltipla escolha, nuvem de palavras, estrelas, pergunta aberta e escala</div>
+            </div>
+            <button class="btn btn-sm" onclick="saveSessionSlidesDraft()">Salvar rascunho</button>
+          </div>
+          <div class="slide-builder">
+            <div>
+              <div class="field">
+                <label>Template padrão do evento</label>
+                <div class="flex" style="flex-wrap:wrap">
+                  <select id="slideTemplatePreset" style="min-width:240px">
+                    <option value="institucional">Institucional (padrão)</option>
+                    <option value="academico">Acadêmico / Aula</option>
+                    <option value="feedback">Feedback rápido</option>
+                  </select>
+                  <button class="btn" onclick="applySlideTemplate()">Aplicar template</button>
+                </div>
+              </div>
+              <div class="field">
+                <label>Tipo de slide</label>
+                <select id="slideType" onchange="syncSlideForm()">
+                  <option value="multiple">Múltipla escolha</option>
+                  <option value="wordcloud">Nuvem de palavras</option>
+                  <option value="stars">Avaliação com estrelas</option>
+                  <option value="open">Pergunta aberta</option>
+                  <option value="scale">Escala</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Título do slide</label>
+                <input type="text" id="slideTitle" placeholder="Ex: Feedback da aula">
+              </div>
+              <div class="field">
+                <label>Enunciado / Prompt</label>
+                <textarea id="slidePrompt" rows="3" placeholder="Digite a pergunta ou instrução do slide"></textarea>
+              </div>
+              <div class="field" id="slideOptionsField">
+                <label>Opções da votação (separe por vírgula ou nova linha)</label>
+                <textarea id="slideOptions" rows="3" placeholder="Opção 1, Opção 2, Opção 3"></textarea>
+              </div>
+              <div class="field hidden" id="slideScaleField">
+                <label>Configuração de escala</label>
+                <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem">
+                  <input type="number" id="slideScaleMin" value="1" min="1" max="10" placeholder="Mínimo">
+                  <input type="number" id="slideScaleMax" value="5" min="2" max="10" placeholder="Máximo">
+                  <input type="text" id="slideScaleLeft" placeholder="Rótulo esquerdo" value="Discordo">
+                </div>
+                <div class="field mt">
+                  <input type="text" id="slideScaleRight" placeholder="Rótulo direito" value="Concordo">
+                </div>
+              </div>
+              <div class="field hidden" id="slideStarsField">
+                <label>Configuração de estrelas</label>
+                <input type="number" id="slideStarsMax" value="5" min="3" max="10">
+              </div>
+              <div class="flex" style="flex-wrap:wrap">
+                <button class="btn btn-gold" onclick="addSlideFromForm()">+ Adicionar slide</button>
+                <button class="btn" onclick="loadDefaultSlides()">↺ Carregar exemplos</button>
+              </div>
+            </div>
+            <div>
+              <div class="card" style="margin:0;height:100%">
+                <div class="card-title" style="margin-bottom:.75rem">PRÉVIA / AJUDA</div>
+                <p style="line-height:1.7;color:var(--silver);font-size:.92rem">
+                  Os slides ficam disponíveis para o modo participante por PIN ou QR code.
+                  O painel ao vivo mostra respostas em tempo real com gráficos e a contagem de participantes.
+                </p>
+                <div style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:.5rem">
+                  <span class="tag">PIN seguro</span>
+                  <span class="tag">QR code</span>
+                  <span class="tag">Chart.js</span>
+                  <span class="tag">Mobile first</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="participant-mini mt">Reordene os slides arrastando e soltando no desktop, ou use os botões ↑ ↓.</p>
+          <div class="slide-list mt2" id="slideList"></div>
+        </div>
+
         <div class="card" id="sessionCard">
           <div class="card-header">
             <div>
               <div class="card-title">CRIAR NOVA SESSÃO</div>
-              <div class="card-meta">Uma sessão contém todas as questões e equipes participantes</div>
+              <div class="card-meta">Uma sessão contém slides, participantes, timer e dados em tempo real</div>
             </div>
           </div>
           <div class="field">
@@ -1903,14 +1858,14 @@ APMBB</textarea>
             <input type="text" id="sessionCode" value="CBHM2026" style="font-family:var(--fh);letter-spacing:3px;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
           </div>
           <div class="field">
-            <label>Número de questões por rodada</label>
-            <input type="number" id="sessionQCount" value="10" min="1" max="50">
+            <label>Duração da sessão (minutos)</label>
+            <input type="number" id="sessionDuration" value="20" min="1" max="240">
           </div>
           <div class="flex" style="flex-wrap:wrap">
             <button class="btn btn-gold" onclick="createSession()">⚡ Iniciar Sessão</button>
-            <button class="btn" onclick="showScreen('sQuiz');startQuiz()">🎮 Ir para o Quiz</button>
+            <button class="btn" onclick="showScreen('sParticipant')">👤 Abrir Participante</button>
           </div>
-          <p style="font-size:.8rem;color:var(--muted);margin-top:.75rem;font-style:italic">Após criar a sessão, abra o projetor no telão antes de iniciar o quiz.</p>
+          <p style="font-size:.8rem;color:var(--muted);margin-top:.75rem;font-style:italic">Após criar a sessão, compartilhe o PIN/QR code e acompanhe as respostas ao vivo.</p>
         </div>
 
         <div class="card hidden" id="activeSessionCard">
@@ -1921,18 +1876,31 @@ APMBB</textarea>
             </div>
             <button class="btn btn-danger btn-sm" onclick="endSession()">Encerrar</button>
           </div>
-          <div class="flex" style="flex-wrap:wrap">
-            <button class="btn btn-gold" onclick="showScreen('sQuiz');startQuiz()">🎮 Controlar Quiz</button>
+          <div class="session-metrics-grid">
+            <div class="metric-card"><div class="metric-value" id="sessionTimerVal">00:00</div><div class="metric-label">Tempo restante</div></div>
+            <div class="metric-card"><div class="metric-value" id="sessionParticipantVal">0</div><div class="metric-label">Participantes</div></div>
+            <div class="metric-card"><div class="metric-value" id="sessionSlideVal">0/0</div><div class="metric-label">Slide atual</div></div>
+            <div class="metric-card"><div class="metric-value" id="sessionPinVal">—</div><div class="metric-label">PIN da sessão</div></div>
+          </div>
+          <div class="flex" style="flex-wrap:wrap;margin-bottom:1rem">
+            <button class="btn btn-gold" onclick="showScreen('sParticipant'); openParticipantHub()">👤 Abrir Participante</button>
+            <button class="btn" onclick="openParticipantProjector()">📺 Projetar Resultados</button>
             <button class="btn" style="background:linear-gradient(135deg,#1a2a1a,#1f3a2a);border-color:var(--green2);color:#9beba7"
               onclick="openProjector()">📽 Abrir Projetor</button>
+            <button class="btn" onclick="prevSlide()">◀ Slide</button>
+            <button class="btn" onclick="nextSlide()">Slide ▶</button>
             <button class="btn" onclick="adminTab(document.querySelector('.sidebar-item:last-child'),'tabScoreboard')">📊 Ver Placar</button>
           </div>
-          <div style="margin-top:.75rem;padding:.75rem 1rem;background:rgba(45,122,78,.07);border:1px solid rgba(45,122,78,.2);border-radius:var(--r);font-size:.82rem;color:var(--muted)">
-            💡 <strong style="color:var(--gold2)">Fluxo recomendado:</strong>
-            Conecte o telão → Clique em <em>Abrir Projetor</em> → use F11 no telão →
-            volte para esta tela e clique em <em>Controlar Quiz</em>.
-            Use <kbd style="background:var(--bg3);border:1px solid var(--border);padding:.1rem .4rem;border-radius:4px;font-family:monospace">←→</kbd> ou
-            os botões flutuantes para navegar entre questões.
+          <div class="participant-join mt">
+            <div class="qr-box">
+              <div class="card-title">QR CODE DE PARTICIPAÇÃO</div>
+              <div id="sessionQrCode" class="qr-code"></div>
+              <div class="participant-mini">Abra no celular do participante usando o PIN acima.</div>
+            </div>
+            <div class="chart-panel">
+              <h3>Respostas em tempo real</h3>
+              <canvas id="sessionChartCanvas" height="220"></canvas>
+            </div>
           </div>
         </div>
       </div>
@@ -2022,6 +1990,14 @@ APMBB</textarea>
         <div class="answer-grid" id="answerGrid"></div>
       </div>
 
+      <!-- bonus streak indicator -->
+      <div id="streakBar" class="hidden" style="margin-top:1rem;padding:.75rem 1.2rem;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.25);border-radius:var(--r);display:flex;align-items:center;gap:.75rem">
+        <span style="font-size:1.2rem">⭐</span>
+        <div>
+          <div style="font-family:var(--fh);font-size:.8rem;color:var(--gold2)">SEQUÊNCIA BÔNUS</div>
+          <div id="streakText" style="font-size:.85rem;color:var(--muted)"></div>
+        </div>
+      </div>
     </div>
 
     <!-- RIGHT: timer + teams -->
@@ -2053,7 +2029,10 @@ APMBB</textarea>
 ══════════════════════════════════════════ -->
 <div class="screen" id="sScoreboard">
   <nav>
-    <span class="nav-logo">⚔ CBHM 2026</span>
+    <span class="nav-logo" id="scoreNavLogo">
+      <img id="scoreNavLogoImg" class="nav-logo-img hidden" alt="Logotipo do CBHM">
+      <span id="scoreNavLogoText" class="nav-logo-text">⚔</span>
+    </span>
     <div class="nav-sep"></div>
     <button class="btn btn-sm" onclick="showScreen('sLanding')">← Voltar</button>
   </nav>
@@ -2071,6 +2050,125 @@ APMBB</textarea>
 </div>
 
 <!-- ══════════════════════════════════════════
+     PARTICIPANT MODE
+══════════════════════════════════════════ -->
+<div class="screen" id="sParticipant">
+  <nav>
+    <span class="nav-logo" id="participantNavLogo">
+      <img id="participantNavLogoImg" class="nav-logo-img hidden" alt="Logotipo do CBHM">
+      <span id="participantNavLogoText" class="nav-logo-text">⚔</span>
+    </span>
+    <span class="nav-badge">Modo Participante</span>
+    <div class="nav-sep"></div>
+    <button class="btn btn-sm" onclick="showScreen('sLanding')">← Voltar</button>
+  </nav>
+
+  <div style="flex:1;padding:1rem;display:flex;flex-direction:column;gap:1rem">
+    <div class="card" id="participantJoinPanel">
+      <div class="card-header">
+        <div>
+          <div class="card-title">ENTRAR NA SESSÃO</div>
+          <div class="card-meta">Informe o código e o PIN fornecidos pelo administrador</div>
+        </div>
+      </div>
+      <div class="participant-join">
+        <div class="field" style="margin:0">
+          <label>Seu nome</label>
+          <input type="text" id="participantNameInput" placeholder="Digite seu nome">
+        </div>
+        <div class="field" style="margin:0">
+          <label>Código da sessão</label>
+          <input type="text" id="participantCodeInput" placeholder="Ex: CBHM2026" style="font-family:var(--fh);letter-spacing:3px;text-transform:uppercase">
+        </div>
+        <div class="field" style="margin:0">
+          <label>PIN da sessão</label>
+          <input type="text" id="participantPinInput" placeholder="000000" style="font-family:var(--fh);letter-spacing:4px;text-transform:uppercase">
+        </div>
+        <div class="field" style="margin:0;display:flex;align-items:end">
+          <button class="btn btn-gold" style="width:100%;justify-content:center" onclick="joinParticipantSession()">Entrar</button>
+        </div>
+      </div>
+      <p class="participant-mini mt">Dica: escaneie o QR code exibido pelo admin para preencher automaticamente o código e o PIN.</p>
+    </div>
+
+    <div class="participant-shell hidden" id="participantLivePanel">
+      <div class="participant-panel">
+        <div class="participant-header">
+          <div>
+            <div class="session-pill" id="participantSessionCode">SESSÃO</div>
+            <div class="participant-mini" id="participantNameLabel">—</div>
+          </div>
+          <div class="flex" style="flex-wrap:wrap;justify-content:flex-end">
+            <span class="timer-pill" id="participantTimer">00:00</span>
+            <span class="session-pill" id="participantCount">0 participantes</span>
+          </div>
+        </div>
+
+        <div class="slide-stage">
+          <div class="slide-meta" id="participantSlideMeta">SLIDE ATIVO</div>
+          <div class="slide-question" id="participantSlideTitle">Aguardando sessão</div>
+          <div class="participant-mini" id="participantSlidePrompt">Entre com o PIN para participar.</div>
+          <div id="participantAnswerArea"></div>
+        </div>
+      </div>
+
+      <div class="vote-panel">
+        <div class="chart-panel">
+          <h3>Resultado ao vivo</h3>
+          <canvas id="participantChartCanvas" height="220"></canvas>
+        </div>
+        <div class="qr-box">
+          <div class="card-title">NUVEM / RESPOSTAS</div>
+          <div id="participantCloud" class="cloud-wrap"></div>
+        </div>
+        <div class="qr-box">
+          <div class="card-title">STATUS DA SESSÃO</div>
+          <div class="participant-mini" id="participantLiveStatus">Aguardando votos...</div>
+          <div class="tag" id="participantVoteState">Sem voto</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PARTICIPANT RESULTS PROJECTOR
+══════════════════════════════════════════ -->
+<div id="sParticipantProjector">
+  <div class="pp-header">
+    <div>
+      <div class="pp-title">RESULTADOS AO VIVO</div>
+      <div class="pp-meta" id="ppSessionMeta">Sessão —</div>
+    </div>
+    <div class="flex" style="flex-wrap:wrap;justify-content:flex-end">
+      <span class="timer-pill" id="ppTimer">00:00</span>
+      <button class="btn btn-sm" onclick="prevSlide()">◀</button>
+      <button class="btn btn-sm" onclick="nextSlide()">▶</button>
+      <button class="btn btn-sm btn-danger" onclick="closeParticipantProjector()">✕</button>
+    </div>
+  </div>
+  <div class="pp-body">
+    <div class="pp-card">
+      <div class="slide-type-chip" id="ppSlideType">SLIDE</div>
+      <div class="pp-question" id="ppQuestion">Aguardando slide</div>
+      <div class="pp-sub" id="ppPrompt">As respostas dos participantes aparecerão aqui.</div>
+      <div id="ppCloud" class="pp-cloud"></div>
+      <div class="pp-stats">
+        <div class="pp-stat"><div class="pp-stat-v" id="ppParticipants">0</div><div class="pp-stat-l">Participantes</div></div>
+        <div class="pp-stat"><div class="pp-stat-v" id="ppVotes">0</div><div class="pp-stat-l">Respostas no slide</div></div>
+        <div class="pp-stat"><div class="pp-stat-v" id="ppSlideIndex">0/0</div><div class="pp-stat-l">Slide atual</div></div>
+      </div>
+    </div>
+    <div class="pp-card">
+      <div class="card-title" style="margin-bottom:.75rem">Distribuição das respostas</div>
+      <div class="pp-chart-wrap">
+        <canvas id="ppChartCanvas"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
      JAVASCRIPT
 ══════════════════════════════════════════ -->
 <!-- ══════════════════════════════════════════
@@ -2082,8 +2180,8 @@ APMBB</textarea>
     <div class="proj-logo">
       <div class="proj-logo-emblem">⚔</div>
       <div>
-        <div style="font-size:clamp(.6rem,1vw,.8rem);color:var(--muted);letter-spacing:2px">CBHM 2026</div>
-        <div>CAMPEONATO BRASILEIRO DE HISTÓRIA MILITAR</div>
+        <div id="projBrandSubtitle" style="font-size:clamp(.6rem,1vw,.8rem);color:var(--muted);letter-spacing:2px">ACADEMIA MILITAR DAS AGULHAS NEGRAS</div>
+        <div id="projBrandTitle">CAMPEONATO BRASILEIRO DE HISTÓRIA MILITAR</div>
       </div>
     </div>
     <div class="proj-qnum" id="projQNum">AGUARDANDO INÍCIO</div>
@@ -2100,8 +2198,8 @@ APMBB</textarea>
     <!-- WAITING -->
     <div class="proj-waiting" id="projWaiting">
       <div class="proj-waiting-emblem">⚔</div>
-      <div class="proj-waiting-title">CBHM 2026</div>
-      <div class="proj-waiting-sub">Academia Militar das Agulhas Negras · Resende / RJ</div>
+      <div class="proj-waiting-title" id="projWaitingTitle">CAMPEONATO BRASILEIRO DE HISTÓRIA MILITAR</div>
+      <div class="proj-waiting-sub" id="projWaitingSub">Academia Militar das Agulhas Negras · Resende / RJ</div>
       <div style="display:flex;align-items:center;gap:.75rem;margin-top:1rem">
         <span class="proj-pulse-dot"></span>
         <span style="font-family:var(--fh);font-size:clamp(.7rem,1.2vw,.9rem);color:var(--muted);letter-spacing:2px">AGUARDANDO INÍCIO DA COMPETIÇÃO</span>
@@ -2152,6 +2250,15 @@ APMBB</textarea>
     <span class="proj-aman" id="projFooterRight">Res Non Verba</span>
   </div>
 
+  <!-- bonus overlay -->
+  <div id="projStreakOverlay" style="position:absolute;inset:0;z-index:50;
+       background:rgba(6,8,16,.93);backdrop-filter:blur(8px);
+       display:none;flex-direction:column;align-items:center;justify-content:center;gap:1rem">
+    <div style="font-size:clamp(3rem,8vw,6rem)">⭐</div>
+    <div class="proj-streak-text" id="projStreakText">SEQUÊNCIA BÔNUS!</div>
+    <div class="proj-streak-sub" id="projStreakSub">90 pontos conquistados</div>
+  </div>
+
   <!-- correct glow bar -->
   <div class="proj-reveal-overlay" id="projRevealBar"></div>
 </div>
@@ -2174,19 +2281,43 @@ const SCHOOLS = ['AMAN','EPCAr','EsPCEx','CN','AFA','EN','EsSA','APMBB'];
 const SCORING = { // seconds -> points
   5:30, 10:25, 15:20, 20:15, 30:10, 99:0
 };
+const BONUS_POINTS = 90;
 const QUESTION_TIME = 30;
 const CIRCUMFERENCE = 2 * Math.PI * 62; // ring radius
+const DEFAULT_LANDING_CONFIG = {
+  subtitle: 'Academia Militar das Agulhas Negras',
+  title: 'Campeonato Brasileiro de História Militar',
+  year: '2026',
+  location: 'AMAN — Resende, Rio de Janeiro',
+  schools: [...SCHOOLS],
+  logoUrl: ''
+};
 
 let adminLogged    = false;
 let questions      = [];
 let teams          = [];
-let users          = [];
 let activeSession  = null;
 let quizState      = null;  // { currentQ, timer, answers }
-let editingUserId  = null;
-let currentProfileId = null;
-let currentUserProfile = null;
 let timerInterval  = null;
+let landingConfig  = { ...DEFAULT_LANDING_CONFIG };
+let sessionSlides  = [];
+let liveChart      = null;
+let participantChart = null;
+let sessionTickInterval = null;
+let chart          = null;
+let sessionChartSignature = '';
+let participantProfile = null;
+let participantJoined = false;
+let participantVoteKey = null;
+let participantSessionLink = '';
+let dragSlideId = null;
+let touchSlideId = null;
+let touchDropTargetId = null;
+let touchDragMoved = false;
+let participantProjectorOpen = false;
+let participantProjectorChart = null;
+let participantProjectorWindow = null;
+let participantProjectorTickInterval = null;
 
 /* ════════════════════════════════
    LOCAL STORAGE (demo mode)
@@ -2194,33 +2325,187 @@ let timerInterval  = null;
 function lsGet(k){ try{ return JSON.parse(localStorage.getItem('cbhm_'+k))||null; }catch{ return null; } }
 function lsSet(k,v){ localStorage.setItem('cbhm_'+k, JSON.stringify(v)); }
 
-/* ════════════════════════════════
-   FIREBASE HELPERS
-════════════════════════════════ */
-function fb(){ return window._fbReady && window._db; }
+function esc(v=''){
+  return String(v)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
 
-async function dbSet(path,data){
-  if(fb()) await window._set(window._ref(window._db,path),data);
-  else lsSet(path.replace(/\//g,'_'),data);
+function normalizeLandingConfig(cfg = {}){
+  const schools = Array.isArray(cfg.schools) ? cfg.schools.filter(Boolean) : [...SCHOOLS];
+  return {
+    subtitle: cfg.subtitle || DEFAULT_LANDING_CONFIG.subtitle,
+    title: cfg.title || DEFAULT_LANDING_CONFIG.title,
+    year: cfg.year || DEFAULT_LANDING_CONFIG.year,
+    location: cfg.location || DEFAULT_LANDING_CONFIG.location,
+    schools: schools.length ? schools : [...SCHOOLS],
+    logoUrl: cfg.logoUrl || ''
+  };
 }
+
+/* ════════════════════════════════
+   SUPABASE HELPERS
+   Substituto direto das funções Firebase.
+   Usa uma tabela "kv" (key-value) no Supabase:
+     CREATE TABLE kv (
+       key   text PRIMARY KEY,
+       value jsonb
+     );
+   Realtime via Canal Supabase (substitui onValue).
+════════════════════════════════ */
+function sb(){ return window._sbReady && window._sb; }
+
+/* Converte path tipo "activeSession/slides" → chave "activeSession__slides" */
+function pathToKey(path){ return path.replace(/\//g,'__'); }
+
+/* GET — lê um valor pelo path */
 async function dbGet(path){
-  if(fb()){ const s=await window._get(window._ref(window._db,path)); return s.exists()?s.val():null; }
-  return lsGet(path.replace(/\//g,'_'));
+  if(!sb()) return lsGet(pathToKey(path));
+  try {
+    const key = pathToKey(path);
+    // suporte a sub-path: "activeSession/slides" → lê "activeSession" e extrai .slides
+    const parts = path.split('/');
+    const rootKey = parts[0];
+    const { data, error } = await window._sb.from('kv').select('value').eq('key', rootKey).maybeSingle();
+    if(error || !data) return null;
+    let val = data.value;
+    for(let i=1; i<parts.length; i++){ if(val==null) return null; val = val[parts[i]]; }
+    return val ?? null;
+  } catch(e){ console.warn('dbGet failed', path, e); return null; }
 }
-async function dbPush(path,data){
-  if(fb()){ const r=await window._push(window._ref(window._db,path),data); return r.key; }
-  const arr=lsGet(path.replace(/\//g,'_'))||[];
-  const id='id'+Date.now();
-  arr.push({...data,id});
-  lsSet(path.replace(/\//g,'_'),arr);
-  return id;
+
+/* SET — grava/substitui valor completo */
+async function dbSet(path, value){
+  if(!sb()){ lsSet(pathToKey(path), value); return; }
+  try {
+    const parts = path.split('/');
+    const rootKey = parts[0];
+    if(parts.length === 1){
+      // gravação direta na raiz
+      await window._sb.from('kv').upsert({ key: rootKey, value }, { onConflict: 'key' });
+    } else {
+      // sub-path: lê raiz, mescla, grava
+      const { data } = await window._sb.from('kv').select('value').eq('key', rootKey).maybeSingle();
+      let root = data?.value ?? {};
+      let cur = root;
+      for(let i=1; i<parts.length-1; i++){
+        if(cur[parts[i]]==null || typeof cur[parts[i]] !== 'object') cur[parts[i]] = {};
+        cur = cur[parts[i]];
+      }
+      cur[parts[parts.length-1]] = value;
+      await window._sb.from('kv').upsert({ key: rootKey, value: root }, { onConflict: 'key' });
+    }
+  } catch(e){ console.warn('dbSet failed', path, e); }
 }
-function dbListen(path,cb){
-  if(fb()){ window._onValue(window._ref(window._db,path),s=>cb(s.exists()?s.val():null)); }
+
+/* UPDATE — mescla campos no objeto existente */
+async function dbUpdate(path, updates){
+  if(!sb()){
+    const cur = lsGet(pathToKey(path)) || {};
+    lsSet(pathToKey(path), {...cur, ...updates});
+    return;
+  }
+  try {
+    const parts = path.split('/');
+    const rootKey = parts[0];
+    const { data } = await window._sb.from('kv').select('value').eq('key', rootKey).maybeSingle();
+    let root = data?.value ?? {};
+    let cur = root;
+    for(let i=1; i<parts.length; i++){
+      if(cur[parts[i]]==null || typeof cur[parts[i]] !== 'object') cur[parts[i]] = {};
+      if(i < parts.length-1){ cur = cur[parts[i]]; }
+      else { cur[parts[i]] = { ...(cur[parts[i]] || {}), ...updates }; }
+    }
+    if(parts.length === 1) root = { ...root, ...updates };
+    await window._sb.from('kv').upsert({ key: rootKey, value: root }, { onConflict: 'key' });
+  } catch(e){ console.warn('dbUpdate failed', path, e); }
 }
-async function dbUpdate(path,data){
-  if(fb()) await window._update(window._ref(window._db,path),data);
-  else { const cur=lsGet(path.replace(/\//g,'_'))||{}; lsSet(path.replace(/\//g,'_'),{...cur,...data}); }
+
+/* PUSH — adiciona item com ID único (equivalente ao Firebase push) */
+async function dbPush(path, data){
+  const id = 'id' + Date.now() + Math.random().toString(36).slice(2,6);
+  const item = { ...data, id };
+  if(!sb()){
+    const arr = lsGet(pathToKey(path)) || [];
+    arr.push(item);
+    lsSet(pathToKey(path), arr);
+    return id;
+  }
+  try {
+    const { data: existing } = await window._sb.from('kv').select('value').eq('key', pathToKey(path)).maybeSingle();
+    const arr = existing?.value ? (Array.isArray(existing.value) ? existing.value : Object.values(existing.value)) : [];
+    arr.push(item);
+    await window._sb.from('kv').upsert({ key: pathToKey(path), value: arr }, { onConflict: 'key' });
+    return id;
+  } catch(e){ console.warn('dbPush failed', path, e); return id; }
+}
+
+/* REMOVE — remove uma chave */
+async function dbRemove(path){
+  if(!sb()){ localStorage.removeItem('cbhm_' + pathToKey(path)); return; }
+  try {
+    const parts = path.split('/');
+    if(parts.length === 1){
+      await window._sb.from('kv').delete().eq('key', parts[0]);
+    } else {
+      await dbSet(path, null);
+    }
+  } catch(e){ console.warn('dbRemove failed', path, e); }
+}
+
+/* LISTEN — escuta mudanças em tempo real via Supabase Realtime
+   Polling a cada 2s como fallback se Realtime não estiver disponível */
+const _listeners = {};
+function dbListen(path, cb){
+  if(!sb()){
+    // modo demo: sem realtime, mas chama cb imediatamente com dados locais
+    const val = lsGet(pathToKey(path));
+    if(val !== null) cb(val);
+    return;
+  }
+  // chama imediatamente com valor atual
+  dbGet(path).then(val => cb(val));
+
+  const rootKey = path.split('/')[0];
+  const channelName = 'kv-' + rootKey;
+
+  // evita duplicar canais
+  if(_listeners[channelName]) return;
+
+  const channel = window._sb
+    .channel(channelName)
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'kv',
+      filter: `key=eq.${rootKey}`
+    }, async (payload) => {
+      const newValue = payload.new?.value ?? null;
+      // extrai sub-path se necessário
+      const parts = path.split('/');
+      let val = newValue;
+      for(let i=1; i<parts.length; i++){ if(val==null) break; val = val[parts[i]]; }
+      cb(val ?? null);
+    })
+    .subscribe((status) => {
+      if(status === 'SUBSCRIBED'){
+        console.log('🔴 Realtime ativo:', channelName);
+      } else if(status === 'CHANNEL_ERROR'){
+        // fallback: polling a cada 2s
+        console.warn('Realtime indisponível, usando polling para', path);
+        if(!_listeners[channelName + '_poll']){
+          _listeners[channelName + '_poll'] = setInterval(async()=>{
+            const val = await dbGet(path);
+            cb(val);
+          }, 2000);
+        }
+      }
+    });
+
+  _listeners[channelName] = channel;
 }
 
 /* ════════════════════════════════
@@ -2231,69 +2516,18 @@ function showScreen(id){
   document.getElementById(id).classList.add('active');
 }
 
-function canAccessTab(tab){
-  const role = currentUserProfile?.role || 'Administrador';
-  const accessMap = {
-    tabDashboard: ['Administrador','Gerente','Professor'],
-    tabLanding:   ['Administrador'],
-    tabQuestions: ['Administrador'],
-    tabUsers:     ['Administrador'],
-    tabGemini:    ['Administrador'],
-    tabTeams:     ['Administrador','Gerente'],
-    tabSession:   ['Administrador','Gerente'],
-    tabScoreboard:['Administrador','Gerente','Professor'],
-  };
-  return accessMap[tab]?.includes(role) ?? false;
-}
-
-function refreshAdminSidebar(){
-  document.querySelectorAll('#sAdmin .sidebar-item').forEach(item=>{
-    const tab = item.getAttribute('data-tab');
-    if(!tab) return;
-    item.classList.toggle('hidden', !canAccessTab(tab));
-  });
-}
-
-function selectDefaultAdminTab(){
-  const validItem = Array.from(document.querySelectorAll('#sAdmin .sidebar-item'))
-    .find(item => !item.classList.contains('hidden') && item.getAttribute('data-tab'));
-  if(validItem){
-    adminTab(validItem, validItem.getAttribute('data-tab'));
-  }
-}
-
-function renderAdminHeader(){
-  const roleBadge = document.getElementById('adminRoleBadge');
-  const userLabel = document.getElementById('adminUserLabel');
-  if(roleBadge){
-    const role = currentUserProfile?.role || 'Administrador';
-    roleBadge.textContent = role === 'Administrador'
-      ? 'Painel do Administrador'
-      : role === 'Gerente'
-        ? 'Painel do Gerente'
-        : 'Painel do Professor';
-  }
-  if(userLabel){
-    userLabel.textContent = currentUserProfile?.name ? `Olá, ${currentUserProfile.name}` : 'Olá, usuário';
-  }
-}
-
 function adminTab(el, tab){
-  if(!canAccessTab(tab)){
-    toast('Acesso negado. Seu perfil não tem permissão para esta área.','err');
-    return;
-  }
   document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
   el.classList.add('active');
   document.querySelectorAll('#sAdmin .admin-content > div').forEach(d=>d.classList.add('hidden'));
   document.getElementById(tab).classList.remove('hidden');
-  if(tab==='tabQuestions')  renderQuestions();
-  if(tab==='tabUsers')      renderUsers();
-  if(tab==='tabTeams')      renderTeams();
+  if(tab==='tabQuestions') renderQuestions();
+  if(tab==='tabTeams') renderTeams();
   if(tab==='tabScoreboard') renderAdminScoreboard();
-  if(tab==='tabDashboard')  refreshDashboard();
-  if(tab==='tabGemini')     loadGeminiKey();
-  if(tab==='tabLanding')    { loadLandingConfig(); fillLandingForm(); }
+  if(tab==='tabDashboard') refreshDashboard();
+  if(tab==='tabGemini') loadGeminiKey();
+  if(tab==='tabLanding') fillLandingConfigForm();
+  if(tab==='tabSession'){ syncSlideForm(); renderSlideDeck(); renderSessionDashboard(); }
 }
 
 /* ════════════════════════════════
@@ -2305,99 +2539,31 @@ function openLogin(){ openOverlay('loginOverlay'); }
 function openJoinTeam(){ openOverlay('joinOverlay'); }
 
 /* ════════════════════════════════
-   AUTH — Firebase Authentication
+   AUTH
 ════════════════════════════════ */
-async function doLogin(){
-  const email  = document.getElementById('loginUser').value.trim();
-  const pass   = document.getElementById('loginPass').value;
-  const errEl  = document.getElementById('loginErr');
-  const loadEl = document.getElementById('loginLoading');
-  const btnEl  = document.getElementById('loginBtn');
+// Credentials stored in Firebase or local fallback
+const CREDENTIALS = { admin:'cbhm2026' }; // change in production!
 
+function doLogin(){
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginErr');
   errEl.classList.add('hidden');
 
-  if(!email || !pass){
-    errEl.textContent = 'Preencha e-mail e senha.';
-    errEl.classList.remove('hidden');
-    return;
-  }
-
-  /* ── Firebase Auth ── */
-  if(window._signIn){
-    loadEl.classList.remove('hidden');
-    btnEl.disabled = true;
-    try {
-      const cred = await window._signIn(email, pass);
-      window._currentUser = cred.user;
-
-      const isAdmin = await dbGet('admins/' + cred.user.uid);
-      await loadUsers();
-      const profile = users.find(u=>u.uid===cred.user.uid || u.id===cred.user.uid || u.email?.toLowerCase()===email.toLowerCase());
-
-      if(!isAdmin && !profile){
-        await window._signOut();
-        window._currentUser = null;
-        throw new Error('Seu usuário não está cadastrado como administrador ou perfil interno. Contate o responsável.');
-      }
-
-      currentUserProfile = profile
-        ? { ...profile, uid: cred.user.uid, email: cred.user.email || email }
-        : { id: cred.user.uid, uid: cred.user.uid, role:'Administrador', rank:'Administrador', name: cred.user.displayName || '', email: cred.user.email || email, discipline:'', password:'' };
-
-      if(profile && !profile.uid){
-        profile.uid = cred.user.uid;
-        if(fb()) await dbSet('users/'+profile.id, profile);
-      }
-
-      if(isAdmin && !profile){
-        users.push(currentUserProfile);
-        if(fb()) await dbSet('users/'+currentUserProfile.id, currentUserProfile);
-      }
-
-      loadEl.classList.add('hidden');
-      btnEl.disabled = false;
-      adminLogged = true;
-      closeOverlay('loginOverlay');
-      showScreen('sAdmin');
-      loadAdminData();
-      toast('Bem-vindo, ' + (currentUserProfile.name || email) + '!', 'ok');
-
-    } catch(e){
-      loadEl.classList.add('hidden');
-      btnEl.disabled = false;
-      const msg = {
-        'auth/invalid-email':          'E-mail inválido.',
-        'auth/user-not-found':         'Usuário não encontrado.',
-        'auth/wrong-password':         'Senha incorreta.',
-        'auth/invalid-credential':     'E-mail ou senha incorretos.',
-        'auth/too-many-requests':      'Muitas tentativas. Aguarde alguns minutos.',
-        'auth/network-request-failed': 'Erro de rede. Verifique sua conexão.',
-      }[e.code] || e.message;
-      errEl.textContent = msg;
-      errEl.classList.remove('hidden');
-    }
-    return;
-  }
-
-  /* ── Demo mode fallback (sem Firebase) ── */
-  if(pass === 'cbhm2026'){
+  if(CREDENTIALS[u]===p){
     adminLogged = true;
-    currentUserProfile = { id:'demo', uid:'demo', role:'Administrador', rank:'Administrador', name:'Demo Admin', email, discipline:'', password:'' };
     closeOverlay('loginOverlay');
     showScreen('sAdmin');
     loadAdminData();
-    toast('Modo demo — bem-vindo!', 'ok');
+    toast('Bem-vindo, '+u+'!','ok');
   } else {
-    errEl.textContent = 'Senha incorreta. Em modo demo use: cbhm2026';
+    errEl.textContent='Credenciais inválidas. Tente novamente.';
     errEl.classList.remove('hidden');
   }
 }
 
-async function logout(){
-  if(window._signOut) await window._signOut().catch(()=>{});
-  window._currentUser = null;
+function logout(){
   adminLogged = false;
-  currentUserProfile = null;
   showScreen('sLanding');
 }
 
@@ -2405,29 +2571,1001 @@ async function logout(){
    LOAD ADMIN DATA
 ════════════════════════════════ */
 async function loadAdminData(){
-  // Load landing config first (from Firebase or localStorage)
-  const lcData = await dbGet('config/landing');
-  if(lcData) { landingCfg = { ...LP_DEFAULTS, ...lcData }; }
-  else        { loadLandingConfig(); }   // fallback to localStorage
-  applyLandingConfig();
+  await loadLandingConfig();
+  loadSessionSlidesDraft();
 
   // Load questions
   const qData = await dbGet('questions');
   questions = qData ? (Array.isArray(qData)?qData:Object.entries(qData).map(([id,v])=>({...v,id}))) : getSampleQuestions();
-  if(!qData) { for(const q of questions) await dbPush('questions',q); }
+  if(!qData) {
+    /* first run: salva questões de exemplo */
+    if(sb()) await window._sb.from('kv').upsert({ key:'questions', value: questions }, { onConflict:'key' });
+    else lsSet('questions', questions);
+  }
 
   // Load teams
   const tData = await dbGet('teams');
   teams = tData ? (Array.isArray(tData)?tData:Object.entries(tData).map(([id,v])=>({...v,id}))) : [];
 
   // Listen to active session
-  dbListen('activeSession', data=>{ activeSession=data; updateSessionUI(); });
+  dbListen('activeSession', data=>{
+    activeSession = data || null;
+    if(activeSession?.slides?.length){
+      sessionSlides = activeSession.slides.map(normalizeSlide);
+    }
+    updateSessionUI();
+    renderParticipantMode();
+  });
 
-  await loadUsers();
-  refreshAdminSidebar();
-  renderAdminHeader();
-  selectDefaultAdminTab();
   refreshDashboard();
+}
+
+async function loadLandingConfig(){
+  const cfg = await dbGet('settings/landing');
+  landingConfig = normalizeLandingConfig(cfg || {});
+  applyLandingConfig();
+}
+
+function applyLandingConfig(){
+  document.getElementById('landingSubtitle').textContent = landingConfig.subtitle;
+  document.getElementById('landingYear').textContent = landingConfig.year;
+  document.getElementById('landingLoc').textContent = landingConfig.location;
+
+  document.getElementById('landingTitle').innerHTML = esc(landingConfig.title).replace(/\n/g,'<br>');
+
+  const schoolsEl = document.getElementById('landingSchoolsGrid');
+  schoolsEl.innerHTML = landingConfig.schools.map(s=>`<span class="school-badge">${esc(s)}</span>`).join('');
+
+  const logoImg = document.getElementById('landingLogoImg');
+  const logoFallback = document.getElementById('landingLogoFallback');
+  if(landingConfig.logoUrl){
+    logoImg.src = landingConfig.logoUrl;
+    logoImg.classList.remove('hidden');
+    logoFallback.classList.add('hidden');
+  } else {
+    logoImg.removeAttribute('src');
+    logoImg.classList.add('hidden');
+    logoFallback.classList.remove('hidden');
+  }
+
+  syncTopNavLogo('adminNavLogoImg', 'adminNavLogoText');
+  syncTopNavLogo('scoreNavLogoImg', 'scoreNavLogoText');
+  syncTopNavLogo('participantNavLogoImg', 'participantNavLogoText');
+
+  const projBrandSubtitle = document.getElementById('projBrandSubtitle');
+  const projBrandTitle = document.getElementById('projBrandTitle');
+  const projWaitingTitle = document.getElementById('projWaitingTitle');
+  const projWaitingSub = document.getElementById('projWaitingSub');
+  if(projBrandSubtitle) projBrandSubtitle.textContent = landingConfig.subtitle.toUpperCase();
+  if(projBrandTitle) projBrandTitle.textContent = landingConfig.title.toUpperCase();
+  if(projWaitingTitle) projWaitingTitle.textContent = landingConfig.title.toUpperCase();
+  if(projWaitingSub) projWaitingSub.textContent = `${landingConfig.subtitle} · ${landingConfig.location}`;
+
+  document.title = `CBHM ${landingConfig.year} — Campeonato Brasileiro de História Militar`;
+}
+
+function syncTopNavLogo(imgId, textId){
+  const logoImg = document.getElementById(imgId);
+  const logoText = document.getElementById(textId);
+  if(!logoImg || !logoText) return;
+
+  if(landingConfig.logoUrl){
+    logoImg.src = landingConfig.logoUrl;
+    logoImg.classList.remove('hidden');
+    logoText.classList.add('hidden');
+  } else {
+    logoImg.removeAttribute('src');
+    logoImg.classList.add('hidden');
+    logoText.classList.remove('hidden');
+  }
+}
+
+function fillLandingConfigForm(){
+  document.getElementById('lpSubtitle').value = landingConfig.subtitle;
+  document.getElementById('lpTitle').value = landingConfig.title;
+  document.getElementById('lpYear').value = landingConfig.year;
+  document.getElementById('lpLoc').value = landingConfig.location;
+  document.getElementById('lpSchools').value = (landingConfig.schools || []).join(', ');
+  document.getElementById('lpLogoUrl').value = landingConfig.logoUrl || '';
+
+  const prev = document.getElementById('lpLogoPreview');
+  if(landingConfig.logoUrl){
+    prev.src = landingConfig.logoUrl;
+    prev.classList.remove('hidden');
+  } else {
+    prev.classList.add('hidden');
+    prev.removeAttribute('src');
+  }
+}
+
+async function fileToDataUrl(fileInputId){
+  const input = document.getElementById(fileInputId);
+  const file = input?.files?.[0];
+  if(!file) return '';
+
+  return await new Promise((resolve,reject)=>{
+    const fr = new FileReader();
+    fr.onload = ()=>resolve(String(fr.result || ''));
+    fr.onerror = reject;
+    fr.readAsDataURL(file);
+  });
+}
+
+function previewLandingLogoFile(){
+  const input = document.getElementById('lpLogoFile');
+  const file = input?.files?.[0];
+  const prev = document.getElementById('lpLogoPreview');
+  if(!file){ prev.classList.add('hidden'); prev.removeAttribute('src'); return; }
+
+  const fr = new FileReader();
+  fr.onload = ()=>{
+    prev.src = String(fr.result || '');
+    prev.classList.remove('hidden');
+  };
+  fr.readAsDataURL(file);
+}
+
+async function saveLandingConfigFromAdmin(){
+  let logoUrl = document.getElementById('lpLogoUrl').value.trim();
+  const uploadedLogo = await fileToDataUrl('lpLogoFile');
+  if(uploadedLogo) logoUrl = uploadedLogo;
+
+  const schoolsRaw = document.getElementById('lpSchools').value;
+  const schools = schoolsRaw
+    .split(/[,\n]/)
+    .map(s=>s.trim())
+    .filter(Boolean);
+
+  const cfg = normalizeLandingConfig({
+    subtitle: document.getElementById('lpSubtitle').value.trim(),
+    title: document.getElementById('lpTitle').value.trim(),
+    year: document.getElementById('lpYear').value.trim(),
+    location: document.getElementById('lpLoc').value.trim(),
+    schools,
+    logoUrl
+  });
+
+  landingConfig = cfg;
+  await dbSet('settings/landing', cfg);
+  applyLandingConfig();
+  fillLandingConfigForm();
+  document.getElementById('lpLogoFile').value = '';
+  toast('Página Principal atualizada com sucesso','ok');
+}
+
+async function resetLandingConfig(){
+  landingConfig = { ...DEFAULT_LANDING_CONFIG };
+  await dbSet('settings/landing', landingConfig);
+  applyLandingConfig();
+  fillLandingConfigForm();
+  document.getElementById('lpLogoFile').value = '';
+  toast('Configuração padrão restaurada','ok');
+}
+
+/* ════════════════════════════════
+   SESSION SLIDES / PARTICIPANT MODE
+════════════════════════════════ */
+function slideTypeLabel(type){
+  return {
+    multiple:'Múltipla escolha',
+    wordcloud:'Nuvem de palavras',
+    stars:'Avaliação com estrelas',
+    open:'Pergunta aberta',
+    scale:'Escala'
+  }[type] || 'Slide';
+}
+
+function getDefaultSlides(templateKey='institucional'){
+  const now = Date.now();
+  const templates = {
+    institucional: [
+      { id:'slide-'+now+'-1', type:'multiple', title:'Abertura do evento', prompt:'Qual tema mais representa esta edição?', options:['Liderança','Inovação','História','Cultura'] },
+      { id:'slide-'+now+'-2', type:'wordcloud', title:'Palavra-chave', prompt:'Digite uma palavra para representar sua expectativa do evento.' },
+      { id:'slide-'+now+'-3', type:'stars', title:'Avaliação da abertura', prompt:'Como você avalia o início da programação?', maxStars:5 },
+      { id:'slide-'+now+'-4', type:'open', title:'Mensagem aberta', prompt:'Deixe um comentário para a organização.' },
+      { id:'slide-'+now+'-5', type:'scale', title:'Relevância percebida', prompt:'A programação está alinhada com suas expectativas?', min:1, max:5, leftLabel:'Pouco alinhada', rightLabel:'Muito alinhada' },
+    ],
+    academico: [
+      { id:'slide-'+now+'-1', type:'multiple', title:'Checkpoint de conteúdo', prompt:'Qual bloco foi mais claro até agora?', options:['Contexto histórico','Estudos de caso','Estratégias','Discussão'] },
+      { id:'slide-'+now+'-2', type:'scale', title:'Nível de dificuldade', prompt:'Como você classifica a dificuldade do conteúdo?', min:1, max:5, leftLabel:'Fácil', rightLabel:'Desafiador' },
+      { id:'slide-'+now+'-3', type:'wordcloud', title:'Conceitos-chave', prompt:'Qual conceito você considera mais importante?' },
+      { id:'slide-'+now+'-4', type:'open', title:'Dúvidas abertas', prompt:'Escreva uma dúvida para o instrutor responder.' },
+      { id:'slide-'+now+'-5', type:'stars', title:'Ritmo da aula', prompt:'Como você avalia o ritmo da condução?', maxStars:5 },
+    ],
+    feedback: [
+      { id:'slide-'+now+'-1', type:'stars', title:'Satisfação geral', prompt:'Qual sua nota para o evento?', maxStars:5 },
+      { id:'slide-'+now+'-2', type:'multiple', title:'Ponto forte', prompt:'O que mais agregou valor?', options:['Conteúdo','Interação','Organização','Infraestrutura'] },
+      { id:'slide-'+now+'-3', type:'scale', title:'Recomendação', prompt:'Qual a chance de recomendar este evento?', min:1, max:10, leftLabel:'Baixa', rightLabel:'Alta' },
+      { id:'slide-'+now+'-4', type:'wordcloud', title:'Sentimento final', prompt:'Resuma o evento em uma palavra.' },
+      { id:'slide-'+now+'-5', type:'open', title:'Sugestões', prompt:'O que podemos melhorar na próxima edição?' },
+    ],
+  };
+  return templates[templateKey] || templates.institucional;
+}
+
+function normalizeSlide(slide){
+  return {
+    id: slide.id || 'slide-'+Date.now(),
+    type: slide.type || 'multiple',
+    title: slide.title || 'Novo slide',
+    prompt: slide.prompt || '',
+    options: Array.isArray(slide.options) ? slide.options.filter(Boolean) : [],
+    min: Number(slide.min || 1),
+    max: Number(slide.max || 5),
+    leftLabel: slide.leftLabel || 'Menor',
+    rightLabel: slide.rightLabel || 'Maior',
+    maxStars: Number(slide.maxStars || 5),
+  };
+}
+
+function loadSessionSlidesFromActive(){
+  const stored = activeSession?.slides;
+  if(Array.isArray(stored) && stored.length){
+    sessionSlides = stored.map(normalizeSlide);
+  } else if(!sessionSlides.length){
+    sessionSlides = getDefaultSlides('institucional').map(normalizeSlide);
+  }
+  localStorage.setItem('cbhm_session_slides', JSON.stringify(sessionSlides));
+  renderSlideDeck();
+}
+
+function loadSessionSlidesDraft(){
+  const draft = lsGet('session_slides');
+  if(Array.isArray(draft) && draft.length){
+    sessionSlides = draft.map(normalizeSlide);
+  } else if(!sessionSlides.length){
+    sessionSlides = getDefaultSlides('institucional').map(normalizeSlide);
+  }
+  renderSlideDeck();
+}
+
+async function saveSessionSlidesDraft(){
+  lsSet('session_slides', sessionSlides);
+  if(activeSession?.active){
+    const normalized = sessionSlides.map(normalizeSlide);
+    activeSession.slides = normalized;
+    await dbSet('activeSession/slides', normalized);
+  }
+  toast('Rascunho dos slides salvo','ok');
+}
+
+function loadDefaultSlides(){
+  sessionSlides = getDefaultSlides('institucional').map(normalizeSlide);
+  saveSessionSlidesDraft();
+  renderSlideDeck();
+  toast('Slides de exemplo carregados','ok');
+}
+
+function applySlideTemplate(){
+  const key = document.getElementById('slideTemplatePreset')?.value || 'institucional';
+  sessionSlides = getDefaultSlides(key).map(normalizeSlide);
+  saveSessionSlidesDraft();
+  renderSlideDeck();
+  toast('Template de slides aplicado','ok');
+}
+
+function syncSlideForm(){
+  const type = document.getElementById('slideType').value;
+  document.getElementById('slideOptionsField').classList.toggle('hidden', !(type==='multiple' || type==='wordcloud'));
+  document.getElementById('slideScaleField').classList.toggle('hidden', type!=='scale');
+  document.getElementById('slideStarsField').classList.toggle('hidden', type!=='stars');
+}
+
+function addSlideFromForm(){
+  const type = document.getElementById('slideType').value;
+  const title = document.getElementById('slideTitle').value.trim();
+  const prompt = document.getElementById('slidePrompt').value.trim();
+  const optionsRaw = document.getElementById('slideOptions').value.trim();
+  const slide = { id:'slide-'+Date.now(), type, title, prompt };
+
+  if(type==='multiple' || type==='wordcloud'){
+    slide.options = optionsRaw.split(/[\n,]/).map(s=>s.trim()).filter(Boolean);
+  }
+  if(type==='scale'){
+    slide.min = +document.getElementById('slideScaleMin').value || 1;
+    slide.max = +document.getElementById('slideScaleMax').value || 5;
+    slide.leftLabel = document.getElementById('slideScaleLeft').value.trim() || 'Menor';
+    slide.rightLabel = document.getElementById('slideScaleRight').value.trim() || 'Maior';
+  }
+  if(type==='stars'){
+    slide.maxStars = +document.getElementById('slideStarsMax').value || 5;
+  }
+
+  if(!title || !prompt){ toast('Preencha título e enunciado do slide','err'); return; }
+  if(type==='multiple' && slide.options.length<2){ toast('Informe ao menos 2 opções','err'); return; }
+
+  sessionSlides.push(normalizeSlide(slide));
+  saveSessionSlidesDraft();
+  renderSlideDeck();
+  toast('Slide adicionado','ok');
+}
+
+function deleteSlide(id){
+  sessionSlides = sessionSlides.filter(s=>s.id!==id);
+  saveSessionSlidesDraft();
+  renderSlideDeck();
+}
+
+function moveSlide(id, dir){
+  const idx = sessionSlides.findIndex(s=>s.id===id);
+  const target = idx + dir;
+  if(idx<0 || target<0 || target>=sessionSlides.length) return;
+  const item = sessionSlides.splice(idx,1)[0];
+  sessionSlides.splice(target,0,item);
+  saveSessionSlidesDraft();
+  renderSlideDeck();
+}
+
+function reorderSlidesById(sourceId, targetId){
+  if(!sourceId || !targetId || sourceId===targetId) return;
+  const from = sessionSlides.findIndex(s=>s.id===sourceId);
+  const to = sessionSlides.findIndex(s=>s.id===targetId);
+  if(from<0 || to<0) return;
+  const [item] = sessionSlides.splice(from,1);
+  sessionSlides.splice(to,0,item);
+  saveSessionSlidesDraft();
+  renderSlideDeck();
+}
+
+function onSlideDragStart(event, slideId){
+  dragSlideId = slideId;
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/plain', slideId);
+  event.currentTarget.classList.add('dragging');
+}
+
+function onSlideDragOver(event){
+  event.preventDefault();
+  event.currentTarget.classList.add('drop-target');
+}
+
+function onSlideDragLeave(event){
+  event.currentTarget.classList.remove('drop-target');
+}
+
+function onSlideDrop(event, targetId){
+  event.preventDefault();
+  event.currentTarget.classList.remove('drop-target');
+  const sourceId = dragSlideId || event.dataTransfer.getData('text/plain');
+  reorderSlidesById(sourceId, targetId);
+}
+
+function onSlideDragEnd(event){
+  dragSlideId = null;
+  document.querySelectorAll('.slide-row').forEach(el=>el.classList.remove('dragging','drop-target'));
+}
+
+function onSlideTouchStart(event, slideId){
+  if(event.target?.closest('button')) return;
+  if(event.touches.length !== 1) return;
+  touchSlideId = slideId;
+  touchDropTargetId = null;
+  touchDragMoved = false;
+  event.currentTarget.classList.add('dragging');
+}
+
+function onSlideTouchMove(event){
+  if(!touchSlideId) return;
+  touchDragMoved = true;
+  const touch = event.touches[0];
+  const target = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.slide-row');
+  document.querySelectorAll('.slide-row').forEach(el=>el.classList.remove('drop-target'));
+  if(target){
+    touchDropTargetId = target.getAttribute('data-slide-id') || null;
+    if(touchDropTargetId && touchDropTargetId !== touchSlideId){
+      target.classList.add('drop-target');
+    }
+  }
+  event.preventDefault();
+}
+
+function onSlideTouchEnd(event, fallbackTargetId){
+  if(!touchSlideId) return;
+  const sourceId = touchSlideId;
+  const targetId = touchDropTargetId || fallbackTargetId;
+  touchSlideId = null;
+  touchDropTargetId = null;
+  document.querySelectorAll('.slide-row').forEach(el=>el.classList.remove('dragging','drop-target'));
+  if(targetId && targetId !== sourceId){
+    reorderSlidesById(sourceId, targetId);
+  }
+  if(touchDragMoved){
+    event.preventDefault();
+  }
+  touchDragMoved = false;
+}
+
+function onSlideTouchCancel(){
+  touchSlideId = null;
+  touchDropTargetId = null;
+  touchDragMoved = false;
+  document.querySelectorAll('.slide-row').forEach(el=>el.classList.remove('dragging','drop-target'));
+}
+
+function editSlide(id){
+  const slide = sessionSlides.find(s=>s.id===id);
+  if(!slide) return;
+  const title = prompt('Título do slide:', slide.title);
+  if(title===null) return;
+  const promptText = prompt('Enunciado / prompt:', slide.prompt);
+  if(promptText===null) return;
+
+  slide.title = title.trim();
+  slide.prompt = promptText.trim();
+  if(slide.type==='multiple' || slide.type==='wordcloud'){
+    const options = prompt('Opções separadas por vírgula:', (slide.options||[]).join(', '));
+    if(options===null) return;
+    slide.options = options.split(/[\n,]/).map(s=>s.trim()).filter(Boolean);
+  }
+  if(slide.type==='scale'){
+    slide.min = +prompt('Valor mínimo:', String(slide.min || 1)) || 1;
+    slide.max = +prompt('Valor máximo:', String(slide.max || 5)) || 5;
+    slide.leftLabel = prompt('Rótulo esquerdo:', slide.leftLabel || 'Menor') || slide.leftLabel;
+    slide.rightLabel = prompt('Rótulo direito:', slide.rightLabel || 'Maior') || slide.rightLabel;
+  }
+  if(slide.type==='stars'){
+    slide.maxStars = +prompt('Quantidade máxima de estrelas:', String(slide.maxStars || 5)) || 5;
+  }
+  saveSessionSlidesDraft();
+  renderSlideDeck();
+}
+
+function renderSlideDeck(){
+  const el = document.getElementById('slideList');
+  if(!el) return;
+  if(!sessionSlides.length){
+    el.innerHTML = '<p style="color:var(--muted);font-style:italic">Nenhum slide cadastrado ainda. Use o formulário acima.</p>';
+    return;
+  }
+  const currentIndex = activeSession?.currentSlideIndex ?? 0;
+  el.innerHTML = sessionSlides.map((slide,i)=>`
+    <div class="slide-row ${i===currentIndex && activeSession?.active ? 'active' : ''}" data-slide-id="${slide.id}" draggable="true"
+      ondragstart="onSlideDragStart(event,'${slide.id}')"
+      ondragover="onSlideDragOver(event)"
+      ondragleave="onSlideDragLeave(event)"
+      ondrop="onSlideDrop(event,'${slide.id}')"
+      ondragend="onSlideDragEnd(event)"
+      ontouchstart="onSlideTouchStart(event,'${slide.id}')"
+      ontouchmove="onSlideTouchMove(event)"
+      ontouchend="onSlideTouchEnd(event,'${slide.id}')"
+      ontouchcancel="onSlideTouchCancel()">
+      <div>
+        <div class="slide-type-chip">${slideTypeLabel(slide.type)}</div>
+        <div class="slide-title">${esc(slide.title)}</div>
+        <div class="slide-sub">${esc(slide.prompt)}</div>
+      </div>
+      <div class="slide-actions">
+        <button class="btn btn-sm" onclick="moveSlide('${slide.id}',-1)">↑</button>
+        <button class="btn btn-sm" onclick="moveSlide('${slide.id}',1)">↓</button>
+        <button class="btn btn-sm" onclick="editSlide('${slide.id}')">✏</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteSlide('${slide.id}')">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function ensureSessionDeck(){
+  if(!sessionSlides.length){
+    sessionSlides = getDefaultSlides('institucional').map(normalizeSlide);
+  }
+  return sessionSlides;
+}
+
+function getCurrentSlide(){
+  const slides = activeSession?.slides?.length ? activeSession.slides.map(normalizeSlide) : sessionSlides;
+  if(!slides.length) return null;
+  const index = Math.max(0, Math.min(activeSession?.currentSlideIndex ?? 0, slides.length-1));
+  return slides[index];
+}
+
+function getSlideResponses(slideId){
+  return activeSession?.responses?.[slideId] || {};
+}
+
+function countResponses(slide){
+  const responses = Object.values(getSlideResponses(slide.id));
+  const counts = new Map();
+  for(const response of responses){
+    const value = response?.value ?? response;
+    const key = String(value);
+    counts.set(key, (counts.get(key)||0)+1);
+  }
+  return counts;
+}
+
+function formatDuration(sec){
+  const total = Math.max(0, Math.floor(sec));
+  const minutes = String(Math.floor(total/60)).padStart(2,'0');
+  const seconds = String(total%60).padStart(2,'0');
+  return `${minutes}:${seconds}`;
+}
+
+function getSessionRemainingSeconds(){
+  if(!activeSession?.active) return 0;
+  const duration = Number(activeSession.durationSec || 0);
+  const elapsed = Math.floor((Date.now() - Number(activeSession.startedAt || Date.now()))/1000);
+  return Math.max(0, duration - elapsed);
+}
+
+function startSessionTicker(){
+  clearInterval(sessionTickInterval);
+  sessionTickInterval = setInterval(()=>{
+    if(!activeSession?.active) return;
+    renderSessionDashboard();
+    renderParticipantMode();
+    if(getSessionRemainingSeconds()<=0){
+      endSession(true);
+    }
+  },1000);
+}
+
+function renderSessionDashboard(){
+  if(!activeSession){ return; }
+  const participants = activeSession.participants ? Object.keys(activeSession.participants).length : 0;
+  const slides = activeSession.slides?.length || sessionSlides.length || 0;
+  const current = (activeSession.currentSlideIndex ?? 0) + (slides ? 1 : 0);
+
+  const timerEl = document.getElementById('sessionTimerVal');
+  const participantEl = document.getElementById('sessionParticipantVal');
+  const slideEl = document.getElementById('sessionSlideVal');
+  const pinEl = document.getElementById('sessionPinVal');
+  if(timerEl) timerEl.textContent = formatDuration(getSessionRemainingSeconds());
+  if(participantEl) participantEl.textContent = String(participants);
+  if(slideEl) slideEl.textContent = `${current || 0}/${slides || 0}`;
+  if(pinEl) pinEl.textContent = activeSession.pin || '—';
+
+  const cardCode = document.getElementById('activeSesCode');
+  if(cardCode) cardCode.textContent = `${slides} slides · ${participants} participantes · PIN ${activeSession.pin || '—'}`;
+
+  const qrBox = document.getElementById('sessionQrCode');
+  if(qrBox){
+    const joinUrl = buildParticipantJoinUrl();
+    if(joinUrl && joinUrl !== participantSessionLink){
+      participantSessionLink = joinUrl;
+      qrBox.innerHTML = '';
+      if(window.QRCode){
+        new QRCode(qrBox, { text: joinUrl, width: 200, height: 200, colorDark: '#111111', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+      } else {
+        qrBox.textContent = joinUrl;
+      }
+    }
+  }
+
+  renderSlideDeck();
+  updateLiveChart();
+  renderParticipantProjector();
+}
+
+async function setSessionSlideIndex(index){
+  if(!activeSession?.active){ toast('Inicie uma sessão para navegar pelos slides','err'); return; }
+  const slides = activeSession.slides?.length ? activeSession.slides : sessionSlides;
+  if(!slides.length){ toast('Nenhum slide cadastrado','err'); return; }
+  const nextIndex = Math.max(0, Math.min(index, slides.length - 1));
+  activeSession.currentSlideIndex = nextIndex;
+  await dbUpdate('activeSession/currentSlideIndex', nextIndex);
+  renderSessionDashboard();
+  renderParticipantMode();
+}
+
+function nextSlide(){
+  setSessionSlideIndex((activeSession?.currentSlideIndex ?? 0) + 1);
+}
+
+function prevSlide(){
+  setSessionSlideIndex((activeSession?.currentSlideIndex ?? 0) - 1);
+}
+
+function buildParticipantJoinUrl(){
+  if(!activeSession?.code || !activeSession?.pin) return '';
+  const url = new URL(location.href);
+  url.searchParams.set('participant','1');
+  url.searchParams.set('code', activeSession.code);
+  url.searchParams.set('pin', activeSession.pin);
+  return url.toString();
+}
+
+function generateSessionPin(){
+  return String(Math.floor(100000 + Math.random()*900000));
+}
+
+function openParticipantHub(){
+  showScreen('sParticipant');
+  const params = new URLSearchParams(location.search);
+  if(params.get('code')) document.getElementById('participantCodeInput').value = params.get('code').toUpperCase();
+  if(params.get('pin')) document.getElementById('participantPinInput').value = params.get('pin').toUpperCase();
+  const stored = lsGet('participant_profile');
+  if(stored && activeSession?.active && stored.code === activeSession.code && String(stored.pin) === String(activeSession.pin)){
+    participantProfile = stored;
+    participantJoined = true;
+    document.getElementById('participantNameInput').value = stored.name || '';
+    document.getElementById('participantCodeInput').value = stored.code || document.getElementById('participantCodeInput').value;
+    document.getElementById('participantPinInput').value = stored.pin || document.getElementById('participantPinInput').value;
+    document.getElementById('participantJoinPanel').classList.add('hidden');
+    document.getElementById('participantLivePanel').classList.remove('hidden');
+  } else {
+    participantJoined = false;
+  }
+  renderParticipantMode();
+}
+
+async function joinParticipantSession(){
+  const name = document.getElementById('participantNameInput').value.trim();
+  const code = document.getElementById('participantCodeInput').value.trim().toUpperCase();
+  const pin  = document.getElementById('participantPinInput').value.trim().toUpperCase();
+  if(!name || !code || !pin){ toast('Preencha nome, código e PIN','err'); return; }
+  if(!activeSession || !activeSession.active || activeSession.code !== code || String(activeSession.pin) !== String(pin)){
+    toast('Código ou PIN inválido','err'); return;
+  }
+
+  const participantId = lsGet('participant_id') || 'p'+Date.now();
+  participantProfile = { id: participantId, name, code, pin };
+  participantJoined = true;
+  lsSet('participant_id', participantId);
+  lsSet('participant_profile', participantProfile);
+
+  activeSession.participants = activeSession.participants || {};
+  activeSession.participants[participantId] = { name, joinedAt: Date.now() };
+  await dbUpdate('activeSession/participants/'+participantId, { name, joinedAt: Date.now() });
+  document.getElementById('participantJoinPanel').classList.add('hidden');
+  document.getElementById('participantLivePanel').classList.remove('hidden');
+  renderParticipantMode();
+  toast('Você entrou na sessão','ok');
+}
+
+function renderParticipantMode(){
+  if(!document.getElementById('sParticipant')) return;
+  const joinedPanel = document.getElementById('participantJoinPanel');
+  const livePanel = document.getElementById('participantLivePanel');
+  const joined = participantJoined && activeSession?.active;
+  if(joinedPanel) joinedPanel.classList.toggle('hidden', joined);
+  if(livePanel) livePanel.classList.toggle('hidden', !joined);
+
+  if(!joined){ return; }
+  const slide = getCurrentSlide();
+  const myResponse = (slide && participantProfile) ? getSlideResponses(slide.id)[participantProfile.id] : null;
+  participantVoteKey = (myResponse && myResponse.value !== undefined) ? String(myResponse.value) : null;
+  document.getElementById('participantSessionCode').textContent = `SESSÃO ${activeSession.code}`;
+  document.getElementById('participantNameLabel').textContent = participantProfile?.name || 'Participante';
+  document.getElementById('participantTimer').textContent = formatDuration(getSessionRemainingSeconds());
+  document.getElementById('participantCount').textContent = `${activeSession.participants ? Object.keys(activeSession.participants).length : 0} participantes`;
+  document.getElementById('participantLiveStatus').textContent = slide ? `Tipo atual: ${slideTypeLabel(slide.type)}` : 'Aguardando slide';
+  document.getElementById('participantVoteState').textContent = participantVoteKey ? `Você votou: ${participantVoteKey}` : 'Sem voto';
+
+  if(!slide){
+    document.getElementById('participantSlideMeta').textContent = 'SEM SLIDE ATIVO';
+    document.getElementById('participantSlideTitle').textContent = 'Aguardando conteúdo';
+    document.getElementById('participantSlidePrompt').textContent = 'O administrador ainda não iniciou os slides.';
+    document.getElementById('participantAnswerArea').innerHTML = '';
+    updateParticipantChart();
+    return;
+  }
+
+  document.getElementById('participantSlideMeta').textContent = slideTypeLabel(slide.type).toUpperCase();
+  document.getElementById('participantSlideTitle').textContent = slide.title;
+  document.getElementById('participantSlidePrompt').textContent = slide.prompt;
+  renderParticipantAnswerArea(slide);
+  updateParticipantChart();
+}
+
+function renderParticipantAnswerArea(slide){
+  const target = document.getElementById('participantAnswerArea');
+  const myResponse = participantProfile ? getSlideResponses(slide.id)[participantProfile.id] : null;
+  if(!target) return;
+
+  if(slide.type==='multiple'){
+    target.innerHTML = `<div class="vote-grid">${(slide.options||[]).map((option, index)=>`<button class="vote-btn ${myResponse?.value===option?'selected':''}" data-value="${esc(option)}" onclick="submitParticipantVote(this.dataset.value)">${esc(option)}</button>`).join('')}</div>`;
+  } else if(slide.type==='wordcloud' || slide.type==='open'){
+    target.innerHTML = `
+      <div class="field">
+        <label>Digite sua resposta</label>
+        <textarea id="participantTextVote" rows="3" placeholder="Sua contribuição"></textarea>
+      </div>
+      <div class="flex" style="flex-wrap:wrap">
+        <button class="btn btn-gold" onclick="submitParticipantTextVote()">Enviar resposta</button>
+      </div>
+      ${myResponse?.value ? `<p class="vote-note">Sua resposta atual: <strong>${esc(myResponse.value)}</strong></p>` : ''}
+    `;
+  } else if(slide.type==='stars'){
+    const maxStars = slide.maxStars || 5;
+    target.innerHTML = `<div class="vote-grid">${Array.from({length:maxStars},(_,i)=>i+1).map(n=>`<button class="vote-btn ${String(myResponse?.value)===String(n)?'selected':''}" onclick="submitParticipantVote(${n})">${'⭐'.repeat(n)}</button>`).join('')}</div>`;
+  } else if(slide.type==='scale'){
+    const min = Number(slide.min || 1);
+    const max = Number(slide.max || 5);
+    const current = Number(myResponse?.value ?? min);
+    target.innerHTML = `
+      <div class="scale-track">${Array.from({length:max-min+1},(_,i)=>min+i).map(n=>`<div class="scale-label"><button class="scale-dot ${current===n?'selected':''}" onclick="submitParticipantVote(${n})">${n}</button><span class="participant-mini">${n}</span></div>`).join('')}</div>
+      <div class="flex" style="justify-content:space-between;margin-top:.75rem">
+        <span class="participant-mini">${esc(slide.leftLabel || 'Menor')}</span>
+        <span class="participant-mini">${esc(slide.rightLabel || 'Maior')}</span>
+      </div>
+    `;
+  }
+}
+
+async function submitParticipantVote(value){
+  if(!participantProfile || !activeSession?.active){ return; }
+  const slide = getCurrentSlide();
+  if(!slide){ return; }
+
+  participantVoteKey = String(value);
+  const response = { value, name: participantProfile.name, ts: Date.now() };
+  activeSession.responses = activeSession.responses || {};
+  activeSession.responses[slide.id] = activeSession.responses[slide.id] || {};
+  activeSession.responses[slide.id][participantProfile.id] = response;
+  await dbUpdate('activeSession/responses/'+slide.id+'/'+participantProfile.id, response);
+  await dbUpdate('activeSession/lastVote', { slideId: slide.id, participantId: participantProfile.id, value, ts: Date.now() });
+  confetti('#00d4aa');
+  renderParticipantMode();
+  updateLiveChart();
+  toast('Voto registrado','ok');
+}
+
+async function submitParticipantTextVote(){
+  const input = document.getElementById('participantTextVote');
+  const value = input?.value.trim();
+  if(!value){ toast('Digite uma resposta','err'); return; }
+  await submitParticipantVote(value);
+}
+
+function renderWordCloud(slide, container){
+  const counts = [...countResponses(slide).entries()].sort((a,b)=>b[1]-a[1]).slice(0,12);
+  if(!counts.length){ container.innerHTML = '<p class="participant-mini">Ainda sem respostas.</p>'; return; }
+  const max = Math.max(...counts.map(([,count])=>count));
+  container.innerHTML = `<div class="cloud-wrap">${counts.map(([word,count])=>`<span class="cloud-item" style="font-size:${0.9 + (count/max)*1.1}rem">${esc(word)} <strong style="margin-left:.35rem;color:var(--gold2)">${count}</strong></span>`).join('')}</div>`;
+}
+
+function renderWordCloudTo(slide, containerId){
+  const container = document.getElementById(containerId);
+  if(!container){ return; }
+  renderWordCloud(slide, container);
+}
+
+function getProjectorChartData(slide){
+  if(!slide){ return { labels:[], values:[] }; }
+  return buildChartData(slide);
+}
+
+function isParticipantProjectorWindow(){
+  return new URLSearchParams(location.search).get('participantProjector') === '1';
+}
+
+function openParticipantProjectorWindow(){
+  if(isParticipantProjectorWindow()){ return true; }
+  const url = new URL(location.href);
+  url.searchParams.set('participantProjector', '1');
+  url.searchParams.delete('participant');
+  const features = 'popup=yes,width=1440,height=900,left=40,top=40,resizable=yes,scrollbars=yes';
+  participantProjectorWindow = window.open(url.toString(), 'cbhmParticipantProjectorWindow', features);
+  if(participantProjectorWindow){
+    participantProjectorWindow.focus();
+    return true;
+  }
+  return false;
+}
+
+function startParticipantProjectorMirrorMode(){
+  participantProjectorOpen = true;
+  const panel = document.getElementById('sParticipantProjector');
+  if(panel){ panel.classList.add('open'); }
+
+  dbListen('activeSession', data=>{
+    activeSession = data || null;
+    renderParticipantProjector();
+  });
+
+  clearInterval(participantProjectorTickInterval);
+  participantProjectorTickInterval = setInterval(()=>{
+    renderParticipantProjector();
+  }, 1000);
+
+  renderParticipantProjector();
+}
+
+function updateParticipantProjectorChart(){
+  const canvas = document.getElementById('ppChartCanvas');
+  const slide = getCurrentSlide();
+  if(!canvas || !slide || typeof Chart==='undefined'){ return; }
+
+  const data = getProjectorChartData(slide);
+  if(participantProjectorChart){
+    participantProjectorChart.destroy();
+    participantProjectorChart = null;
+  }
+
+  participantProjectorChart = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: data.labels,
+      datasets: [{
+        label: 'Respostas',
+        data: data.values,
+        backgroundColor: 'rgba(201,168,76,.62)',
+        borderColor: 'rgba(201,168,76,1)',
+        borderWidth: 1,
+        borderRadius: 10,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { precision: 0, color: '#b7c0cc' }, grid: { color: 'rgba(183,192,204,.13)' } },
+        x: { ticks: { color: '#dce4ef' }, grid: { display: false } },
+      }
+    }
+  });
+}
+
+function renderParticipantProjector(){
+  if(!participantProjectorOpen){ return; }
+  const session = activeSession;
+  const slides = session?.slides || [];
+  const index = Math.max(0, Math.min(session?.currentSlideIndex ?? 0, Math.max(0, slides.length-1)));
+  const slide = slides[index] || null;
+
+  const participants = session?.participants ? Object.keys(session.participants).length : 0;
+  const responses = slide ? Object.keys(getSlideResponses(slide.id)).length : 0;
+
+  const meta = document.getElementById('ppSessionMeta');
+  const timer = document.getElementById('ppTimer');
+  const type = document.getElementById('ppSlideType');
+  const title = document.getElementById('ppQuestion');
+  const prompt = document.getElementById('ppPrompt');
+  const pCount = document.getElementById('ppParticipants');
+  const vCount = document.getElementById('ppVotes');
+  const idx = document.getElementById('ppSlideIndex');
+
+  if(meta) meta.textContent = session ? `Sessão ${session.code || '----'} • PIN ${session.pin || '----'}` : 'Sessão —';
+  if(timer) timer.textContent = formatDuration(getSessionRemainingSeconds());
+  if(type) type.textContent = slide ? slideTypeLabel(slide.type) : 'SLIDE';
+  if(title) title.textContent = slide ? slide.title : 'Aguardando slide';
+  if(prompt) prompt.textContent = slide ? slide.prompt : 'As respostas dos participantes aparecerão aqui.';
+  if(pCount) pCount.textContent = String(participants);
+  if(vCount) vCount.textContent = String(responses);
+  if(idx) idx.textContent = `${slides.length ? index+1 : 0}/${slides.length || 0}`;
+
+  const cloud = document.getElementById('ppCloud');
+  if(cloud){
+    if(slide && (slide.type==='wordcloud' || slide.type==='open')){
+      renderWordCloudTo(slide, 'ppCloud');
+    } else {
+      cloud.innerHTML = '<p class="participant-mini">Use este painel para exibir os resultados agregados ao público.</p>';
+    }
+  }
+
+  if(slide){
+    updateParticipantProjectorChart();
+  }
+}
+
+function openParticipantProjector(){
+  if(!activeSession?.active){
+    toast('Inicie uma sessão para projetar resultados','err');
+    return;
+  }
+
+  const opened = openParticipantProjectorWindow();
+  if(!opened){
+    toast('Permita pop-ups para abrir o projetor no segundo monitor','err');
+  }
+
+  participantProjectorOpen = true;
+  const panel = document.getElementById('sParticipantProjector');
+  if(panel){ panel.classList.add('open'); }
+  renderParticipantProjector();
+}
+
+function closeParticipantProjector(){
+  if(isParticipantProjectorWindow()){
+    window.close();
+    return;
+  }
+  participantProjectorOpen = false;
+  const panel = document.getElementById('sParticipantProjector');
+  if(panel){ panel.classList.remove('open'); }
+  clearInterval(participantProjectorTickInterval);
+  participantProjectorTickInterval = null;
+  if(participantProjectorChart){
+    participantProjectorChart.destroy();
+    participantProjectorChart = null;
+  }
+  if(participantProjectorWindow && !participantProjectorWindow.closed){
+    participantProjectorWindow.close();
+  }
+  participantProjectorWindow = null;
+}
+
+function buildChartData(slide){
+  const counts = countResponses(slide);
+  if(slide.type==='multiple'){
+    const labels = slide.options || [];
+    return { labels, values: labels.map(opt => counts.get(String(opt)) || 0) };
+  }
+  if(slide.type==='stars'){
+    const maxStars = slide.maxStars || 5;
+    const labels = Array.from({length:maxStars},(_,i)=>String(i+1));
+    return { labels, values: labels.map(n => counts.get(n) || 0) };
+  }
+  if(slide.type==='scale'){
+    const min = Number(slide.min || 1);
+    const max = Number(slide.max || 5);
+    const labels = Array.from({length:max-min+1},(_,i)=>String(min+i));
+    return { labels, values: labels.map(n => counts.get(n) || 0) };
+  }
+  const top = [...counts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,8);
+  return { labels: top.map(([label])=>label), values: top.map(([,count])=>count) };
+}
+
+function updateLiveChart(){
+  const slide = getCurrentSlide();
+  const canvas = document.getElementById('sessionChartCanvas');
+  if(!canvas || !slide) return;
+
+  const signature = slide.id + '|' + JSON.stringify(getSlideResponses(slide.id));
+  if(signature === sessionChartSignature){
+    return;
+  }
+  sessionChartSignature = signature;
+
+  const data = buildChartData(slide);
+  if(liveChart){ liveChart.destroy(); liveChart = null; }
+  liveChart = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: data.labels,
+      datasets: [{
+        label: 'Respostas',
+        data: data.values,
+        backgroundColor: 'rgba(201,168,76,.6)',
+        borderColor: 'rgba(201,168,76,1)',
+        borderWidth: 1,
+        borderRadius: 8,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0, color: '#9eafc2' }, grid: { color: 'rgba(158,175,194,.12)' } }, x: { ticks: { color: '#9eafc2' }, grid: { display: false } } }
+    }
+  });
+
+  const participantCanvas = document.getElementById('participantChartCanvas');
+  if(participantCanvas){
+    if(participantChart){ participantChart.destroy(); participantChart = null; }
+    participantChart = new Chart(participantCanvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: data.labels,
+        datasets: [{
+          label: 'Ao vivo',
+          data: data.values,
+          backgroundColor: 'rgba(45,122,78,.45)',
+          borderColor: 'rgba(45,122,78,1)',
+          borderWidth: 1,
+          borderRadius: 8,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0, color: '#9eafc2' }, grid: { color: 'rgba(158,175,194,.12)' } }, x: { ticks: { color: '#9eafc2' }, grid: { display: false } } }
+      }
+    });
+  }
+
+  const cloudContainer = document.getElementById('participantLiveStatus');
+  if(slide.type==='wordcloud' || slide.type==='open'){
+    renderWordCloud(slide, document.getElementById('participantCloud') || cloudContainer);
+  }
+
+  renderParticipantProjector();
+}
+
+function updateParticipantChart(){
+  updateLiveChart();
 }
 
 /* ════════════════════════════════
@@ -2481,12 +3619,13 @@ async function saveQuestion(){
   if(editingQId){
     const idx=questions.findIndex(x=>x.id===editingQId);
     questions[idx]={...questions[idx],...q};
-    await dbSet('questions/'+editingQId,questions[idx]);
   } else {
     q.id='q'+Date.now();
     questions.push(q);
-    await dbPush('questions',q);
   }
+  // Supabase: salva o array completo de uma vez
+  if(sb()) await window._sb.from('kv').upsert({ key:'questions', value: questions }, { onConflict:'key' });
+  else lsSet('questions', questions);
   closeOverlay('questionOverlay');
   renderQuestions();
   refreshDashboard();
@@ -2496,7 +3635,9 @@ async function saveQuestion(){
 async function deleteQuestion(id){
   if(!confirm('Excluir esta questão?')) return;
   questions = questions.filter(q=>q.id!==id);
-  if(fb()) await window._remove(window._ref(window._db,'questions/'+id));
+  // Salva o array atualizado no Supabase
+  if(sb()) await window._sb.from('kv').upsert({ key:'questions', value: questions }, { onConflict:'key' });
+  else lsSet('questions', questions);
   renderQuestions();
   toast('Questão excluída','ok');
 }
@@ -2522,236 +3663,6 @@ function renderQuestions(){
   `).join('');
 }
 
-async function loadUsers(){
-  const userData = await dbGet('users');
-  if(userData){
-    users = Array.isArray(userData)
-      ? userData.map(u => ({ ...u, id: u.id || ('u'+Date.now()), uid: u.uid || null }))
-      : Object.entries(userData).map(([id,v]) => ({ ...v, id, uid: v.uid || null }));
-  } else {
-    users = [];
-  }
-  renderUsers();
-}
-
-function updateUserPasswordHint(cpf){
-  const digits = (cpf || '').replace(/\D/g,'');
-  const hint = digits.length >= 6 ? digits.slice(0,3) + digits.slice(-3) : '';
-  setVal('userPwdHint', hint);
-  return hint;
-}
-
-function resetUserForm(){
-  editingUserId = null;
-  setVal('userRank','');
-  setVal('userRole','');
-  setVal('userName','');
-  setVal('userCpf','');
-  setVal('userEmail','');
-  setVal('userDiscipline','');
-  setVal('userPwdHint','');
-}
-
-async function saveUser(){
-  const rank       = document.getElementById('userRank').value.trim();
-  const role       = document.getElementById('userRole').value;
-  const name       = document.getElementById('userName').value.trim();
-  const cpf        = document.getElementById('userCpf').value.trim();
-  const email      = document.getElementById('userEmail').value.trim();
-  const discipline = document.getElementById('userDiscipline').value.trim();
-  const password   = updateUserPasswordHint(cpf);
-
-  if(!rank || !role || !name || !cpf || !email || !discipline){
-    toast('Preencha todos os campos do usuário','err');
-    return;
-  }
-
-  const digits = cpf.replace(/\D/g,'');
-  if(digits.length < 11){
-    toast('CPF inválido. Use 11 dígitos','err');
-    return;
-  }
-
-  const existing = users.find(u=>u.id===editingUserId);
-  const user = {
-    id: editingUserId || 'u'+Date.now(),
-    uid: existing?.uid || null,
-    rank,
-    role,
-    name,
-    cpf,
-    email,
-    discipline,
-    password,
-    updated: Date.now(),
-  };
-
-  const existing = users.find(u=>u.id===user.id);
-  if(existing){
-    Object.assign(existing, user);
-  } else {
-    users.push(user);
-  }
-
-  if(fb()){
-    await dbSet('users/'+user.id, user);
-  } else {
-    lsSet('users', users);
-  }
-
-  renderUsers();
-  resetUserForm();
-  toast(`Usuário ${name} salvo com sucesso`,'ok');
-}
-
-function editUser(id){
-  const user = users.find(u=>u.id===id);
-  if(!user) return;
-  editingUserId = id;
-  setVal('userRank', user.rank || '');
-  setVal('userRole', user.role || '');
-  setVal('userName', user.name || '');
-  setVal('userCpf', user.cpf || '');
-  setVal('userEmail', user.email || '');
-  setVal('userDiscipline', user.discipline || '');
-  setVal('userPwdHint', user.password || updateUserPasswordHint(user.cpf));
-}
-
-async function deleteUser(id){
-  if(!confirm('Excluir este usuário?')) return;
-  users = users.filter(u=>u.id!==id);
-  if(fb()){
-    await window._remove(window._ref(window._db,'users/'+id));
-  } else {
-    lsSet('users', users);
-  }
-  renderUsers();
-  toast('Usuário excluído','ok');
-}
-
-function renderUsers(){
-  const el = document.getElementById('userList');
-  if(!el) return;
-  if(!users.length){
-    el.innerHTML = '<p style="color:var(--muted);font-style:italic;padding:.5rem">Nenhum usuário cadastrado.</p>';
-    return;
-  }
-
-  el.innerHTML = users.map((u,i)=>`
-    <div class="card" style="padding:1rem;margin-bottom:.9rem;display:grid;grid-template-columns:1fr auto;gap:1rem;align-items:start">
-      <div>
-        <div class="card-title" style="margin-bottom:.55rem">${u.name} — ${u.role || 'Sem perfil'}</div>
-        <div style="font-size:.88rem;color:var(--silver);line-height:1.6">
-          <strong>Posto:</strong> ${u.rank || '—'}<br>
-          <strong>CPF:</strong> ${u.cpf || '—'}<br>
-          <strong>E-mail:</strong> ${u.email || '—'}<br>
-          <strong>Disciplina:</strong> ${u.discipline || '—'}<br>
-          <strong>Senha padrão:</strong> ${u.password || '—'}
-        </div>
-      </div>
-      <div class="flex" style="flex-direction:column;align-items:flex-end;gap:.5rem">
-        <button class="btn btn-sm btn-icon" onclick="editUser('${u.id}')">✏ Editar</button>
-        <button class="btn btn-sm btn-icon btn-danger" onclick="deleteUser('${u.id}')">🗑 Excluir</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function openProfileModal(){
-  const uid = window._currentUser?.uid || null;
-  const email = window._currentUser?.email?.toLowerCase();
-  let profile = users.find(u=>u.id===uid || u.uid===uid || (email && u.email?.toLowerCase()===email));
-
-  if(!profile && uid){
-    profile = { id: uid, uid, rank:'Administrador', role:'Administrador', name: window._currentUser?.displayName || '', email: window._currentUser?.email || '', discipline:'', password:'' };
-  }
-  if(!profile){
-    profile = { rank:'Administrador', role:'Administrador', name:'', email:'', discipline:'', password:'' };
-  }
-
-  setVal('profileRank', profile.rank || '');
-  setVal('profileName', profile.name || '');
-  setVal('profileEmail', profile.email || '');
-  setVal('profileDiscipline', profile.discipline || '');
-  setVal('profilePassword', '');
-  currentProfileId = profile.id || null;
-  currentUserProfile = profile;
-  const titleEl = document.querySelector('#profileOverlay h2');
-  if(titleEl){
-    titleEl.textContent = profile.name ? `👤 Meu Perfil — ${profile.name}` : '👤 Meu Perfil';
-  }
-  openOverlay('profileOverlay');
-}
-
-async function saveProfile(){
-  const rank       = document.getElementById('profileRank').value.trim();
-  const name       = document.getElementById('profileName').value.trim();
-  const email      = document.getElementById('profileEmail').value.trim();
-  const discipline = document.getElementById('profileDiscipline').value.trim();
-  const password   = document.getElementById('profilePassword').value;
-  const uid        = window._currentUser?.uid || currentProfileId || null;
-
-  if(!rank || !name || !email){
-    toast('Preencha nome, e-mail e posto/graduação','err');
-    return;
-  }
-
-  const existing = users.find(u=>u.id===currentProfileId || u.uid===uid || u.email?.toLowerCase()===email.toLowerCase());
-  const profile = {
-    id: currentProfileId || existing?.id || uid || ('u'+Date.now()),
-    uid,
-    rank,
-    role: currentUserProfile?.role || existing?.role || 'Administrador',
-    name,
-    email,
-    discipline,
-    password: password ? password : (existing?.password || ''),
-    updated: Date.now(),
-  };
-
-  if(existing){ Object.assign(existing, profile); }
-  else { users.push(profile); }
-  currentUserProfile = profile;
-  currentProfileId = profile.id;
-
-  if(fb()){
-    await dbSet('users/'+profile.id, profile);
-  } else {
-    lsSet('users', users);
-  }
-
-  toast('Perfil atualizado','ok');
-  closeOverlay('profileOverlay');
-}
-
-function showHelp(){
-  const current = document.querySelector('#sAdmin .admin-content > div:not(.hidden)');
-  const topic = current?.id || 'tabDashboard';
-  const title = {
-    tabDashboard: 'Ajuda — Dashboard',
-    tabLanding: 'Ajuda — Landing Page',
-    tabQuestions: 'Ajuda — Questões',
-    tabUsers: 'Ajuda — Usuários',
-    tabTeams: 'Ajuda — Equipes',
-    tabSession: 'Ajuda — Sessão ao Vivo',
-    tabScoreboard: 'Ajuda — Placar',
-  }[topic] || 'Ajuda';
-
-  const body = {
-    tabDashboard: 'Veja aqui o resumo da competição e o fluxo de trabalho. Use o menu à esquerda para navegar entre as áreas.',
-    tabLanding: 'Edite o texto, logotipo e as instituições exibidas na página inicial. Clique em Salvar para persistir as alterações.',
-    tabQuestions: 'Cadastre, edite e exclua questões de múltipla escolha. Use o botão + Nova Questão para adicionar e atualizar seu banco de questões.',
-    tabUsers: 'Cadastre perfis de usuários com Posto/Grad, CPF, e-mail, disciplina e perfil. A senha padrão é gerada automaticamente a partir do CPF.',
-    tabTeams: 'Gerencie as equipes participantes, suas imagens e pontuação. Adicione uma nova equipe e use os controles para atualizar ou remover registros.',
-    tabSession: 'Crie e controle a sessão ao vivo. Defina código e número de questões, abra o projetor e inicie o quiz.',
-    tabScoreboard: 'Veja o ranking geral das equipes em tempo real. Esta página mostra a classificação atual da competição.',
-  }[topic] || 'Use o menu à esquerda para navegar e acesse as funções de cada área. O botão Perfil permite editar seus dados.';
-
-  document.getElementById('helpModalTitle').textContent = title;
-  document.getElementById('helpModalBody').textContent = body;
-  openOverlay('helpOverlay');
-}
-
 /* ════════════════════════════════
    TEAMS
 ════════════════════════════════ */
@@ -2761,72 +3672,118 @@ async function doJoinTeam(){
   const code   = document.getElementById('joinCode').value.trim().toUpperCase();
   if(!school||!name||!code){ toast('Preencha todos os campos','err'); return; }
 
-  const team = { id:'t'+Date.now(), school, name, code, score:0, streak:0, joined:Date.now() };
+  const team = { id:'t'+Date.now(), school, name, code, score:0, streak:0, joined:Date.now(), image:'' };
   teams.push(team);
-  await dbPush('teams',team);
+  if(sb()) await window._sb.from('kv').upsert({ key:'teams', value: teams }, { onConflict:'key' });
+  else lsSet('teams', teams);
   closeOverlay('joinOverlay');
   toast('Equipe registrada! Aguarde o início da competição.','ok');
 }
 
+function previewAdminTeamImageFile(){
+  const input = document.getElementById('teamImgFileAdmin');
+  const file = input?.files?.[0];
+  const prev = document.getElementById('teamImgPreviewAdmin');
+  if(!file){ prev.classList.add('hidden'); prev.removeAttribute('src'); return; }
+
+  const fr = new FileReader();
+  fr.onload = ()=>{
+    prev.src = String(fr.result || '');
+    prev.classList.remove('hidden');
+  };
+  fr.readAsDataURL(file);
+}
+
+function teamAvatarHtml(team, cls='team-avatar'){
+  if(team?.image){
+    return `<img class="${cls}" src="${esc(team.image)}" alt="Equipe ${esc(team.name || '')}">`;
+  }
+  return `<span class="${cls} team-avatar-fallback" aria-hidden="true">⚔</span>`;
+}
+
+async function addTeamFromAdmin(){
+  const name = document.getElementById('teamNameAdmin').value.trim();
+  const school = document.getElementById('teamSchoolAdmin').value.trim();
+  let image = document.getElementById('teamImgUrlAdmin').value.trim();
+  const uploadedImage = await fileToDataUrl('teamImgFileAdmin');
+  if(uploadedImage) image = uploadedImage;
+
+  if(!name || !school){ toast('Informe nome da equipe e escola','err'); return; }
+
+  const code = (activeSession?.code || document.getElementById('sessionCode')?.value || 'CBHM2026').toUpperCase();
+  const team = { id:'t'+Date.now(), school, name, code, score:0, streak:0, joined:Date.now(), image };
+  teams.push(team);
+  if(sb()) await window._sb.from('kv').upsert({ key:'teams', value: teams }, { onConflict:'key' });
+  else lsSet('teams', teams);
+
+  document.getElementById('teamNameAdmin').value = '';
+  document.getElementById('teamSchoolAdmin').value = '';
+  document.getElementById('teamImgUrlAdmin').value = '';
+  document.getElementById('teamImgFileAdmin').value = '';
+  document.getElementById('teamImgPreviewAdmin').classList.add('hidden');
+  document.getElementById('teamImgPreviewAdmin').removeAttribute('src');
+
+  renderTeams();
+  refreshDashboard();
+  toast('Equipe inserida com sucesso','ok');
+}
+
 function renderTeams(){
   const el = document.getElementById('teamList');
-  if(!el) return;
   const sorted = [...teams].sort((a,b)=>b.score-a.score);
-  if(!sorted.length){
-    el.innerHTML='<p style="color:var(--muted);font-style:italic;padding:.5rem">Nenhuma equipe registrada. Use o formulário acima para adicionar.</p>';
-    return;
-  }
+  if(!sorted.length){ el.innerHTML='<p style="color:var(--muted);font-style:italic">Nenhuma equipe registrada.</p>'; return; }
   el.innerHTML = sorted.map((t,i)=>`
-    <div class="team-row" style="grid-template-columns:auto auto 1fr auto auto;align-items:center">
+    <div class="team-row">
+      ${teamAvatarHtml(t)}
       <span class="team-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}º</span>
-
-      <!-- team avatar -->
-      <div style="width:48px;height:48px;border-radius:50%;overflow:hidden;border:2px solid var(--border);
-        background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.3rem">
-        ${t.img
-          ? `<img src="${t.img}" style="width:100%;height:100%;object-fit:cover">`
-          : '🏛'}
-      </div>
-
-      <!-- name + school -->
-      <div style="min-width:0">
-        <div class="team-name">${t.name}</div>
-        <div class="team-school">${t.school}</div>
-      </div>
-
+      <div><div class="team-name">${esc(t.name)}</div><div class="team-school">${esc(t.school)}</div></div>
       <span class="team-score">${t.score} pts</span>
-
-      <!-- actions -->
-      <div style="display:flex;gap:.4rem;flex-shrink:0;align-items:center">
-        <!-- edit image -->
-        <label style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;
-          border-radius:var(--r);border:1px solid var(--border);background:var(--bg3);cursor:pointer;font-size:.85rem"
-          title="Alterar imagem da equipe"
-          onmouseover="this.style.borderColor='var(--gold)'" onmouseout="this.style.borderColor='rgba(201,168,76,.18)'">
-          🖼
-          <input type="file" accept="image/*" style="display:none" onchange="handleTeamImgEdit('${t.id}',this)">
-        </label>
-        ${t.img ? `<button class="btn btn-sm btn-icon" style="width:30px;height:30px;padding:0;font-size:.75rem"
-          title="Remover imagem" onclick="removeTeamImg('${t.id}')">✕</button>` : ''}
-        <button class="btn btn-sm btn-danger" style="padding:.3rem .6rem;font-size:.75rem"
-          onclick="removeTeam('${t.id}')">🗑</button>
-      </div>
+      <button class="btn btn-sm" onclick="editTeamDetails('${t.id}')">✏</button>
+      <button class="btn btn-sm btn-danger" onclick="removeTeam('${t.id}')">✕</button>
     </div>
   `).join('');
 }
 
-async function removeTeamImg(id){
-  const t = teams.find(t=>t.id===id);
-  if(!t) return;
-  t.img = '';
-  await dbUpdate('teams/'+id, {img:''});
+async function editTeamDetails(id){
+  const team = teams.find(t=>t.id===id);
+  if(!team){ toast('Equipe não encontrada','err'); return; }
+
+  const nextName = prompt('Nome da equipe:', team.name || '');
+  if(nextName===null) return;
+
+  const nextSchool = prompt('Escola da equipe:', team.school || '');
+  if(nextSchool===null) return;
+
+  const nextImage = prompt('URL da imagem da equipe (deixe vazio para remover):', team.image || '');
+  if(nextImage===null) return;
+
+  const name = nextName.trim();
+  const school = nextSchool.trim();
+  if(!name || !school){ toast('Nome e escola são obrigatórios','err'); return; }
+
+  team.name = name;
+  team.school = school;
+  team.image = nextImage.trim();
+  if(sb()) await window._sb.from('kv').upsert({ key:'teams', value: teams }, { onConflict:'key' });
+  else lsSet('teams', teams);
+
+  if(quizState?.teamScores?.[id]){
+    quizState.teamScores[id].name = team.name;
+    quizState.teamScores[id].school = team.school;
+  }
+
   renderTeams();
-  toast('Imagem removida','ok');
+  if(quizState?.teamScores) renderTeamsPanel();
+  renderAdminScoreboard();
+  if(document.getElementById('sScoreboard')?.classList.contains('active')) loadScoreboard();
+  if(projOpen) projUpdateScoreboard();
+  toast('Equipe atualizada com sucesso','ok');
 }
 
 async function removeTeam(id){
   teams=teams.filter(t=>t.id!==id);
-  if(fb()) await window._remove(window._ref(window._db,'teams/'+id));
+  if(sb()) await window._sb.from('kv').upsert({ key:'teams', value: teams }, { onConflict:'key' });
+  else lsSet('teams', teams);
   renderTeams();
 }
 
@@ -2835,22 +3792,44 @@ async function removeTeam(id){
 ════════════════════════════════ */
 async function createSession(){
   const code  = document.getElementById('sessionCode').value.trim().toUpperCase();
-  const count = +document.getElementById('sessionQCount').value||10;
   if(!code){ toast('Digite um código de sessão','err'); return; }
 
-  const shuffled = [...questions].sort(()=>Math.random()-.5).slice(0,Math.min(count,questions.length));
-  activeSession = { code, questions:shuffled, currentQ:0, active:true, created:Date.now() };
+  const durationMin = +document.getElementById('sessionDuration').value || 20;
+  const slides = ensureSessionDeck().map(normalizeSlide);
+  const shuffled = [...questions].sort(()=>Math.random()-.5).slice(0,Math.min(10,questions.length));
+  activeSession = {
+    code,
+    questions:shuffled,
+    slides,
+    currentSlideIndex:0,
+    active:true,
+    created:Date.now(),
+    startedAt:Date.now(),
+    durationSec:durationMin*60,
+    pin: generateSessionPin(),
+    participants:{},
+    responses:{},
+    mode:'slides'
+  };
   await dbSet('activeSession', activeSession);
+  sessionSlides = slides;
+  sessionChartSignature = '';
 
   updateSessionUI();
+  renderSessionDashboard();
+  startSessionTicker();
   toast('Sessão '+code+' iniciada!','ok');
 }
 
-async function endSession(){
-  if(!confirm('Encerrar a sessão ao vivo?')) return;
+async function endSession(silent=false){
+  if(!silent && !confirm('Encerrar a sessão ao vivo?')) return;
   await dbSet('activeSession/active',false);
   activeSession=null;
+  clearInterval(sessionTickInterval);
+  sessionChartSignature = '';
+  closeParticipantProjector();
   updateSessionUI();
+  renderParticipantMode();
   toast('Sessão encerrada','ok');
 }
 
@@ -2860,10 +3839,15 @@ function updateSessionUI(){
   document.getElementById('activeSessionCard').classList.toggle('hidden',!has);
   if(has){
     document.getElementById('activeSesTitle').textContent='SESSÃO ATIVA: '+activeSession.code;
-    document.getElementById('activeSesCode').textContent=activeSession.questions?.length+' questões · '+teams.length+' equipes';
+    document.getElementById('activeSesCode').textContent=(activeSession.slides?.length || sessionSlides.length)+' slides · '+(activeSession.participants ? Object.keys(activeSession.participants).length : 0)+' participantes';
     document.getElementById('sessionCodeBadge').textContent='Sessão: '+activeSession.code;
     document.getElementById('sessionCodeBadge').classList.remove('hidden');
+    startSessionTicker();
+  } else {
+    clearInterval(sessionTickInterval);
+    closeParticipantProjector();
   }
+  renderSessionDashboard();
 }
 
 /* ════════════════════════════════
@@ -2904,6 +3888,7 @@ function renderQuizQuestion(){
   `).join('');
 
   renderTeamsPanel();
+  updateStreakBar();
   startTimer();
 }
 
@@ -2983,31 +3968,66 @@ function scoreTeam(teamId, correct, elapsed){
   const ts = quizState.teamScores;
   if(!ts[teamId]) return;
   const pts = correct ? getPoints(elapsed) : 0;
-  ts[teamId].score += pts;
 
+  if(correct){
+    ts[teamId].streak++;
+    if(ts[teamId].streak>=3){
+      const bonus = BONUS_POINTS - ts[teamId].score; // give total 90 pts for this round
+      ts[teamId].score += BONUS_POINTS;
+      ts[teamId].streak = 0;
+      toast('⭐ BÔNUS! '+ts[teamId].name+' acertou 3 seguidas em 5s! +90 pts','ok');
+      confetti('#c9a84c');
+    } else {
+      ts[teamId].score += pts;
+    }
+  } else {
+    ts[teamId].streak = 0;
+  }
+
+  // persist
   const t = teams.find(t=>t.id===teamId);
-  if(t){ t.score=ts[teamId].score; dbUpdate('teams/'+teamId,{score:t.score}); }
+  if(t){
+    t.score=ts[teamId].score;
+    if(sb()) window._sb.from('kv').upsert({ key:'teams', value: teams }, { onConflict:'key' });
+    else lsSet('teams', teams);
+  }
   renderTeamsPanel();
 }
 
 function renderTeamsPanel(){
+  if(!quizState?.teamScores) return;
   const el = document.getElementById('teamsPanel');
   const sorted = Object.entries(quizState.teamScores).sort((a,b)=>b[1].score-a[1].score);
   el.innerHTML = sorted.map(([id,t])=>`
     <div class="team-panel" id="tp_${id}">
+      ${teamAvatarHtml(teams.find(tm=>tm.id===id)||{},'team-avatar-sm')}
       <div>
-        <div class="tp-name">${t.name}</div>
-        <div class="tp-school">${t.school}</div>
+        <div class="tp-name">${esc(t.name)}</div>
+        <div class="tp-school">${esc(t.school)}</div>
       </div>
       <div class="tp-score">${t.score}<span style="font-size:.65rem;color:var(--muted)"> pts</span></div>
     </div>
   `).join('') || '<p style="color:var(--muted);font-style:italic;font-size:.85rem">Nenhuma equipe registrada.</p>';
 }
 
+function updateStreakBar(){
+  const bar = document.getElementById('streakBar');
+  const txt = document.getElementById('streakText');
+  const best = Object.values(quizState?.teamScores||{}).reduce((a,t)=>Math.max(a,t.streak),0);
+  if(best>0){
+    bar.classList.remove('hidden');
+    txt.textContent = `Melhor sequência atual: ${best} acertos consecutivos em ≤5s. ${3-best} para o bônus!`;
+  } else {
+    bar.classList.add('hidden');
+  }
+}
+
 function endQuiz(){
   clearInterval(timerInterval);
   // Save final scores
-  teams.forEach(t=>{ if(quizState.teamScores[t.id]) t.score=quizState.teamScores[t.id].score; dbUpdate('teams/'+t.id,{score:t.score}); });
+  teams.forEach(t=>{ if(quizState.teamScores[t.id]) t.score=quizState.teamScores[t.id].score; });
+  if(sb()) window._sb.from('kv').upsert({ key:'teams', value: teams }, { onConflict:'key' });
+  else lsSet('teams', teams);
   showScreen('sScoreboard');
   loadScoreboard();
   confetti('#c9a84c'); confetti('#e8c97a');
@@ -3043,8 +4063,9 @@ async function loadScoreboard(){
   const sbList = document.getElementById('sbList');
   sbList.innerHTML = sorted.map((t2,i)=>`
     <div class="team-row" style="animation:fadeUp .3s ease ${i*.05}s both">
+      ${teamAvatarHtml(t2)}
       <span class="team-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}º</span>
-      <div><div class="team-name">${t2.name}</div><div class="team-school">${t2.school||''}</div></div>
+      <div><div class="team-name">${esc(t2.name)}</div><div class="team-school">${esc(t2.school||'')}</div></div>
       <span class="team-score">${t2.score} pts</span>
     </div>
   `).join('') || '<p style="color:var(--muted);text-align:center;padding:2rem;font-style:italic">Nenhuma equipe classificada ainda.</p>';
@@ -3055,8 +4076,9 @@ function renderAdminScoreboard(){
   const sorted=[...teams].sort((a,b)=>b.score-a.score);
   el.innerHTML = sorted.map((t,i)=>`
     <div class="team-row">
+      ${teamAvatarHtml(t)}
       <span class="team-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i+1}º</span>
-      <div><div class="team-name">${t.name}</div><div class="team-school">${t.school}</div></div>
+      <div><div class="team-name">${esc(t.name)}</div><div class="team-school">${esc(t.school)}</div></div>
       <span class="team-score">${t.score} pts</span>
     </div>
   `).join('') || '<p style="color:var(--muted);font-style:italic">Sem equipes ainda.</p>';
@@ -3092,227 +4114,6 @@ function confetti(color){
     document.body.appendChild(el);
     setTimeout(()=>el.remove(),2500);
   }
-}
-
-/* ════════════════════════════════════════════════════
-   LANDING PAGE EDITOR
-════════════════════════════════════════════════════ */
-
-const LP_DEFAULTS = {
-  subtitle: 'Academia Militar das Agulhas Negras',
-  title:    'Campeonato Brasileiro de\nHistória Militar',
-  year:     '2026',
-  loc:      'AMAN — Resende, Rio de Janeiro',
-  tagline:  'Formando líderes pela História · Res Non Verba',
-  schools:  'AMAN\nEPCAr\nEsPCEx\nCN\nAFA\nEN\nEsSA\nAPMBB',
-  logoType: 'emoji',   // 'emoji' | 'image'
-  logoEmoji:'⚔',
-  logoImg:  '',        // base64
-};
-
-let landingCfg = { ...LP_DEFAULTS };
-
-function loadLandingConfig(){
-  const saved = lsGet('landingConfig');
-  if(saved) landingCfg = { ...LP_DEFAULTS, ...saved };
-  applyLandingConfig();
-  fillLandingForm();
-}
-
-function applyLandingConfig(){
-  const c = landingCfg;
-
-  // texts
-  el('landingSubtitle').textContent = c.subtitle;
-  el('landingTitle').innerHTML      = c.title.replace(/\n/g,'<br>');
-  el('landingYear').textContent     = c.year;
-  el('landingLoc').textContent      = c.loc;
-  el('landingTagline').textContent  = c.tagline;
-
-  // schools
-  applySchools(c.schools);
-
-  // logo
-  applyLogo(c);
-}
-
-function applyLogo(c){
-  const def  = el('landingLogoDefault');
-  const img  = el('landingLogoImg');
-  const emo  = el('landingLogoEmoji');
-  // form preview
-  const pEmo = document.getElementById('logoPreviewEmoji');
-  const pImg = document.getElementById('logoPreviewImg');
-
-  if(c.logoType==='image' && c.logoImg){
-    def.style.display  = 'none';
-    img.style.display  = 'block';
-    img.src            = c.logoImg;
-    if(pImg){ pImg.style.display='block'; pImg.src=c.logoImg; }
-    if(pEmo){ pEmo.style.display='none'; }
-  } else {
-    def.style.display  = 'flex';
-    img.style.display  = 'none';
-    emo.textContent    = c.logoEmoji||'⚔';
-    if(pImg){ pImg.style.display='none'; }
-    if(pEmo){ pEmo.style.display='block'; pEmo.textContent=c.logoEmoji||'⚔'; }
-  }
-}
-
-function applySchools(raw){
-  const list = raw.split('\n').map(s=>s.trim()).filter(Boolean);
-  el('landingSchoolsGrid').innerHTML = list.map(s=>`<span class="school-badge">${s}</span>`).join('');
-}
-
-function fillLandingForm(){
-  const c = landingCfg;
-  setVal('lpSubtitle', c.subtitle);
-  setVal('lpTitle',    c.title.replace(/\n/g,' '));
-  setVal('lpYear',     c.year);
-  setVal('lpLoc',      c.loc);
-  setVal('lpTagline',  c.tagline);
-  setVal('lpSchools',  c.schools);
-}
-
-function setVal(id,v){ const e=document.getElementById(id); if(e) e.value=v; }
-function el(id){ return document.getElementById(id); }
-
-/* live updates */
-function liveUpdateText(elemId, val){
-  const e = el(elemId);
-  if(e) e.textContent = val;
-  const key = { landingSubtitle:'subtitle', landingYear:'year', landingLoc:'loc', landingTagline:'tagline' }[elemId];
-  if(key) landingCfg[key] = val;
-}
-
-function liveUpdateTitle(val){
-  el('landingTitle').innerHTML = val.replace(/\n/g,'<br>');
-  landingCfg.title = val;
-}
-
-function liveUpdateSchools(raw){
-  applySchools(raw);
-  landingCfg.schools = raw;
-}
-
-/* logo */
-function handleLogoUpload(input){
-  const file = input.files[0]; if(!file) return;
-  if(file.size > 2*1024*1024){ toast('Imagem muito grande (máx 2MB)','err'); return; }
-  const reader = new FileReader();
-  reader.onload = e => {
-    landingCfg.logoType = 'image';
-    landingCfg.logoImg  = e.target.result;
-    applyLogo(landingCfg);
-  };
-  reader.readAsDataURL(file);
-}
-
-function setLogoEmoji(emoji){
-  landingCfg.logoType  = 'emoji';
-  landingCfg.logoEmoji = emoji;
-  landingCfg.logoImg   = '';
-  applyLogo(landingCfg);
-}
-
-function removeLogo(){
-  landingCfg.logoType  = 'emoji';
-  landingCfg.logoEmoji = '⚔';
-  landingCfg.logoImg   = '';
-  applyLogo(landingCfg);
-}
-
-async function saveLandingConfig(){
-  // collect form values first
-  landingCfg.subtitle = document.getElementById('lpSubtitle')?.value || landingCfg.subtitle;
-  landingCfg.title    = document.getElementById('lpTitle')?.value    || landingCfg.title;
-  landingCfg.year     = document.getElementById('lpYear')?.value     || landingCfg.year;
-  landingCfg.loc      = document.getElementById('lpLoc')?.value      || landingCfg.loc;
-  landingCfg.tagline  = document.getElementById('lpTagline')?.value  || landingCfg.tagline;
-  landingCfg.schools  = document.getElementById('lpSchools')?.value  || landingCfg.schools;
-
-  lsSet('landingConfig', landingCfg);
-  // also persist to Firebase if available
-  if(fb()) await dbSet('config/landing', landingCfg);
-  applyLandingConfig();
-  toast('Landing page salva! ✅','ok');
-  confetti('#c9a84c');
-}
-
-function resetLandingConfig(){
-  if(!confirm('Restaurar o conteúdo padrão da landing page?')) return;
-  landingCfg = { ...LP_DEFAULTS };
-  lsSet('landingConfig', landingCfg);
-  applyLandingConfig();
-  fillLandingForm();
-  toast('Landing restaurada ao padrão','ok');
-}
-
-/* ════════════════════════════════════════════════════
-   TEAMS — com imagem personalizada
-════════════════════════════════════════════════════ */
-let newTeamImgData = '';
-
-function handleNewTeamImg(input){
-  const file = input.files[0]; if(!file) return;
-  if(file.size > 1.5*1024*1024){ toast('Imagem muito grande (máx 1.5MB)','err'); return; }
-  const reader = new FileReader();
-  reader.onload = e => {
-    newTeamImgData = e.target.result;
-    const prev = document.getElementById('newTeamImgPreview');
-    if(prev) prev.innerHTML = `<img src="${newTeamImgData}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-  };
-  reader.readAsDataURL(file);
-}
-
-function clearNewTeamImg(){
-  newTeamImgData = '';
-  const prev = document.getElementById('newTeamImgPreview');
-  if(prev) prev.innerHTML = '🏛';
-}
-
-async function adminAddTeam(){
-  const name   = document.getElementById('newTeamName')?.value.trim();
-  const school = document.getElementById('newTeamSchool')?.value;
-  if(!name){ toast('Digite o nome da equipe','err'); return; }
-  if(!school){ toast('Selecione o estabelecimento','err'); return; }
-
-  const team = {
-    id:     't'+Date.now(),
-    name, school,
-    score:  0,
-    streak: 0,
-    img:    newTeamImgData || '',
-    joined: Date.now()
-  };
-
-  teams.push(team);
-  await dbPush('teams', team);
-
-  // reset form
-  document.getElementById('newTeamName').value = '';
-  document.getElementById('newTeamSchool').value = '';
-  clearNewTeamImg();
-
-  renderTeams();
-  refreshDashboard();
-  toast(`Equipe "${name}" adicionada! ✅`,'ok');
-  confetti('#c9a84c');
-}
-
-function handleTeamImgEdit(teamId, input){
-  const file = input.files[0]; if(!file) return;
-  if(file.size > 1.5*1024*1024){ toast('Imagem muito grande (máx 1.5MB)','err'); return; }
-  const reader = new FileReader();
-  reader.onload = async e => {
-    const t = teams.find(t=>t.id===teamId);
-    if(!t) return;
-    t.img = e.target.result;
-    await dbUpdate('teams/'+teamId,{img:t.img});
-    renderTeams();
-    toast('Imagem da equipe atualizada!','ok');
-  };
-  reader.readAsDataURL(file);
 }
 
 /* ════════════════════════════════════════════════════
@@ -3500,7 +4301,8 @@ function adoptOneGemini(i){
   if(!q) return;
   const newQ = { id:'q'+Date.now(), cat:q.cat||'História Militar', text:q.text, opts:q.opts, correct:q.correct };
   questions.push(newQ);
-  dbPush('questions', newQ);
+  if(sb()) window._sb.from('kv').upsert({ key:'questions', value: questions }, { onConflict:'key' });
+  else lsSet('questions', questions);
   const card = document.getElementById('gemCard'+i);
   if(card){
     card.style.opacity = '.4';
@@ -3747,6 +4549,16 @@ function projShowScoreboard(){
   confetti('#c9a84c'); setTimeout(()=>confetti('#e8c97a'),400);
 }
 
+/* ── bonus streak overlay on projector ── */
+function projShowStreak(teamName, pts){
+  const ov  = document.getElementById('projStreakOverlay');
+  document.getElementById('projStreakText').textContent  = `⭐ BÔNUS! ${teamName}`;
+  document.getElementById('projStreakSub').textContent   = `3 acertos consecutivos em ≤5s — +${pts} pontos!`;
+  ov.style.display = 'flex';
+  playFanfare();
+  setTimeout(()=>{ ov.style.display='none'; projUpdateScoreboard(); }, 3200);
+}
+
 /* ── sound ── */
 function getAudioCtx(){
   if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
@@ -3796,6 +4608,12 @@ const _origScoreTeam = scoreTeam;
 scoreTeam = function(teamId, correct, elapsed){
   _origScoreTeam(teamId, correct, elapsed);
   if(projOpen) projUpdateScoreboard();
+  // check for bonus
+  if(correct && quizState?.teamScores?.[teamId]?.streak===0){
+    // streak was just reset after 3 — means bonus fired
+    const t = quizState.teamScores[teamId];
+    if(projOpen) projShowStreak(t.name, BONUS_POINTS);
+  }
 };
 
 const _origEndQuiz = endQuiz;
@@ -3808,12 +4626,19 @@ endQuiz = function(){
    INIT
 ════════════════════════════════ */
 document.addEventListener('appReady',()=>{
-  // Load landing config from localStorage on every page load
   loadLandingConfig();
+  loadSessionSlidesDraft();
+  syncSlideForm();
 
-  // Check URL params for team join link
-  const p = new URLSearchParams(location.search);
+  // Check URL params
+  const p=new URLSearchParams(location.search);
   if(p.get('join')){ document.getElementById('joinCode').value=p.get('join'); openJoinTeam(); }
+  if(p.get('participant')==='1'){
+    openParticipantHub();
+  }
+  if(p.get('participantProjector')==='1'){
+    startParticipantProjectorMirrorMode();
+  }
 });
 </script>
 </body>
