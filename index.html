@@ -18,6 +18,15 @@
    1. Acesse https://supabase.com → seu projeto
    2. Project Settings → API
    3. Copie "Project URL" e "anon / public key"
+   
+   ⚠️  CORS CONFIGURATION:
+   - Authentication → URL Configuration → "Allowed redirect URLs"
+   - Adicione: https://cbhm-rose.vercel.app
+   - Adicione também: http://localhost:3000 (para testes locais)
+   
+   🔐 SEGURANÇA:
+   - Use APENAS a "anon key" (public key) aqui no frontend
+   - Nunca exponha a "service_role_key"
 ══════════════════════════════════════════════════════ */
 window.SUPABASE_URL = 'https://enhruuzvbzdzhhssznee.supabase.co';  // Project URL (remover paths como /rest/v1/)
 window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuaHJ1dXp2Ynpkemhoc3N6bmVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMzU3MDEsImV4cCI6MjA5NDcxMTcwMX0.FW0cYGtwOqPKh-vdDlsuGbBmLBbqc5iYToVKCQvCBzU';                      // ← cole aqui
