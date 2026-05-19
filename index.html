@@ -2621,9 +2621,26 @@ async function loadAdminData(){
 }
 
 async function loadLandingConfig(){
-  const cfg = await dbGet('settings/landing');
-  landingConfig = normalizeLandingConfig(cfg || {});
-  applyLandingConfig();
+  // ─ 1️⃣ Tenta usar cache do localStorage primeiro (instantâneo)
+  const cached = localStorage.getItem('_cbhm_landingConfig');
+  if(cached){
+    try{
+      const cfg = JSON.parse(cached);
+      landingConfig = normalizeLandingConfig(cfg);
+      applyLandingConfig();
+    }catch(e){console.warn('Cache inválido:', e)}
+  }
+
+  // ─ 2️⃣ Busca do banco em background e atualiza cache + UI
+  try{
+    const cfg = await dbGet('settings/landing');
+    landingConfig = normalizeLandingConfig(cfg || {});
+    localStorage.setItem('_cbhm_landingConfig', JSON.stringify(cfg || {}));
+    applyLandingConfig();  // Atualiza UI se houver mudanças
+  }catch(e){
+    console.warn('Falha ao buscar config:', e);
+    // Mantém cache anterior se banco falhar
+  }
 }
 
 function applyLandingConfig(){
