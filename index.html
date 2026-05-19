@@ -10,40 +10,79 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-<!-- Supabase -->
+<!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-/* ══════════════════════════════════════════════
-   🔧 CONFIGURE AQUI — supabase.com → seu projeto
-   1. Crie conta em https://supabase.com (grátis)
-   2. New Project → anote a URL e a anon key
-   3. Cole os valores abaixo
-   Veja o README.md para o passo a passo completo
-══════════════════════════════════════════════ */
-window.SUPABASE_URL  = 'https://enhruuzvbzdzhhssznee.supabase.co/rest/v1/';   // ← cole aqui
-window.SUPABASE_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuaHJ1dXp2Ynpkemhoc3N6bmVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMzU3MDEsImV4cCI6MjA5NDcxMTcwMX0.FW0cYGtwOqPKh-vdDlsuGbBmLBbqc5iYToVKCQvCBzU';                       // ← cole aqui
+/* ══════════════════════════════════════════════════════
+   🔧 SUPABASE — cole suas credenciais abaixo
+   1. Acesse https://supabase.com → seu projeto
+   2. Project Settings → API
+   3. Copie "Project URL" e "anon / public key"
+══════════════════════════════════════════════════════ */
+window.SUPABASE_URL = 'https://enhruuzvbzdzhhssznee.supabase.co/rest/v1/';  // ← cole aqui
+window.SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVuaHJ1dXp2Ynpkemhoc3N6bmVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxMzU3MDEsImV4cCI6MjA5NDcxMTcwMX0.FW0cYGtwOqPKh-vdDlsuGbBmLBbqc5iYToVKCQvCBzU';                      // ← cole aqui
 
-/* ══════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════
    🤖 GEMINI API KEY — grátis em aistudio.google.com/apikey
-══════════════════════════════════════════════ */
+══════════════════════════════════════════════════════ */
 window.GEMINI_KEY = 'AIzaSyC26NtNtHSoIS60dsueu7KKdA9Tto5MowI';
 
+/* ── Indicador visual de conexão ─────────────────────
+   Mostra um badge no canto da tela:
+   🟢 Supabase conectado  /  🟡 Modo demo (localStorage)
+───────────────────────────────────────────────────── */
+function showDbStatus(ok, msg){
+  const badge = document.createElement('div');
+  badge.id = 'dbStatusBadge';
+  badge.style.cssText = `
+    position:fixed;bottom:1rem;left:1rem;z-index:9999;
+    padding:.4rem .85rem;border-radius:999px;font-size:.75rem;
+    font-family:'Cinzel',serif;letter-spacing:1px;
+    background:${ok ? 'rgba(45,122,78,.9)' : 'rgba(180,120,0,.9)'};
+    color:#fff;border:1px solid ${ok ? '#2d7a4e' : '#b87a00'};
+    box-shadow:0 2px 12px rgba(0,0,0,.4);
+    animation:fadeUp .4s ease;pointer-events:none;
+  `;
+  badge.textContent = ok ? '🟢 Supabase conectado' : '🟡 Modo demo (sem banco)';
+  document.body.appendChild(badge);
+  // some após 6 segundos
+  setTimeout(()=>{ badge.style.opacity='0'; badge.style.transition='opacity .5s'; setTimeout(()=>badge.remove(),500); }, 6000);
+  console.log(msg);
+}
+
+/* ── Inicialização ───────────────────────────────── */
 (async function initSupabase(){
-  const isConfigured = !window.SUPABASE_URL.includes('SEU_PROJETO')
-                    && !window.SUPABASE_KEY.includes('SUA_ANON');
-  if(!isConfigured){
-    console.warn('Supabase não configurado — modo demo (localStorage) ativo');
+  const configured = !window.SUPABASE_URL.includes('SEU_PROJETO')
+                  && !window.SUPABASE_KEY.includes('SUA_ANON')
+                  && window.SUPABASE_URL.startsWith('https://');
+
+  if(!configured){
     window._sbReady = false;
+    console.warn('⚠️ Supabase não configurado — modo demo (localStorage) ativo');
+    document.addEventListener('DOMContentLoaded', ()=>
+      setTimeout(()=>showDbStatus(false,'Modo demo ativo'),500));
     document.dispatchEvent(new Event('appReady'));
     return;
   }
+
   try {
-    window._sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY);
+    window._sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_KEY, {
+      realtime: { params: { eventsPerSecond: 10 } }
+    });
+
+    // Testa a conexão com uma leitura simples
+    const { error } = await window._sb.from('kv').select('key').limit(1);
+    if(error) throw new Error(error.message);
+
     window._sbReady = true;
-    console.log('✅ Supabase conectado');
+    console.log('✅ Supabase conectado com sucesso');
+    document.addEventListener('DOMContentLoaded', ()=>
+      setTimeout(()=>showDbStatus(true,'Supabase OK'),500));
   } catch(e){
-    console.error('Supabase falhou:', e);
     window._sbReady = false;
+    console.error('❌ Supabase falhou:', e.message);
+    document.addEventListener('DOMContentLoaded', ()=>
+      setTimeout(()=>showDbStatus(false,'Supabase falhou: '+e.message),500));
   }
   document.dispatchEvent(new Event('appReady'));
 })();
@@ -2347,65 +2386,59 @@ function normalizeLandingConfig(cfg = {}){
 }
 
 /* ════════════════════════════════
-   SUPABASE HELPERS
-   Substituto direto das funções Firebase.
-   Usa uma tabela "kv" (key-value) no Supabase:
-     CREATE TABLE kv (
-       key   text PRIMARY KEY,
-       value jsonb
-     );
-   Realtime via Canal Supabase (substitui onValue).
+   SUPABASE DB HELPERS
+   Tabela "kv" com colunas: key TEXT, value JSONB
+   Crie no Supabase SQL Editor:
+     CREATE TABLE kv (key text PRIMARY KEY, value jsonb);
+     ALTER TABLE kv ENABLE ROW LEVEL SECURITY;
+     CREATE POLICY "pub" ON kv USING (true) WITH CHECK (true);
 ════════════════════════════════ */
 function sb(){ return window._sbReady && window._sb; }
 
-/* Converte path tipo "activeSession/slides" → chave "activeSession__slides" */
-function pathToKey(path){ return path.replace(/\//g,'__'); }
+/* Converte "activeSession/slides" → chave raiz "activeSession" */
+function _rootKey(path){ return path.split('/')[0]; }
+function _lsKey(path){ return path.replace(/\//g,'__'); }
 
-/* GET — lê um valor pelo path */
+/* GET — lê valor (suporta sub-path: "activeSession/currentSlide") */
 async function dbGet(path){
-  if(!sb()) return lsGet(pathToKey(path));
+  if(!sb()) return lsGet(_lsKey(path));
   try {
-    const key = pathToKey(path);
-    // suporte a sub-path: "activeSession/slides" → lê "activeSession" e extrai .slides
     const parts = path.split('/');
-    const rootKey = parts[0];
-    const { data, error } = await window._sb.from('kv').select('value').eq('key', rootKey).maybeSingle();
+    const { data, error } = await window._sb.from('kv').select('value').eq('key', parts[0]).maybeSingle();
     if(error || !data) return null;
     let val = data.value;
-    for(let i=1; i<parts.length; i++){ if(val==null) return null; val = val[parts[i]]; }
+    for(let i=1; i<parts.length; i++){ if(val == null) return null; val = val[parts[i]]; }
     return val ?? null;
-  } catch(e){ console.warn('dbGet failed', path, e); return null; }
+  } catch(e){ console.warn('dbGet erro:', path, e); return null; }
 }
 
-/* SET — grava/substitui valor completo */
+/* SET — grava valor (suporta sub-path) */
 async function dbSet(path, value){
-  if(!sb()){ lsSet(pathToKey(path), value); return; }
+  if(!sb()){ lsSet(_lsKey(path), value); return; }
   try {
     const parts = path.split('/');
     const rootKey = parts[0];
     if(parts.length === 1){
-      // gravação direta na raiz
-      await window._sb.from('kv').upsert({ key: rootKey, value }, { onConflict: 'key' });
+      await window._sb.from('kv').upsert({ key: rootKey, value }, { onConflict:'key' });
     } else {
-      // sub-path: lê raiz, mescla, grava
       const { data } = await window._sb.from('kv').select('value').eq('key', rootKey).maybeSingle();
-      let root = data?.value ?? {};
+      const root = data?.value ?? {};
       let cur = root;
       for(let i=1; i<parts.length-1; i++){
-        if(cur[parts[i]]==null || typeof cur[parts[i]] !== 'object') cur[parts[i]] = {};
+        if(!cur[parts[i]] || typeof cur[parts[i]] !== 'object') cur[parts[i]] = {};
         cur = cur[parts[i]];
       }
       cur[parts[parts.length-1]] = value;
-      await window._sb.from('kv').upsert({ key: rootKey, value: root }, { onConflict: 'key' });
+      await window._sb.from('kv').upsert({ key: rootKey, value: root }, { onConflict:'key' });
     }
-  } catch(e){ console.warn('dbSet failed', path, e); }
+  } catch(e){ console.warn('dbSet erro:', path, e); }
 }
 
 /* UPDATE — mescla campos no objeto existente */
 async function dbUpdate(path, updates){
   if(!sb()){
-    const cur = lsGet(pathToKey(path)) || {};
-    lsSet(pathToKey(path), {...cur, ...updates});
+    const cur = lsGet(_lsKey(path)) || {};
+    lsSet(_lsKey(path), {...cur, ...updates});
     return;
   }
   try {
@@ -2413,99 +2446,77 @@ async function dbUpdate(path, updates){
     const rootKey = parts[0];
     const { data } = await window._sb.from('kv').select('value').eq('key', rootKey).maybeSingle();
     let root = data?.value ?? {};
-    let cur = root;
-    for(let i=1; i<parts.length; i++){
-      if(cur[parts[i]]==null || typeof cur[parts[i]] !== 'object') cur[parts[i]] = {};
-      if(i < parts.length-1){ cur = cur[parts[i]]; }
-      else { cur[parts[i]] = { ...(cur[parts[i]] || {}), ...updates }; }
+    if(parts.length === 1){
+      root = { ...root, ...updates };
+    } else {
+      let cur = root;
+      for(let i=1; i<parts.length-1; i++){
+        if(!cur[parts[i]] || typeof cur[parts[i]] !== 'object') cur[parts[i]] = {};
+        cur = cur[parts[i]];
+      }
+      const last = parts[parts.length-1];
+      cur[last] = { ...(cur[last] || {}), ...updates };
     }
-    if(parts.length === 1) root = { ...root, ...updates };
-    await window._sb.from('kv').upsert({ key: rootKey, value: root }, { onConflict: 'key' });
-  } catch(e){ console.warn('dbUpdate failed', path, e); }
+    await window._sb.from('kv').upsert({ key: rootKey, value: root }, { onConflict:'key' });
+  } catch(e){ console.warn('dbUpdate erro:', path, e); }
 }
 
-/* PUSH — adiciona item com ID único (equivalente ao Firebase push) */
+/* PUSH — adiciona item com ID gerado ao array */
 async function dbPush(path, data){
   const id = 'id' + Date.now() + Math.random().toString(36).slice(2,6);
   const item = { ...data, id };
   if(!sb()){
-    const arr = lsGet(pathToKey(path)) || [];
+    const arr = lsGet(_lsKey(path)) || [];
     arr.push(item);
-    lsSet(pathToKey(path), arr);
+    lsSet(_lsKey(path), arr);
     return id;
   }
   try {
-    const { data: existing } = await window._sb.from('kv').select('value').eq('key', pathToKey(path)).maybeSingle();
-    const arr = existing?.value ? (Array.isArray(existing.value) ? existing.value : Object.values(existing.value)) : [];
+    const { data: existing } = await window._sb.from('kv').select('value').eq('key', _lsKey(path)).maybeSingle();
+    const arr = existing?.value
+      ? (Array.isArray(existing.value) ? existing.value : Object.values(existing.value))
+      : [];
     arr.push(item);
-    await window._sb.from('kv').upsert({ key: pathToKey(path), value: arr }, { onConflict: 'key' });
+    await window._sb.from('kv').upsert({ key: _lsKey(path), value: arr }, { onConflict:'key' });
     return id;
-  } catch(e){ console.warn('dbPush failed', path, e); return id; }
-}
-
-/* REMOVE — remove uma chave */
-async function dbRemove(path){
-  if(!sb()){ localStorage.removeItem('cbhm_' + pathToKey(path)); return; }
-  try {
-    const parts = path.split('/');
-    if(parts.length === 1){
-      await window._sb.from('kv').delete().eq('key', parts[0]);
-    } else {
-      await dbSet(path, null);
-    }
-  } catch(e){ console.warn('dbRemove failed', path, e); }
+  } catch(e){ console.warn('dbPush erro:', path, e); return id; }
 }
 
 /* LISTEN — escuta mudanças em tempo real via Supabase Realtime
-   Polling a cada 2s como fallback se Realtime não estiver disponível */
-const _listeners = {};
+   Polling a cada 2s como fallback automático */
+const _sbChannels = {};
 function dbListen(path, cb){
-  if(!sb()){
-    // modo demo: sem realtime, mas chama cb imediatamente com dados locais
-    const val = lsGet(pathToKey(path));
-    if(val !== null) cb(val);
-    return;
-  }
-  // chama imediatamente com valor atual
+  // chama imediatamente com o valor atual
   dbGet(path).then(val => cb(val));
 
+  if(!sb()) return; // modo demo: sem realtime
+
   const rootKey = path.split('/')[0];
-  const channelName = 'kv-' + rootKey;
+  const chName  = 'kv-' + rootKey;
+  if(_sbChannels[chName]) return; // evita duplicar canal
 
-  // evita duplicar canais
-  if(_listeners[channelName]) return;
-
-  const channel = window._sb
-    .channel(channelName)
+  _sbChannels[chName] = window._sb
+    .channel(chName)
     .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'kv',
+      event: '*', schema: 'public', table: 'kv',
       filter: `key=eq.${rootKey}`
-    }, async (payload) => {
-      const newValue = payload.new?.value ?? null;
-      // extrai sub-path se necessário
-      const parts = path.split('/');
-      let val = newValue;
-      for(let i=1; i<parts.length; i++){ if(val==null) break; val = val[parts[i]]; }
-      cb(val ?? null);
+    }, async () => {
+      const val = await dbGet(path);
+      cb(val);
     })
-    .subscribe((status) => {
+    .subscribe(status => {
       if(status === 'SUBSCRIBED'){
-        console.log('🔴 Realtime ativo:', channelName);
-      } else if(status === 'CHANNEL_ERROR'){
-        // fallback: polling a cada 2s
-        console.warn('Realtime indisponível, usando polling para', path);
-        if(!_listeners[channelName + '_poll']){
-          _listeners[channelName + '_poll'] = setInterval(async()=>{
-            const val = await dbGet(path);
-            cb(val);
+        console.log('🔴 Realtime ativo:', chName);
+      } else if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT'){
+        // fallback automático para polling
+        if(!_sbChannels[chName + '_poll']){
+          console.warn('Realtime indisponível, polling 2s para:', path);
+          _sbChannels[chName + '_poll'] = setInterval(async()=>{
+            cb(await dbGet(path));
           }, 2000);
         }
       }
     });
-
-  _listeners[channelName] = channel;
 }
 
 /* ════════════════════════════════
@@ -2578,7 +2589,7 @@ async function loadAdminData(){
   const qData = await dbGet('questions');
   questions = qData ? (Array.isArray(qData)?qData:Object.entries(qData).map(([id,v])=>({...v,id}))) : getSampleQuestions();
   if(!qData) {
-    /* first run: salva questões de exemplo */
+    /* primeira execução: salva questões de exemplo */
     if(sb()) await window._sb.from('kv').upsert({ key:'questions', value: questions }, { onConflict:'key' });
     else lsSet('questions', questions);
   }
@@ -3623,7 +3634,7 @@ async function saveQuestion(){
     q.id='q'+Date.now();
     questions.push(q);
   }
-  // Supabase: salva o array completo de uma vez
+  // salva array completo no Supabase
   if(sb()) await window._sb.from('kv').upsert({ key:'questions', value: questions }, { onConflict:'key' });
   else lsSet('questions', questions);
   closeOverlay('questionOverlay');
@@ -3635,7 +3646,6 @@ async function saveQuestion(){
 async function deleteQuestion(id){
   if(!confirm('Excluir esta questão?')) return;
   questions = questions.filter(q=>q.id!==id);
-  // Salva o array atualizado no Supabase
   if(sb()) await window._sb.from('kv').upsert({ key:'questions', value: questions }, { onConflict:'key' });
   else lsSet('questions', questions);
   renderQuestions();
