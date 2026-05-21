@@ -1458,8 +1458,8 @@ nav {
     <h2>⚔ ACESSO RESTRITO</h2>
     <div class="divider-sm" style="margin:0 0 1.5rem"></div>
     <div class="field">
-      <label>Usuário</label>
-      <input type="text" id="loginUser" placeholder="admin" autocomplete="username">
+      <label>E-mail</label>
+      <input type="email" id="loginUser" placeholder="usuario@example.com" autocomplete="email">
     </div>
     <div class="field">
       <label>Senha</label>
@@ -1468,7 +1468,7 @@ nav {
     <div id="loginErr" class="hidden" style="color:#e07070;font-size:.85rem;margin-bottom:1rem;padding:.5rem .75rem;border-radius:var(--r);background:rgba(139,26,26,.2);border:1px solid var(--red)"></div>
     <button class="btn btn-gold" style="width:100%;justify-content:center" onclick="doLogin()">Entrar</button>
     <p style="font-size:.8rem;color:var(--muted);margin-top:1rem;text-align:center;font-style:italic">
-      Credenciais padrão: admin / cbhm2026
+      Use suas credenciais cadastradas na plataforma
     </p>
   </div>
 </div>
@@ -2612,6 +2612,25 @@ function showScreen(id){
 }
 
 function adminTab(el, tab){
+  // Mapear abas para features
+  const tabFeatureMap = {
+    tabDashboard: 'dashboard',
+    tabQuestions: 'questions',
+    tabGemini: 'gemini',
+    tabTeams: 'teams',
+    tabUsers: 'users',
+    tabLanding: 'landing',
+    tabSession: 'session',
+    tabScoreboard: 'scoreboard'
+  };
+
+  // Verificar acesso
+  const feature = tabFeatureMap[tab];
+  if(feature && !hasUserAccess(feature)){
+    toast('Você não tem permissão para acessar esta funcionalidade','err');
+    return;
+  }
+
   document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
   el.classList.add('active');
   document.querySelectorAll('#sAdmin .admin-content > div').forEach(d=>d.classList.add('hidden'));
@@ -2641,19 +2660,32 @@ function openJoinTeam(){ openOverlay('joinOverlay'); }
 const CREDENTIALS = { admin:'cbhm2026' }; // change in production!
 
 function doLogin(){
-  const u = document.getElementById('loginUser').value.trim();
-  const p = document.getElementById('loginPass').value;
+  const email = document.getElementById('loginUser').value.trim();
+  const password = document.getElementById('loginPass').value;
   const errEl = document.getElementById('loginErr');
   errEl.classList.add('hidden');
 
-  if(CREDENTIALS[u]===p){
+  // Tenta logar com usuário criado na plataforma
+  const user = users.find(u => u.email === email && atob(u.password) === password);
+  
+  if(user){
+    // Login bem-sucedido com usuário do sistema
     adminLogged = true;
+    currentUser = { id: user.id, email: user.email, warName: user.warName, profile: user.profile };
     closeOverlay('loginOverlay');
     showScreen('sAdmin');
     loadAdminData();
-    toast('Bem-vindo, '+u+'!','ok');
+    toast('Bem-vindo, '+user.warName+'!','ok');
+  } else if(CREDENTIALS['admin'] === password && email === 'admin'){
+    // Login com credencial padrão (backward compatibility)
+    adminLogged = true;
+    currentUser = { id: 'admin', email: 'admin', warName: 'Administrador', profile: 'admin' };
+    closeOverlay('loginOverlay');
+    showScreen('sAdmin');
+    loadAdminData();
+    toast('Bem-vindo, Administrador!','ok');
   } else {
-    errEl.textContent='Credenciais inválidas. Tente novamente.';
+    errEl.textContent='E-mail ou senha inválidos. Tente novamente.';
     errEl.classList.remove('hidden');
   }
 }
@@ -2690,6 +2722,43 @@ function checkAccess(feature){
   return true;
 }
 
+// Ocultar itens do menu baseado no perfil do usuário
+function applyMenuAccessControl(){
+  if(!currentUser) return;
+
+  const menuItemMap = {
+    'tabDashboard': document.querySelector('[onclick*="tabDashboard"]'),
+    'tabQuestions': document.querySelector('[onclick*="tabQuestions"]'),
+    'tabGemini': document.querySelector('[onclick*="tabGemini"]'),
+    'tabTeams': document.querySelector('[onclick*="tabTeams"]'),
+    'tabUsers': document.querySelector('[onclick*="tabUsers"]'),
+    'tabLanding': document.querySelector('[onclick*="tabLanding"]'),
+    'tabSession': document.querySelector('[onclick*="tabSession"]'),
+    'tabScoreboard': document.querySelector('[onclick*="tabScoreboard"]')
+  };
+
+  const featureMap = {
+    'tabDashboard': 'dashboard',
+    'tabQuestions': 'questions',
+    'tabGemini': 'gemini',
+    'tabTeams': 'teams',
+    'tabUsers': 'users',
+    'tabLanding': 'landing',
+    'tabSession': 'session',
+    'tabScoreboard': 'scoreboard'
+  };
+
+  Object.entries(menuItemMap).forEach(([tab, el]) => {
+    if(!el) return;
+    const feature = featureMap[tab];
+    if(hasUserAccess(feature)){
+      el.style.display = '';  // Mostrar
+    } else {
+      el.style.display = 'none';  // Ocultar
+    }
+  });
+}
+
 /* ════════════════════════════════
    LOAD ADMIN DATA
 ════════════════════════════════ */
@@ -2724,6 +2793,9 @@ async function loadAdminData(){
     renderParticipantMode();
   });
 
+  // Aplicar controle de acesso ao menu
+  applyMenuAccessControl();
+  
   refreshDashboard();
 }
 
