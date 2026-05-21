@@ -9,6 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode"></script>
+<script type="module" src="./assets/js/participant-tools.js"></script>
 
 <!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -2208,6 +2210,9 @@ nav {
         <div class="field" style="margin:0;display:flex;align-items:end">
           <button class="btn btn-gold" style="width:100%;justify-content:center" onclick="joinParticipantSession()">Entrar</button>
         </div>
+        <div class="field" style="margin:0;display:flex;align-items:end">
+          <button class="btn" style="width:100%;justify-content:center" onclick="openParticipantScanner()">📷 Ler QR com câmera</button>
+        </div>
       </div>
       <p class="participant-mini mt">Dica: escaneie o QR code exibido pelo admin para preencher automaticamente o código e o PIN.</p>
     </div>
@@ -2286,6 +2291,19 @@ nav {
         <canvas id="ppChartCanvas"></canvas>
       </div>
     </div>
+  </div>
+</div>
+
+<div id="participantQrScannerModal" class="hidden" style="position:fixed;inset:0;z-index:9998;background:rgba(8,11,16,.92);backdrop-filter:blur(12px);padding:1rem;display:flex;align-items:center;justify-content:center;">
+  <div class="card" style="width:min(92vw,680px);max-width:680px;max-height:90vh;overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.55)">
+    <div class="card-header" style="align-items:center">
+      <div>
+        <div class="card-title">LER QR COM CÂMERA</div>
+        <div class="card-meta">Aponte a câmera do celular para preencher código e PIN automaticamente</div>
+      </div>
+      <button class="btn btn-sm" onclick="closeParticipantScanner()">✕ Fechar</button>
+    </div>
+    <div id="participantQrScannerMount" style="min-height:320px"></div>
   </div>
 </div>
 
@@ -3392,8 +3410,13 @@ function generateSessionPin(){
 function openParticipantHub(){
   showScreen('sParticipant');
   const params = new URLSearchParams(location.search);
-  if(params.get('code')) document.getElementById('participantCodeInput').value = params.get('code').toUpperCase();
-  if(params.get('pin')) document.getElementById('participantPinInput').value = params.get('pin').toUpperCase();
+  const qrPayload = window.CBHMParticipantTools?.parseParticipantQrText?.(location.href);
+  if(qrPayload){
+    window.CBHMParticipantTools.fillParticipantJoinForm(qrPayload);
+  } else {
+    if(params.get('code')) document.getElementById('participantCodeInput').value = params.get('code').toUpperCase();
+    if(params.get('pin')) document.getElementById('participantPinInput').value = params.get('pin').toUpperCase();
+  }
   const stored = lsGet('participant_profile');
   // Verificar se código e PIN correspondem (sem comparação de tipo)
   const pinMatch = stored && activeSession?.active && stored.code === activeSession.code && String(stored.pin).trim() === String(activeSession.pin).trim();
@@ -3413,6 +3436,7 @@ function openParticipantHub(){
 
 function closeParticipantHub(){
   // Sair do modo participante sem fazer logout do admin
+  closeParticipantScanner?.();
   participantJoined = false;
   participantProfile = null;
   lsSet('participant_profile', null);
@@ -3429,14 +3453,14 @@ async function joinParticipantSession(){
   const sessionPin = String(activeSession?.pin || '').trim();
   const inputPin = String(pin).trim();
   
-  // Debug: log dos valores para diagnóstico
-  console.log('[PIN DEBUG]', {
-    inputPin: inputPin,
-    sessionPin: sessionPin,
-    match: inputPin === sessionPin,
+  const pinDebug = window.CBHMParticipantTools?.debugParticipantPinSession?.({
+    inputPin,
+    sessionPin,
+    code,
     activeSessionActive: activeSession?.active,
-    codeMatch: activeSession?.code === code
-  });
+    qrPayload: window.CBHMParticipantTools?.parseParticipantQrText?.(buildParticipantJoinUrl())
+  }) || { inputPin, sessionPin, code, activeSessionActive: !!activeSession?.active, match: inputPin === sessionPin };
+  console.debug('[PIN DEBUG]', pinDebug);
   
   if(!activeSession || !activeSession.active || activeSession.code !== code || inputPin !== sessionPin){
     toast('Código ou PIN inválido','err'); return;
