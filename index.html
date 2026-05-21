@@ -1538,6 +1538,9 @@ nav {
         <div class="sidebar-item" onclick="adminTab(this,'tabTeams')">
           <span class="si-icon">🏛</span> Equipes
         </div>
+        <div class="sidebar-item" onclick="adminTab(this,'tabUsers')">
+          <span class="si-icon">👥</span> Usuários
+        </div>
         <div class="sidebar-item" onclick="adminTab(this,'tabLanding')">
           <span class="si-icon">🛠</span> Página Principal
         </div>
@@ -1604,10 +1607,10 @@ nav {
               <span style="color:var(--silver)">Resposta de 21 a 30 segundos</span>
               <span style="font-family:var(--fh);color:var(--gold);font-size:1.1rem">10 pts</span>
             </div>
-            <div class="team-row" style="grid-template-columns:auto 1fr auto;border-color:rgba(201,168,76,.4);background:rgba(201,168,76,.05)">
-              <span style="font-family:var(--fh);font-size:.75rem;color:var(--gold)">⭐</span>
-              <span style="color:var(--gold2)">Bônus: 3 acertos consecutivos em até 5s</span>
-              <span style="font-family:var(--fh);color:var(--gold);font-size:1.1rem">90 pts</span>
+            <div class="team-row" style="grid-template-columns:auto 1fr auto;border-color:rgba(186,26,26,.4);background:rgba(186,26,26,.05)">
+              <span style="font-family:var(--fh);font-size:.75rem;color:#e07070">❌</span>
+              <span style="color:#e07070">Resposta incorreta</span>
+              <span style="font-family:var(--fh);color:#e07070;font-size:1.1rem">-15 pts</span>
             </div>
           </div>
         </div>
@@ -1804,6 +1807,76 @@ nav {
         </div>
 
         <div id="teamList"></div>
+      </div>
+
+      <!-- USUARIOS -->
+      <div id="tabUsers" class="hidden">
+        <h1>USUÁRIOS</h1>
+        <p class="sub">Gestão de usuários com controle de perfis e permissões</p>
+
+        <div class="card">
+          <div class="card-title" style="margin-bottom:1rem">NOVO USUÁRIO</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div class="field" style="margin:0">
+              <label>Posto/Graduação</label>
+              <input type="text" id="userRank" placeholder="Ex: Tenente, Capitão" maxlength="20">
+            </div>
+            <div class="field" style="margin:0">
+              <label>Nome de Guerra</label>
+              <input type="text" id="userWarName" placeholder="Ex: Águia Negra" maxlength="20">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem">
+            <div class="field" style="margin:0">
+              <label>CPF</label>
+              <input type="text" id="userCPF" placeholder="12345678901" maxlength="11" pattern="[0-9]{11}">
+            </div>
+            <div class="field" style="margin:0">
+              <label>E-mail</label>
+              <input type="email" id="userEmail" placeholder="usuario@example.com">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem">
+            <div class="field" style="margin:0">
+              <label>Setor</label>
+              <input type="text" id="userSector" placeholder="Ex: Administração" maxlength="30">
+            </div>
+            <div class="field" style="margin:0">
+              <label>Perfil</label>
+              <select id="userProfile">
+                <option value="">Selecione um perfil</option>
+                <option value="admin">Administrador (Acesso total)</option>
+                <option value="manager">Gerente (Dashboard, Questões, Equipes, Sessão, Placar)</option>
+                <option value="teacher">Professor (Questões, Sessão, Placar)</option>
+              </select>
+            </div>
+          </div>
+          <div class="field mt">
+            <label>Senha</label>
+            <input type="password" id="userPassword" placeholder="Digite uma senha segura">
+          </div>
+          <div class="mt2">
+            <button class="btn btn-gold" onclick="addUserFromAdmin()">+ Criar Usuário</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title" style="margin-bottom:1rem">USUÁRIOS REGISTRADOS</div>
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse">
+              <thead style="background:var(--bg3);border-bottom:1px solid var(--border)">
+                <tr>
+                  <th style="padding:.75rem;text-align:left;font-family:var(--fh);color:var(--gold2);font-size:.85rem">NOME</th>
+                  <th style="padding:.75rem;text-align:left;font-family:var(--fh);color:var(--gold2);font-size:.85rem">EMAIL</th>
+                  <th style="padding:.75rem;text-align:left;font-family:var(--fh);color:var(--gold2);font-size:.85rem">PERFIL</th>
+                  <th style="padding:.75rem;text-align:left;font-family:var(--fh);color:var(--gold2);font-size:.85rem">SETOR</th>
+                  <th style="padding:.75rem;text-align:center;font-family:var(--fh);color:var(--gold2);font-size:.85rem">AÇÕES</th>
+                </tr>
+              </thead>
+              <tbody id="userList"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <!-- SESSION -->
@@ -2344,6 +2417,7 @@ const DEFAULT_LANDING_CONFIG = {
 let adminLogged    = false;
 let questions      = [];
 let teams          = [];
+let users          = [];  // Usuários do sistema
 let activeSession  = null;
 let quizState      = null;  // { currentQ, timer, answers }
 let timerInterval  = null;
@@ -2543,6 +2617,7 @@ function adminTab(el, tab){
   document.getElementById(tab).classList.remove('hidden');
   if(tab==='tabQuestions') renderQuestions();
   if(tab==='tabTeams') renderTeams();
+  if(tab==='tabUsers') renderUsers();
   if(tab==='tabScoreboard') renderAdminScoreboard();
   if(tab==='tabDashboard') refreshDashboard();
   if(tab==='tabGemini') loadGeminiKey();
@@ -2606,6 +2681,10 @@ async function loadAdminData(){
   // Load teams
   const tData = await dbGet('teams');
   teams = tData ? (Array.isArray(tData)?tData:Object.entries(tData).map(([id,v])=>({...v,id}))) : [];
+
+  // Load users
+  const uData = await dbGet('users');
+  users = uData ? (Array.isArray(uData)?uData:Object.entries(uData).map(([id,v])=>({...v,id}))) : [];
 
   // Listen to active session
   dbListen('activeSession', data=>{
@@ -3824,6 +3903,142 @@ async function removeTeam(id){
 }
 
 /* ════════════════════════════════
+   USUÁRIOS
+════════════════════════════════ */
+async function addUserFromAdmin(){
+  const rank = document.getElementById('userRank').value.trim();
+  const warName = document.getElementById('userWarName').value.trim();
+  const cpf = document.getElementById('userCPF').value.trim();
+  const email = document.getElementById('userEmail').value.trim();
+  const sector = document.getElementById('userSector').value.trim();
+  const profile = document.getElementById('userProfile').value.trim();
+  const password = document.getElementById('userPassword').value.trim();
+
+  // Validações
+  if(!rank || !warName || !cpf || !email || !sector || !profile || !password){
+    toast('Preencha todos os campos obrigatórios','err');
+    return;
+  }
+
+  // Validar CPF (11 dígitos)
+  if(!/^\d{11}$/.test(cpf)){
+    toast('CPF deve ter 11 dígitos','err');
+    return;
+  }
+
+  // Validar e-mail
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    toast('E-mail inválido','err');
+    return;
+  }
+
+  // Verificar se CPF ou e-mail já existem
+  if(users.some(u => u.cpf === cpf)){
+    toast('Este CPF já está registrado','err');
+    return;
+  }
+  if(users.some(u => u.email === email)){
+    toast('Este e-mail já está registrado','err');
+    return;
+  }
+
+  const user = {
+    id: 'u' + Date.now(),
+    rank,
+    warName,
+    cpf,
+    email,
+    sector,
+    profile,  // 'admin', 'manager', 'teacher'
+    password: btoa(password),  // Codificação básica (não é segura para produção)
+    created: Date.now()
+  };
+
+  users.push(user);
+  if(sb()) await window._sb.from('kv').upsert({ key:'users', value: users }, { onConflict:'key' });
+  else lsSet('users', users);
+
+  // Limpar formulário
+  document.getElementById('userRank').value = '';
+  document.getElementById('userWarName').value = '';
+  document.getElementById('userCPF').value = '';
+  document.getElementById('userEmail').value = '';
+  document.getElementById('userSector').value = '';
+  document.getElementById('userProfile').value = '';
+  document.getElementById('userPassword').value = '';
+
+  renderUsers();
+  toast('Usuário criado com sucesso','ok');
+}
+
+function renderUsers(){
+  const el = document.getElementById('userList');
+  if(!users.length){
+    el.innerHTML = '<tr><td colspan="5" style="padding:1.5rem;text-align:center;color:var(--muted)">Nenhum usuário registrado.</td></tr>';
+    return;
+  }
+
+  const profileNames = {
+    admin: 'Administrador',
+    manager: 'Gerente',
+    teacher: 'Professor'
+  };
+
+  el.innerHTML = users.map(u => `
+    <tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:.75rem">${esc(u.warName)}</td>
+      <td style="padding:.75rem;font-size:.9rem">${esc(u.email)}</td>
+      <td style="padding:.75rem"><span style="background:rgba(201,168,76,.1);border:1px solid var(--gold);color:var(--gold);padding:.25rem .5rem;border-radius:4px;font-size:.8rem">${profileNames[u.profile] || u.profile}</span></td>
+      <td style="padding:.75rem;font-size:.9rem">${esc(u.sector)}</td>
+      <td style="padding:.75rem;text-align:center">
+        <button class="btn btn-sm" onclick="editUser('${u.id}')" style="background:rgba(0,212,170,.1);border-color:rgba(0,212,170,.3);color:#00d4aa">✏</button>
+        <button class="btn btn-sm btn-danger" onclick="removeUser('${u.id}')">✕</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function editUser(id){
+  const user = users.find(u => u.id === id);
+  if(!user){ toast('Usuário não encontrado','err'); return; }
+
+  const nextRank = prompt('Posto/Graduação:', user.rank || '');
+  if(nextRank === null) return;
+
+  const nextWarName = prompt('Nome de Guerra:', user.warName || '');
+  if(nextWarName === null) return;
+
+  const nextSector = prompt('Setor:', user.sector || '');
+  if(nextSector === null) return;
+
+  if(!nextRank.trim() || !nextWarName.trim() || !nextSector.trim()){
+    toast('Informações obrigatórias não podem ficar vazias','err');
+    return;
+  }
+
+  user.rank = nextRank.trim();
+  user.warName = nextWarName.trim();
+  user.sector = nextSector.trim();
+
+  if(sb()) await window._sb.from('kv').upsert({ key:'users', value: users }, { onConflict:'key' });
+  else lsSet('users', users);
+
+  renderUsers();
+  toast('Usuário atualizado com sucesso','ok');
+}
+
+async function removeUser(id){
+  if(!confirm('Tem certeza que deseja remover este usuário?')) return;
+
+  users = users.filter(u => u.id !== id);
+  if(sb()) await window._sb.from('kv').upsert({ key:'users', value: users }, { onConflict:'key' });
+  else lsSet('users', users);
+
+  renderUsers();
+  toast('Usuário removido com sucesso','ok');
+}
+
+/* ════════════════════════════════
    SESSION
 ════════════════════════════════ */
 async function createSession(){
@@ -4007,17 +4222,11 @@ function scoreTeam(teamId, correct, elapsed){
 
   if(correct){
     ts[teamId].streak++;
-    if(ts[teamId].streak>=3){
-      const bonus = BONUS_POINTS - ts[teamId].score; // give total 90 pts for this round
-      ts[teamId].score += BONUS_POINTS;
-      ts[teamId].streak = 0;
-      toast('⭐ BÔNUS! '+ts[teamId].name+' acertou 3 seguidas em 5s! +90 pts','ok');
-      confetti('#c9a84c');
-    } else {
-      ts[teamId].score += pts;
-    }
+    ts[teamId].score += pts;
   } else {
     ts[teamId].streak = 0;
+    ts[teamId].score -= 15;  // Penalidade: -15 pontos por resposta errada
+    if(ts[teamId].score < 0) ts[teamId].score = 0;  // Não pode ficar negativo
   }
 
   // persist
