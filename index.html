@@ -12,6 +12,7 @@
 <script src="https://unpkg.com/html5-qrcode"></script>
 <script type="module" src="./assets/js/participant-tools.js"></script>
 <script type="module" src="./assets/js/db-core.js"></script>
+<script type="module" src="./assets/js/auth-core.js"></script>
 
 <!-- Supabase SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -2514,36 +2515,22 @@ function openJoinTeam(){ openOverlay('joinOverlay'); }
 /* ════════════════════════════════
    AUTH
 ════════════════════════════════ */
-// Credentials stored in Firebase or local fallback
-const CREDENTIALS = { admin:'cbhm2026' }; // change in production!
-
 function doLogin(){
   const email = document.getElementById('loginUser').value.trim();
   const password = document.getElementById('loginPass').value;
   const errEl = document.getElementById('loginErr');
   errEl.classList.add('hidden');
 
-  // Tenta logar com usuário criado na plataforma
-  const user = users.find(u => u.email === email && atob(u.password) === password);
-  
+  const user = window.resolveLoginUser ? window.resolveLoginUser(email, password, users) : null;
+
   if(user){
-    // Login bem-sucedido com usuário do sistema
     adminLogged = true;
-    currentUser = { id: user.id, email: user.email, warName: user.warName, profile: user.profile };
-    lsSet('currentUser', currentUser);  // Persistir autenticação
+    currentUser = user;
+    window.persistAuthUser?.(currentUser);
     closeOverlay('loginOverlay');
     showScreen('sAdmin');
     loadAdminData();
     toast('Bem-vindo, '+user.warName+'!','ok');
-  } else if(CREDENTIALS['admin'] === password && email === 'admin'){
-    // Login com credencial padrão (backward compatibility)
-    adminLogged = true;
-    currentUser = { id: 'admin', email: 'admin', warName: 'Administrador', profile: 'admin' };
-    lsSet('currentUser', currentUser);  // Persistir autenticação
-    closeOverlay('loginOverlay');
-    showScreen('sAdmin');
-    loadAdminData();
-    toast('Bem-vindo, Administrador!','ok');
   } else {
     errEl.textContent='E-mail ou senha inválidos. Tente novamente.';
     errEl.classList.remove('hidden');
@@ -2553,25 +2540,13 @@ function doLogin(){
 function logout(){
   adminLogged = false;
   currentUser = null;
-  lsSet('currentUser', null);  // Limpar autenticação persistida
+  window.persistAuthUser?.(null);
   showScreen('sLanding');
 }
 
 // Verifica se o usuário tem acesso à funcionalidade baseado em seu perfil
 function hasUserAccess(feature){
-  if(!currentUser) return false;
-  
-  const featureAccessMap = {
-    // Admin: acesso total
-    admin: ['dashboard', 'questions', 'teams', 'users', 'gemini', 'landing', 'session', 'scoreboard', 'live', 'results'],
-    // Gerente: Dashboard, Questões, Equipes, Sessão ao Vivo, Placar
-    manager: ['dashboard', 'questions', 'teams', 'session', 'scoreboard'],
-    // Professor: Questões, Sessão ao Vivo, Placar
-    teacher: ['questions', 'session', 'scoreboard']
-  };
-
-  const userFeatures = featureAccessMap[currentUser.profile] || [];
-  return userFeatures.includes(feature);
+  return window.CBHMAuth?.hasUserAccess ? window.CBHMAuth.hasUserAccess(currentUser, feature) : false;
 }
 
 // Verificar acesso e mostrar mensagem se não tiver permissão
@@ -2585,39 +2560,7 @@ function checkAccess(feature){
 
 // Ocultar itens do menu baseado no perfil do usuário
 function applyMenuAccessControl(){
-  if(!currentUser) return;
-
-  const menuItemMap = {
-    'tabDashboard': document.querySelector('[onclick*="tabDashboard"]'),
-    'tabQuestions': document.querySelector('[onclick*="tabQuestions"]'),
-    'tabGemini': document.querySelector('[onclick*="tabGemini"]'),
-    'tabTeams': document.querySelector('[onclick*="tabTeams"]'),
-    'tabUsers': document.querySelector('[onclick*="tabUsers"]'),
-    'tabLanding': document.querySelector('[onclick*="tabLanding"]'),
-    'tabSession': document.querySelector('[onclick*="tabSession"]'),
-    'tabScoreboard': document.querySelector('[onclick*="tabScoreboard"]')
-  };
-
-  const featureMap = {
-    'tabDashboard': 'dashboard',
-    'tabQuestions': 'questions',
-    'tabGemini': 'gemini',
-    'tabTeams': 'teams',
-    'tabUsers': 'users',
-    'tabLanding': 'landing',
-    'tabSession': 'session',
-    'tabScoreboard': 'scoreboard'
-  };
-
-  Object.entries(menuItemMap).forEach(([tab, el]) => {
-    if(!el) return;
-    const feature = featureMap[tab];
-    if(hasUserAccess(feature)){
-      el.style.display = '';  // Mostrar
-    } else {
-      el.style.display = 'none';  // Ocultar
-    }
-  });
+  window.CBHMAuth?.applyMenuAccessControl?.(currentUser);
 }
 
 /* ════════════════════════════════
@@ -4868,7 +4811,7 @@ document.addEventListener('appReady',()=>{
   syncSlideForm();
 
   // Verificar se há autenticação persistida
-  const savedUser = lsGet('currentUser');
+  const savedUser = window.restoreAuthUser ? window.restoreAuthUser() : lsGet('currentUser');
   if(savedUser && savedUser.id && savedUser.profile){
     adminLogged = true;
     currentUser = savedUser;
