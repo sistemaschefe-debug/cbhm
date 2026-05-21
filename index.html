@@ -2415,6 +2415,7 @@ const DEFAULT_LANDING_CONFIG = {
 };
 
 let adminLogged    = false;
+let currentUser    = null;  // Usuário atualmente logado { id, email, warName, profile }
 let questions      = [];
 let teams          = [];
 let users          = [];  // Usuários do sistema
@@ -2659,7 +2660,34 @@ function doLogin(){
 
 function logout(){
   adminLogged = false;
+  currentUser = null;
   showScreen('sLanding');
+}
+
+// Verifica se o usuário tem acesso à funcionalidade baseado em seu perfil
+function hasUserAccess(feature){
+  if(!currentUser) return false;
+  
+  const featureAccessMap = {
+    // Admin: acesso total
+    admin: ['dashboard', 'questions', 'teams', 'users', 'gemini', 'landing', 'session', 'scoreboard', 'live', 'results'],
+    // Gerente: Dashboard, Questões, Equipes, Sessão ao Vivo, Placar
+    manager: ['dashboard', 'questions', 'teams', 'session', 'scoreboard'],
+    // Professor: Questões, Sessão ao Vivo, Placar
+    teacher: ['questions', 'session', 'scoreboard']
+  };
+
+  const userFeatures = featureAccessMap[currentUser.profile] || [];
+  return userFeatures.includes(feature);
+}
+
+// Verificar acesso e mostrar mensagem se não tiver permissão
+function checkAccess(feature){
+  if(!hasUserAccess(feature)){
+    toast('Você não tem permissão para acessar esta funcionalidade','err');
+    return false;
+  }
+  return true;
 }
 
 /* ════════════════════════════════
