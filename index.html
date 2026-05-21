@@ -2672,6 +2672,7 @@ function doLogin(){
     // Login bem-sucedido com usuário do sistema
     adminLogged = true;
     currentUser = { id: user.id, email: user.email, warName: user.warName, profile: user.profile };
+    lsSet('currentUser', currentUser);  // Persistir autenticação
     closeOverlay('loginOverlay');
     showScreen('sAdmin');
     loadAdminData();
@@ -2680,6 +2681,7 @@ function doLogin(){
     // Login com credencial padrão (backward compatibility)
     adminLogged = true;
     currentUser = { id: 'admin', email: 'admin', warName: 'Administrador', profile: 'admin' };
+    lsSet('currentUser', currentUser);  // Persistir autenticação
     closeOverlay('loginOverlay');
     showScreen('sAdmin');
     loadAdminData();
@@ -2693,6 +2695,7 @@ function doLogin(){
 function logout(){
   adminLogged = false;
   currentUser = null;
+  lsSet('currentUser', null);  // Limpar autenticação persistida
   showScreen('sLanding');
 }
 
@@ -3347,9 +3350,10 @@ function renderSessionDashboard(){
     }
   }
 
-  renderSlideDeck();
+  // NÃO renderizar slides/chart aqui - causava flickering
+  // Renderizar apenas quando sessão é criada ou alteração real ocorre
   updateLiveChart();
-  renderParticipantProjector();
+  if(participantProjectorOpen) renderParticipantProjector();
 }
 
 async function setSessionSlideIndex(index){
@@ -3360,6 +3364,8 @@ async function setSessionSlideIndex(index){
   activeSession.currentSlideIndex = nextIndex;
   await dbUpdate('activeSession/currentSlideIndex', nextIndex);
   renderSessionDashboard();
+  renderSlideDeck();  // Atualizar destaque do slide atual
+  renderParticipantProjector();
   renderParticipantMode();
 }
 
@@ -4168,6 +4174,7 @@ async function createSession(){
 
   updateSessionUI();
   renderSessionDashboard();
+  renderSlideDeck();  // Renderizar lista de slides uma única vez
   startSessionTicker();
   toast('Sessão '+code+' iniciada!','ok');
 }
@@ -4974,6 +4981,13 @@ document.addEventListener('appReady',()=>{
   loadLandingConfig();
   loadSessionSlidesDraft();
   syncSlideForm();
+
+  // Verificar se há autenticação persistida
+  const savedUser = lsGet('currentUser');
+  if(savedUser && savedUser.id && savedUser.profile){
+    adminLogged = true;
+    currentUser = savedUser;
+  }
 
   // Check URL params
   const p=new URLSearchParams(location.search);
