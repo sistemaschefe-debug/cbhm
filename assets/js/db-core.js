@@ -65,7 +65,7 @@ async function dbGet(path){
     return val ?? null;
   } catch (error) {
     console.warn('dbGet erro:', path, error);
-    return null;
+    return lsGet(_lsKey(path));
   }
 }
 
@@ -93,6 +93,7 @@ async function dbSet(path, value){
     await window._sb.from('kv').upsert({ key: rootKey, value: root }, { onConflict: 'key' });
   } catch (error) {
     console.warn('dbSet erro:', path, error);
+    lsSet(_lsKey(path), value);
   }
 }
 
@@ -124,6 +125,8 @@ async function dbUpdate(path, updates){
     await window._sb.from('kv').upsert({ key: rootKey, value: root }, { onConflict: 'key' });
   } catch (error) {
     console.warn('dbUpdate erro:', path, error);
+    const current = lsGet(_lsKey(path)) || {};
+    lsSet(_lsKey(path), { ...current, ...updates });
   }
 }
 
@@ -146,6 +149,9 @@ async function dbPush(path, data){
     return id;
   } catch (error) {
     console.warn('dbPush erro:', path, error);
+    const arr = lsGet(_lsKey(path)) || [];
+    arr.push(item);
+    lsSet(_lsKey(path), arr);
     return id;
   }
 }
@@ -169,6 +175,10 @@ function dbListen(path, cb){
     .subscribe(status => {
       if(status === 'SUBSCRIBED'){
         console.log('🔴 Realtime ativo:', channelName);
+        if(DB_CHANNELS[channelName + '_poll']){
+          clearInterval(DB_CHANNELS[channelName + '_poll']);
+          delete DB_CHANNELS[channelName + '_poll'];
+        }
       } else if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT'){
         if(!DB_CHANNELS[channelName + '_poll']){
           console.warn('Realtime indisponível, polling 2s para:', path);

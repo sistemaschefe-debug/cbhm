@@ -1,6 +1,20 @@
 const AUTH_STORAGE_KEY = 'currentUser';
 const ADMIN_CREDENTIALS = { admin: 'cbhm2026' };
 
+function normalizeProfile(profile){
+  const value = String(profile || '').trim().toLowerCase();
+  const aliases = {
+    admin: 'admin',
+    administrador: 'admin',
+    'administrador (acesso total)': 'admin',
+    manager: 'manager',
+    gerente: 'manager',
+    teacher: 'teacher',
+    professor: 'teacher',
+  };
+  return aliases[value] || value;
+}
+
 function persistAuthUser(user){
   if(user){
     lsSet(AUTH_STORAGE_KEY, user);
@@ -21,11 +35,17 @@ function resolveLoginUser(email, password, users){
   const userList = Array.isArray(users) ? users : [];
 
   const matchedUser = userList.find(user => {
+    const storedPassword = String(user.password || '');
+    let decodedPassword = '';
     try {
-      return String(user.email || '').trim() === normalizedEmail && atob(String(user.password || '')) === normalizedPassword;
+      decodedPassword = atob(storedPassword);
     } catch {
-      return false;
+      decodedPassword = storedPassword;
     }
+
+    return String(user.email || '').trim() === normalizedEmail && (
+      decodedPassword === normalizedPassword || storedPassword === normalizedPassword
+    );
   });
 
   if(matchedUser){
@@ -33,7 +53,7 @@ function resolveLoginUser(email, password, users){
       id: matchedUser.id,
       email: matchedUser.email,
       warName: matchedUser.warName,
-      profile: matchedUser.profile,
+      profile: normalizeProfile(matchedUser.profile || matchedUser.role || matchedUser.access || matchedUser.type),
       source: 'users-db',
     };
   }
@@ -54,13 +74,15 @@ function resolveLoginUser(email, password, users){
 function hasUserAccess(user, feature){
   if(!user) return false;
 
+  const profile = normalizeProfile(user.profile || user.role || user.access || user.type);
+
   const featureAccessMap = {
     admin: ['dashboard', 'questions', 'teams', 'users', 'gemini', 'landing', 'session', 'scoreboard', 'live', 'results'],
     manager: ['dashboard', 'questions', 'teams', 'session', 'scoreboard'],
     teacher: ['questions', 'session', 'scoreboard'],
   };
 
-  return (featureAccessMap[user.profile] || []).includes(feature);
+  return (featureAccessMap[profile] || []).includes(feature);
 }
 
 function applyMenuAccessControl(user){
@@ -88,6 +110,8 @@ function checkUserAccess(user, feature){
   return hasUserAccess(user, feature);
 }
 
+window.normalizeProfile = normalizeProfile;
+
 window.CBHMAuth = {
   persistAuthUser,
   restoreAuthUser,
@@ -95,6 +119,7 @@ window.CBHMAuth = {
   hasUserAccess,
   applyMenuAccessControl,
   checkUserAccess,
+  normalizeProfile,
   ADMIN_CREDENTIALS,
 };
 
