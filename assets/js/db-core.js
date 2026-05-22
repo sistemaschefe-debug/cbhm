@@ -56,13 +56,15 @@ async function dbGet(path){
   try {
     const parts = String(path).split('/');
     const { data, error } = await window._sb.from('kv').select('value').eq('key', parts[0]).maybeSingle();
-    if(error || !data) return null;
+    if(error || !data){
+      return lsGet(_lsKey(path));
+    }
     let val = data.value;
     for(let i = 1; i < parts.length; i++){
       if(val == null) return null;
       val = val[parts[i]];
     }
-    return val ?? null;
+    return val ?? lsGet(_lsKey(path));
   } catch (error) {
     console.warn('dbGet erro:', path, error);
     return lsGet(_lsKey(path));

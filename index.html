@@ -336,7 +336,7 @@ nav {
   gap: 1rem;
   padding: .85rem 1.5rem;
   background: rgba(8,11,16,.9);
-  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
   position: sticky; top:0; z-index:100;
   flex-wrap: wrap;
@@ -380,7 +380,7 @@ nav {
   align-items:center;
   justify-content:center;
   padding:1rem;
-  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter: blur(6px);backdrop-filter:blur(6px);
 }
 .overlay.open { display:flex; }
 .modal {
@@ -603,7 +603,7 @@ nav {
   padding:1rem 1.5rem;
   border-bottom:1px solid var(--border);
   background:rgba(8,11,16,.85);
-  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter: blur(12px);backdrop-filter:blur(12px);
   flex-wrap:wrap;
 }
 .quiz-q-num {
@@ -830,6 +830,108 @@ nav {
   border:1px solid var(--border);font-size:.75rem;
   color:var(--muted);font-family:var(--fh);letter-spacing:.5px;
 }
+.spacer-lg { margin-top:3rem; }
+.muted-center { color:var(--muted);font-size:.82rem;letter-spacing:1px;margin-top:1rem;font-style:italic; }
+.divider-tight { margin:0 0 1.5rem; }
+.error-box {
+  color:#e07070;font-size:.85rem;margin-bottom:1rem;padding:.5rem .75rem;
+  border-radius:var(--r);background:rgba(139,26,26,.2);border:1px solid var(--red);
+}
+.full-btn { width:100%;justify-content:center; }
+.full-btn.mt { margin-top:.5rem; }
+.join-code { letter-spacing:3px;font-family:var(--fh); }
+.about-text { line-height:1.8;color:var(--silver); }
+.about-emph { color:var(--gold2); }
+.score-grid { margin-top:1rem;display:grid;gap:.4rem; }
+.score-row { display:grid;grid-template-columns:auto 1fr auto; }
+.score-row.negative { border-color:rgba(186,26,26,.4);background:rgba(186,26,26,.05); }
+.score-key,.score-pts { font-family:var(--fh);font-size:.75rem;color:var(--muted); }
+.score-pts { color:var(--gold);font-size:1.1rem; }
+.score-pts.negative { color:#e07070; }
+.score-text { color:var(--silver); }
+.card-accent { border-color:rgba(0,212,170,.25);background:rgba(0,212,170,.03); }
+.card-accent-title { color:#00d4aa; }
+.card-accent-link { color:#00d4aa; }
+.flex-wrap-gap { gap:.75rem;flex-wrap:wrap; }
+.input-accent {
+  flex:1;padding:.65rem 1rem;border-radius:var(--r);border:1px solid rgba(0,212,170,.3);
+  background:var(--bg3);color:var(--tx);font-family:var(--fb);font-size:.95rem;min-width:260px;
+}
+.btn-accent { border-color:rgba(0,212,170,.4);color:#00d4aa; }
+.note-small { font-size:.8rem;color:var(--muted);margin-top:.75rem; }
+.note-small strong { color:var(--tx); }
+.note-small code { color:#00d4aa; }
+.section-title { margin-bottom:1rem; }
+.grid-2 { display:grid;grid-template-columns:1fr 1fr;gap:1rem; }
+.grid-gap-1 { gap:1rem; }
+.field-compact { margin:0; }
+.center-flex { display:flex;align-items:center; }
+.muted-inline { font-size:.82rem;color:var(--muted); }
+.table-wrap { width:100%;border-collapse:collapse; }
+.table-head { background:var(--bg3);border-bottom:1px solid var(--border); }
+.th-cell { padding:.75rem;text-align:left;font-family:var(--fh);color:var(--gold2);font-size:.85rem; }
+.th-cell.center { text-align:center; }
+.tbody-row { border-bottom:1px solid var(--border); }
+.td-cell { padding:.75rem; }
+.td-cell.small { font-size:.9rem; }
+.profile-pill {
+  background:rgba(201,168,76,.1);border:1px solid var(--gold);color:var(--gold);padding:.25rem .5rem;
+  border-radius:4px;font-size:.8rem;
+}
+.preview-note { margin-top:1rem;display:flex;flex-wrap:wrap;gap:.5rem; }
+.preview-help { margin:0;height:100%; }
+.preview-help-title { margin-bottom:.75rem; }
+.preview-help-text { line-height:1.7;color:var(--silver);font-size:.92rem; }
+.preview-tags { margin-top:1rem;display:flex;flex-wrap:wrap;gap:.5rem; }
+.space-between { justify-content:space-between; }
+.col-stack { display:flex;flex-direction:column;gap:.75rem; }
+.mb1 { margin-bottom:1rem; }
+.big-emoji { font-size:2.5rem;margin-bottom:1rem;animation:rotateSlow 2s linear infinite;display:inline-block }
+.muted-small { font-size:.85rem }
+.radio-option { display:flex;align-items:center;gap:.4rem;cursor:pointer;font-family:var(--fb);font-size:.9rem;padding:.4rem .8rem;border-radius:var(--r);border:1px solid var(--border);background:var(--bg3); }
+.accent-radio { accent-color:var(--gold); }
+.mb15 { margin-bottom:1.5rem }
+.ml-auto { margin-left:auto }
+.join-panel { flex:1;padding:1rem;display:flex;flex-direction:column;gap:1rem; }
+.qr-modal {
+  position:fixed;inset:0;z-index:9998;background:rgba(8,11,16,.92);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  padding:1rem;display:flex;align-items:center;justify-content:center;
+}
+.qr-modal-card { width:min(92vw,680px);max-width:680px;max-height:90vh;overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.55); }
+.qr-modal-head { align-items:center; }
+.qr-modal-mount { min-height:320px; }
+.proj-brand-sub { font-size:clamp(.6rem,1vw,.8rem);color:var(--muted);letter-spacing:2px; }
+.wait-row { display:flex;align-items:center;gap:.75rem;margin-top:1rem; }
+.wait-label { font-family:var(--fh);font-size:clamp(.7rem,1.2vw,.9rem);color:var(--muted);letter-spacing:2px; }
+.streak-overlay {
+  position:absolute;inset:0;z-index:50;background:rgba(6,8,16,.93);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  display:none;flex-direction:column;align-items:center;justify-content:center;gap:1rem;
+}
+.streak-icon { font-size:clamp(3rem,8vw,6rem); }
+.proj-boost { width:0%; }
+.grid-3 { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem; }
+.pin-input { font-family:var(--fh);letter-spacing:3px;text-transform:uppercase; }
+.modal-lg { max-width:620px; }
+.btn-success { background:linear-gradient(135deg,#1a2a1a,#1f3a2a);border-color:var(--green2);color:#9beba7; }
+.streak-bar { margin-top:1rem;padding:.75rem 1.2rem;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.25);border-radius:var(--r);display:flex;align-items:center;gap:.75rem; }
+.streak-star { font-size:1.2rem; }
+.streak-label { font-family:var(--fh);font-size:.8rem;color:var(--gold2); }
+
+.text-center { text-align:center; }
+.neg-red { color:#e07070; }
+.select-wide { min-width:240px; }
+.overflow-x { overflow-x:auto; }
+.proj-ring-svg { width:clamp(110px,18vw,155px);height:clamp(110px,18vw,155px); }
+.pos-relative { position:relative; }
+.justify-end { justify-content:flex-end; }
+.stack-grid { display:grid;gap:.75rem;margin-bottom:1rem }
+.panel-col { flex:1;padding:1rem;display:flex;flex-direction:column;gap:1rem }
+.code-input { font-family:var(--fh);letter-spacing:3px;text-transform:uppercase }
+.align-end { align-items:flex-end }
+.mb2 { margin-bottom:2rem }
+.sScoreboard { flex:1;padding:2rem 1rem;display:flex;align-items:flex-start;justify-content:center }
+.italic { font-style:italic; }
+.proj-ring-fill { transition:stroke-dashoffset .08s linear,stroke .3s }
 
 /* ══════════════════════════════════════════════════
    MODO PROJETOR — tela cheia para o telão
@@ -865,7 +967,7 @@ nav {
   padding: clamp(.6rem,1.5vh,1.2rem) clamp(1rem,3vw,2.5rem);
   border-bottom: 1px solid var(--border);
   background: rgba(6,8,16,.7);
-  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);backdrop-filter: blur(8px);
   position: relative;
   z-index: 2;
   flex-shrink: 0;
@@ -1198,7 +1300,7 @@ nav {
   justify-content: center;
   background: rgba(6,8,16,.92);
   z-index: 50;
-  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);backdrop-filter: blur(8px);
   animation: fadeUp .3s ease;
   pointer-events: none;
 }
@@ -1292,7 +1394,7 @@ nav {
   border-radius: 999px;
   padding: .5rem .75rem;
   z-index: 1001;
-  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);backdrop-filter: blur(16px);
   box-shadow: 0 8px 32px rgba(0,0,0,.6);
   align-items: center;
 }
@@ -1391,7 +1493,7 @@ nav {
 .pp-header {
   display:flex;align-items:center;justify-content:space-between;gap:1rem;
   padding:1rem 1.5rem;border-bottom:1px solid var(--border);
-  background:rgba(7,10,18,.72);backdrop-filter:blur(8px);
+  background:rgba(7,10,18,.72);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
 }
 .pp-title { font-family:var(--fh);font-size:1rem;letter-spacing:2px;color:var(--gold2); }
 .pp-meta { font-size:.8rem;color:var(--muted); }
@@ -1450,8 +1552,8 @@ nav {
     <button class="btn btn-lg" onclick="showScreen('sScoreboard'); loadScoreboard()">📊 Placar Geral</button>
   </div>
 
-  <div class="divider-sm" style="margin-top:3rem"></div>
-  <p style="color:var(--muted);font-size:.82rem;letter-spacing:1px;margin-top:1rem;font-style:italic">
+  <div class="divider-sm spacer-lg"></div>
+  <p class="muted-center">
     Formando líderes pela História · Res Non Verba
   </p>
 </div>
@@ -1463,7 +1565,7 @@ nav {
   <div class="modal">
     <button class="modal-close" onclick="closeOverlay('loginOverlay')">✕</button>
     <h2>⚔ ACESSO RESTRITO</h2>
-    <div class="divider-sm" style="margin:0 0 1.5rem"></div>
+    <div class="divider-sm divider-tight"></div>
     <div class="field">
       <label>E-mail</label>
       <input type="email" id="loginUser" placeholder="usuario@example.com" autocomplete="email">
@@ -1472,9 +1574,9 @@ nav {
       <label>Senha</label>
       <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
     </div>
-    <div id="loginErr" class="hidden" style="color:#e07070;font-size:.85rem;margin-bottom:1rem;padding:.5rem .75rem;border-radius:var(--r);background:rgba(139,26,26,.2);border:1px solid var(--red)"></div>
-    <button class="btn btn-gold" style="width:100%;justify-content:center" onclick="doLogin()">Entrar</button>
-    <p style="font-size:.8rem;color:var(--muted);margin-top:1rem;text-align:center;font-style:italic">
+    <div id="loginErr" class="hidden error-box"></div>
+    <button class="btn btn-gold full-btn" onclick="doLogin()">Entrar</button>
+    <p class="muted-center text-center">
       Use suas credenciais cadastradas na plataforma
     </p>
   </div>
@@ -1507,9 +1609,9 @@ nav {
     </div>
     <div class="field">
       <label>Código da Sessão (fornecido pelo administrador)</label>
-      <input type="text" id="joinCode" placeholder="Ex: CBHM2026" style="letter-spacing:3px;font-family:var(--fh)">
+      <input type="text" id="joinCode" placeholder="Ex: CBHM2026" class="join-code">
     </div>
-    <button class="btn btn-gold" style="width:100%;justify-content:center;margin-top:.5rem" onclick="doJoinTeam()">Ingressar na Competição →</button>
+    <button class="btn btn-gold full-btn mt" onclick="doJoinTeam()">Ingressar na Competição →</button>
   </div>
 </div>
 
@@ -1580,44 +1682,44 @@ nav {
           <div class="card-header">
             <div><div class="card-title">SOBRE O EVENTO</div></div>
           </div>
-          <p style="line-height:1.8;color:var(--silver)">
+          <p class="about-text">
             O CBHM é um marco na valorização da História Militar na formação dos futuros líderes.
-            O evento reúne equipes de <strong style="color:var(--gold2)">8 estabelecimentos de ensino</strong> militares
+            O evento reúne equipes de <strong class="about-emph">8 estabelecimentos de ensino</strong> militares
             em uma competição de conhecimento histórico com pontuação por velocidade de resposta.
           </p>
         </div>
         <div class="card">
           <div class="card-title">TABELA DE PONTUAÇÃO</div>
-          <div style="margin-top:1rem;display:grid;gap:.4rem">
-            <div class="team-row" style="grid-template-columns:auto 1fr auto">
-              <span style="font-family:var(--fh);font-size:.75rem;color:var(--muted)">0–5s</span>
-              <span style="color:var(--silver)">Resposta até 5 segundos</span>
-              <span style="font-family:var(--fh);color:var(--gold);font-size:1.1rem">30 pts</span>
+          <div class="score-grid">
+            <div class="team-row score-row">
+              <span class="score-key">0–5s</span>
+              <span class="score-text">Resposta até 5 segundos</span>
+              <span class="score-pts">30 pts</span>
             </div>
-            <div class="team-row" style="grid-template-columns:auto 1fr auto">
-              <span style="font-family:var(--fh);font-size:.75rem;color:var(--muted)">6–10s</span>
-              <span style="color:var(--silver)">Resposta de 6 a 10 segundos</span>
-              <span style="font-family:var(--fh);color:var(--gold);font-size:1.1rem">25 pts</span>
+            <div class="team-row score-row">
+              <span class="score-key">6–10s</span>
+              <span class="score-text">Resposta de 6 a 10 segundos</span>
+              <span class="score-pts">25 pts</span>
             </div>
-            <div class="team-row" style="grid-template-columns:auto 1fr auto">
-              <span style="font-family:var(--fh);font-size:.75rem;color:var(--muted)">11–15s</span>
-              <span style="color:var(--silver)">Resposta de 11 a 15 segundos</span>
-              <span style="font-family:var(--fh);color:var(--gold);font-size:1.1rem">20 pts</span>
+            <div class="team-row score-row">
+              <span class="score-key">11–15s</span>
+              <span class="score-text">Resposta de 11 a 15 segundos</span>
+              <span class="score-pts">20 pts</span>
             </div>
-            <div class="team-row" style="grid-template-columns:auto 1fr auto">
-              <span style="font-family:var(--fh);font-size:.75rem;color:var(--muted)">16–20s</span>
-              <span style="color:var(--silver)">Resposta de 16 a 20 segundos</span>
-              <span style="font-family:var(--fh);color:var(--gold);font-size:1.1rem">15 pts</span>
+            <div class="team-row score-row">
+              <span class="score-key">16–20s</span>
+              <span class="score-text">Resposta de 16 a 20 segundos</span>
+              <span class="score-pts">15 pts</span>
             </div>
-            <div class="team-row" style="grid-template-columns:auto 1fr auto">
-              <span style="font-family:var(--fh);font-size:.75rem;color:var(--muted)">21–30s</span>
-              <span style="color:var(--silver)">Resposta de 21 a 30 segundos</span>
-              <span style="font-family:var(--fh);color:var(--gold);font-size:1.1rem">10 pts</span>
+            <div class="team-row score-row">
+              <span class="score-key">21–30s</span>
+              <span class="score-text">Resposta de 21 a 30 segundos</span>
+              <span class="score-pts">10 pts</span>
             </div>
-            <div class="team-row" style="grid-template-columns:auto 1fr auto;border-color:rgba(186,26,26,.4);background:rgba(186,26,26,.05)">
-              <span style="font-family:var(--fh);font-size:.75rem;color:#e07070">❌</span>
-              <span style="color:#e07070">Resposta incorreta</span>
-              <span style="font-family:var(--fh);color:#e07070;font-size:1.1rem">-15 pts</span>
+            <div class="team-row score-row negative">
+              <span class="score-key neg-red">❌</span>
+              <span class="neg-red">Resposta incorreta</span>
+              <span class="score-pts negative">-15 pts</span>
             </div>
           </div>
         </div>
@@ -1629,35 +1731,33 @@ nav {
         <p class="sub">Gere questões de História Militar automaticamente com Google Gemini</p>
 
         <!-- API key config -->
-        <div class="card" style="border-color:rgba(0,212,170,.25);background:rgba(0,212,170,.03)">
+        <div class="card card-accent">
           <div class="card-header">
             <div>
-              <div class="card-title" style="color:#00d4aa">CONFIGURAÇÃO DA API</div>
-              <div class="card-meta">Obtenha sua chave gratuita em <a href="https://aistudio.google.com/apikey" target="_blank" style="color:#00d4aa">aistudio.google.com/apikey</a></div>
+              <div class="card-title card-accent-title">CONFIGURAÇÃO DA API</div>
+              <div class="card-meta">Obtenha sua chave gratuita em <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener" class="card-accent-link">aistudio.google.com/apikey</a></div>
             </div>
             <span id="geminiStatusBadge" class="tag">⭕ Não configurado</span>
           </div>
-          <div class="flex" style="gap:.75rem;flex-wrap:wrap">
-            <input type="password" id="geminiKeyInput" placeholder="Cole sua Gemini API Key aqui..."
-              style="flex:1;padding:.65rem 1rem;border-radius:var(--r);border:1px solid rgba(0,212,170,.3);background:var(--bg3);color:var(--tx);font-family:var(--fb);font-size:.95rem;min-width:260px"
-              oninput="checkGeminiKey(this.value)">
-            <button class="btn" style="border-color:rgba(0,212,170,.4);color:#00d4aa" onclick="saveGeminiKey()">💾 Salvar chave</button>
+          <div class="flex flex-wrap-gap">
+            <input type="password" id="geminiKeyInput" placeholder="Cole sua Gemini API Key aqui..." class="input-accent" oninput="checkGeminiKey(this.value)">
+            <button class="btn btn-accent" onclick="saveGeminiKey()">💾 Salvar chave</button>
           </div>
-          <p style="font-size:.8rem;color:var(--muted);margin-top:.75rem">
-            Limite gratuito: <strong style="color:var(--tx)">1.500 requisições/dia · 60 req/min</strong> — mais que suficiente para o CBHM.
-            A chave fica salva no <code style="color:#00d4aa">localStorage</code> do seu navegador.
+          <p class="note-small">
+            Limite gratuito: <strong>1.500 requisições/dia · 60 req/min</strong> — mais que suficiente para o CBHM.
+            A chave fica salva no <code>localStorage</code> do seu navegador.
           </p>
         </div>
 
         <!-- generator -->
         <div class="card">
-          <div class="card-title" style="margin-bottom:1rem">✨ GERAR QUESTÕES</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
-            <div class="field" style="margin:0">
+          <div class="card-title section-title">✨ GERAR QUESTÕES</div>
+          <div class="grid-2 mb1">
+            <div class="field field-compact">
               <label>Tema / Período Histórico</label>
               <input type="text" id="gemTopic" placeholder="Ex: Segunda Guerra Mundial, Batalhas Navais, FEB...">
             </div>
-            <div class="field" style="margin:0">
+            <div class="field field-compact">
               <label>Quantidade de questões</label>
               <select id="gemQty">
                 <option value="3">3 questões</option>
@@ -1669,18 +1769,18 @@ nav {
           </div>
           <div class="field">
             <label>Nível de dificuldade</label>
-            <div style="display:flex;gap:.5rem;flex-wrap:wrap">
-              <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;font-family:var(--fb);font-size:.9rem;padding:.4rem .8rem;border-radius:var(--r);border:1px solid var(--border);background:var(--bg3)">
-                <input type="radio" name="gemDiff" value="básico" style="accent-color:var(--gold)"> Básico
+            <div class="flex flex-wrap-gap">
+              <label class="radio-option">
+                <input type="radio" name="gemDiff" value="básico" class="accent-radio"> Básico
               </label>
-              <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;font-family:var(--fb);font-size:.9rem;padding:.4rem .8rem;border-radius:var(--r);border:1px solid var(--border);background:var(--bg3)">
-                <input type="radio" name="gemDiff" value="intermediário" checked style="accent-color:var(--gold)"> Intermediário
+              <label class="radio-option">
+                <input type="radio" name="gemDiff" value="intermediário" checked class="accent-radio"> Intermediário
               </label>
-              <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;font-family:var(--fb);font-size:.9rem;padding:.4rem .8rem;border-radius:var(--r);border:1px solid var(--border);background:var(--bg3)">
-                <input type="radio" name="gemDiff" value="avançado" style="accent-color:var(--gold)"> Avançado
+              <label class="radio-option">
+                <input type="radio" name="gemDiff" value="avançado" class="accent-radio"> Avançado
               </label>
-              <label style="display:flex;align-items:center;gap:.4rem;cursor:pointer;font-family:var(--fb);font-size:.9rem;padding:.4rem .8rem;border-radius:var(--r);border:1px solid var(--border);background:var(--bg3)">
-                <input type="radio" name="gemDiff" value="cadete militar" style="accent-color:var(--gold)"> Nível Cadete
+              <label class="radio-option">
+                <input type="radio" name="gemDiff" value="cadete militar" class="accent-radio"> Nível Cadete
               </label>
             </div>
           </div>
@@ -1695,22 +1795,18 @@ nav {
 
         <!-- suggestions output -->
         <div id="gemOutput" class="hidden">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
-            <div style="font-family:var(--fh);font-size:.85rem;color:#00d4aa;letter-spacing:2px">
-              SUGESTÕES DO GEMINI
-            </div>
-            <button class="btn btn-gold btn-sm" onclick="adoptAllGemini()" id="adoptAllBtn">
-              ✅ Adicionar todas ao banco
-            </button>
+          <div class="flex space-between center-flex mb1">
+            <div class="card-accent-title">SUGESTÕES DO GEMINI</div>
+            <button class="btn btn-gold btn-sm" onclick="adoptAllGemini()" id="adoptAllBtn">✅ Adicionar todas ao banco</button>
           </div>
-          <div id="gemCards" style="display:flex;flex-direction:column;gap:.75rem"></div>
+          <div id="gemCards" class="col-stack"></div>
         </div>
 
         <!-- loading -->
-        <div id="gemLoading" class="hidden" style="text-align:center;padding:3rem;color:var(--muted)">
-          <div style="font-size:2.5rem;margin-bottom:1rem;animation:rotateSlow 2s linear infinite;display:inline-block">⚔</div>
-          <div style="font-family:var(--fh);letter-spacing:2px;margin-bottom:.5rem" id="gemLoadingText">Consultando Gemini...</div>
-          <div style="font-size:.85rem">Aguarde, a IA está elaborando questões de História Militar</div>
+        <div id="gemLoading" class="hidden">
+          <div class="big-emoji">⚔</div>
+          <div id="gemLoadingText" class="muted-center">Consultando Gemini...</div>
+          <div class="muted-small">Aguarde, a IA está elaborando questões de História Militar</div>
         </div>
       </div>
 
@@ -1720,7 +1816,7 @@ nav {
         <p class="sub">Edite os textos da competição, logotipo e escolas exibidas na página inicial</p>
 
         <div class="card">
-          <div class="card-title" style="margin-bottom:1rem">TEXTOS DA COMPETIÇÃO</div>
+          <div class="card-title section-title">TEXTOS DA COMPETIÇÃO</div>
           <div class="field">
             <label>Subtítulo</label>
             <input type="text" id="lpSubtitle" placeholder="Academia Militar das Agulhas Negras">
@@ -1729,12 +1825,12 @@ nav {
             <label>Título</label>
             <textarea id="lpTitle" rows="2" placeholder="Campeonato Brasileiro de História Militar"></textarea>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
-            <div class="field" style="margin:0">
+          <div class="grid-2">
+            <div class="field field-compact">
               <label>Ano</label>
               <input type="text" id="lpYear" placeholder="2026">
             </div>
-            <div class="field" style="margin:0">
+            <div class="field field-compact">
               <label>Local</label>
               <input type="text" id="lpLoc" placeholder="AMAN — Resende, Rio de Janeiro">
             </div>
@@ -1746,7 +1842,7 @@ nav {
         </div>
 
         <div class="card">
-          <div class="card-title" style="margin-bottom:1rem">LOGOTIPO</div>
+          <div class="card-title section-title">LOGOTIPO</div>
           <div class="field">
             <label>URL do logotipo</label>
             <input type="url" id="lpLogoUrl" placeholder="https://.../logo.png">
@@ -1755,11 +1851,11 @@ nav {
             <label>Ou envie um arquivo de imagem</label>
             <input type="file" id="lpLogoFile" accept="image/*" onchange="previewLandingLogoFile()">
           </div>
-          <div class="flex" style="align-items:center">
+          <div class="center-flex">
             <img id="lpLogoPreview" alt="Prévia do logotipo" class="team-avatar-sm hidden">
-            <span style="font-size:.82rem;color:var(--muted)">A prévia usa o último valor de URL ou arquivo selecionado.</span>
+            <span class="muted-inline">A prévia usa o último valor de URL ou arquivo selecionado.</span>
           </div>
-          <div class="flex mt2" style="flex-wrap:wrap">
+          <div class="flex mt2 flex-wrap-gap">
             <button class="btn btn-gold" onclick="saveLandingConfigFromAdmin()">💾 Salvar Página Principal</button>
             <button class="btn" onclick="resetLandingConfig()">↺ Restaurar padrão</button>
           </div>
@@ -1770,9 +1866,9 @@ nav {
       <div id="tabQuestions" class="hidden">
         <h1>QUESTÕES</h1>
         <p class="sub">Banco de questões de múltipla escolha com 4 opções</p>
-        <div class="flex" style="margin-bottom:1.5rem;flex-wrap:wrap">
+          <div class="flex flex-wrap-gap mb15">
           <button class="btn btn-gold" onclick="openQuestionModal()">+ Nova Questão</button>
-          <button class="btn" style="border-color:rgba(0,212,170,.4);color:#00d4aa"
+          <button class="btn btn-accent"
             onclick="adminTab(document.querySelectorAll('.sidebar-item')[2],'tabGemini')">🤖 Gerar com Gemini</button>
           <span id="qCount" class="tag">0 questões</span>
         </div>
@@ -1785,13 +1881,13 @@ nav {
         <p class="sub">Equipes registradas na competição</p>
 
         <div class="card">
-          <div class="card-title" style="margin-bottom:1rem">NOVA EQUIPE</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
-            <div class="field" style="margin:0">
+          <div class="card-title section-title">NOVA EQUIPE</div>
+          <div class="grid-2">
+            <div class="field field-compact">
               <label>Nome da Equipe</label>
               <input type="text" id="teamNameAdmin" placeholder="Ex: Equipe Alfa">
             </div>
-            <div class="field" style="margin:0">
+            <div class="field field-compact">
               <label>Escola</label>
               <input type="text" id="teamSchoolAdmin" placeholder="Ex: AMAN">
             </div>
@@ -1804,9 +1900,9 @@ nav {
             <label>Ou envie um arquivo de imagem</label>
             <input type="file" id="teamImgFileAdmin" accept="image/*" onchange="previewAdminTeamImageFile()">
           </div>
-          <div class="flex" style="align-items:center">
+          <div class="center-flex">
             <img id="teamImgPreviewAdmin" alt="Prévia da equipe" class="team-avatar-sm hidden">
-            <span style="font-size:.82rem;color:var(--muted)">A imagem será exibida nos cards da equipe.</span>
+            <span class="muted-inline">A imagem será exibida nos cards da equipe.</span>
           </div>
           <div class="mt2">
             <button class="btn btn-gold" onclick="addTeamFromAdmin()">+ Inserir Equipe</button>
@@ -1822,33 +1918,33 @@ nav {
         <p class="sub">Gestão de usuários com controle de perfis e permissões</p>
 
         <div class="card">
-          <div class="card-title" style="margin-bottom:1rem">NOVO USUÁRIO</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
-            <div class="field" style="margin:0">
+          <div class="card-title section-title">NOVO USUÁRIO</div>
+          <div class="grid-2">
+            <div class="field field-compact">
               <label>Posto/Graduação</label>
               <input type="text" id="userRank" placeholder="Ex: Tenente, Capitão" maxlength="20">
             </div>
-            <div class="field" style="margin:0">
+            <div class="field field-compact">
               <label>Nome de Guerra</label>
               <input type="text" id="userWarName" placeholder="Ex: Águia Negra" maxlength="20">
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem">
-            <div class="field" style="margin:0">
+          <div class="grid-2 mt">
+            <div class="field field-compact">
               <label>CPF</label>
               <input type="text" id="userCPF" placeholder="12345678901" maxlength="11" pattern="[0-9]{11}">
             </div>
-            <div class="field" style="margin:0">
+            <div class="field field-compact">
               <label>E-mail</label>
               <input type="email" id="userEmail" placeholder="usuario@example.com">
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1rem">
-            <div class="field" style="margin:0">
+          <div class="grid-2 mt">
+            <div class="field field-compact">
               <label>Setor</label>
               <input type="text" id="userSector" placeholder="Ex: Administração" maxlength="30">
             </div>
-            <div class="field" style="margin:0">
+            <div class="field field-compact">
               <label>Perfil</label>
               <select id="userProfile">
                 <option value="">Selecione um perfil</option>
@@ -1868,16 +1964,16 @@ nav {
         </div>
 
         <div class="card">
-          <div class="card-title" style="margin-bottom:1rem">USUÁRIOS REGISTRADOS</div>
-          <div style="overflow-x:auto">
-            <table style="width:100%;border-collapse:collapse">
-              <thead style="background:var(--bg3);border-bottom:1px solid var(--border)">
+          <div class="card-title section-title">USUÁRIOS REGISTRADOS</div>
+          <div class="overflow-x">
+            <table class="table-wrap">
+              <thead class="table-head">
                 <tr>
-                  <th style="padding:.75rem;text-align:left;font-family:var(--fh);color:var(--gold2);font-size:.85rem">NOME</th>
-                  <th style="padding:.75rem;text-align:left;font-family:var(--fh);color:var(--gold2);font-size:.85rem">EMAIL</th>
-                  <th style="padding:.75rem;text-align:left;font-family:var(--fh);color:var(--gold2);font-size:.85rem">PERFIL</th>
-                  <th style="padding:.75rem;text-align:left;font-family:var(--fh);color:var(--gold2);font-size:.85rem">SETOR</th>
-                  <th style="padding:.75rem;text-align:center;font-family:var(--fh);color:var(--gold2);font-size:.85rem">AÇÕES</th>
+                  <th class="th-cell">NOME</th>
+                  <th class="th-cell">EMAIL</th>
+                  <th class="th-cell">PERFIL</th>
+                  <th class="th-cell">SETOR</th>
+                  <th class="th-cell center">AÇÕES</th>
                 </tr>
               </thead>
               <tbody id="userList"></tbody>
@@ -1903,8 +1999,8 @@ nav {
             <div>
               <div class="field">
                 <label>Template padrão do evento</label>
-                <div class="flex" style="flex-wrap:wrap">
-                  <select id="slideTemplatePreset" style="min-width:240px">
+                <div class="flex flex-wrap-gap">
+                  <select id="slideTemplatePreset" class="select-wide">
                     <option value="institucional">Institucional (padrão)</option>
                     <option value="academico">Acadêmico / Aula</option>
                     <option value="feedback">Feedback rápido</option>
@@ -1936,7 +2032,7 @@ nav {
               </div>
               <div class="field hidden" id="slideScaleField">
                 <label>Configuração de escala</label>
-                <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem">
+                <div class="grid-3">
                   <input type="number" id="slideScaleMin" value="1" min="1" max="10" placeholder="Mínimo">
                   <input type="number" id="slideScaleMax" value="5" min="2" max="10" placeholder="Máximo">
                   <input type="text" id="slideScaleLeft" placeholder="Rótulo esquerdo" value="Discordo">
@@ -1949,25 +2045,25 @@ nav {
                 <label>Configuração de estrelas</label>
                 <input type="number" id="slideStarsMax" value="5" min="3" max="10">
               </div>
-              <div class="flex" style="flex-wrap:wrap">
+              <div class="flex flex-wrap-gap">
                 <button class="btn btn-gold" onclick="addSlideFromForm()">+ Adicionar slide</button>
                 <button class="btn" onclick="loadDefaultSlides()">↺ Carregar exemplos</button>
               </div>
             </div>
             <div>
-              <div class="card" style="margin:0;height:100%">
-                <div class="card-title" style="margin-bottom:.75rem">PRÉVIA / AJUDA</div>
-                <p style="line-height:1.7;color:var(--silver);font-size:.92rem">
-                  Os slides ficam disponíveis para o modo participante por PIN ou QR code.
-                  O painel ao vivo mostra respostas em tempo real com gráficos e a contagem de participantes.
-                </p>
-                <div style="margin-top:1rem;display:flex;flex-wrap:wrap;gap:.5rem">
-                  <span class="tag">PIN seguro</span>
-                  <span class="tag">QR code</span>
-                  <span class="tag">Chart.js</span>
-                  <span class="tag">Mobile first</span>
+              <div class="card preview-help">
+                  <div class="card-title preview-help-title">PRÉVIA / AJUDA</div>
+                  <p class="preview-help-text">
+                    Os slides ficam disponíveis para o modo participante por PIN ou QR code.
+                    O painel ao vivo mostra respostas em tempo real com gráficos e a contagem de participantes.
+                  </p>
+                  <div class="preview-tags">
+                    <span class="tag">PIN seguro</span>
+                    <span class="tag">QR code</span>
+                    <span class="tag">Chart.js</span>
+                    <span class="tag">Mobile first</span>
+                  </div>
                 </div>
-              </div>
             </div>
           </div>
           <p class="participant-mini mt">Reordene os slides arrastando e soltando no desktop, ou use os botões ↑ ↓.</p>
@@ -1983,17 +2079,17 @@ nav {
           </div>
           <div class="field">
             <label>Código da Sessão</label>
-            <input type="text" id="sessionCode" value="CBHM2026" style="font-family:var(--fh);letter-spacing:3px;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+            <input type="text" id="sessionCode" value="CBHM2026" class="pin-input" oninput="this.value=this.value.toUpperCase()">
           </div>
           <div class="field">
             <label>Duração da sessão (minutos)</label>
             <input type="number" id="sessionDuration" value="20" min="1" max="240">
           </div>
-          <div class="flex" style="flex-wrap:wrap">
+          <div class="flex flex-wrap-gap">
             <button class="btn btn-gold" onclick="createSession()">⚡ Iniciar Sessão</button>
             <button class="btn" onclick="showScreen('sParticipant')">👤 Abrir Participante</button>
           </div>
-          <p style="font-size:.8rem;color:var(--muted);margin-top:.75rem;font-style:italic">Após criar a sessão, compartilhe o PIN/QR code e acompanhe as respostas ao vivo.</p>
+          <p class="note-small italic">Após criar a sessão, compartilhe o PIN/QR code e acompanhe as respostas ao vivo.</p>
         </div>
 
         <div class="card hidden" id="activeSessionCard">
@@ -2010,11 +2106,10 @@ nav {
             <div class="metric-card"><div class="metric-value" id="sessionSlideVal">0/0</div><div class="metric-label">Slide atual</div></div>
             <div class="metric-card"><div class="metric-value" id="sessionPinVal">—</div><div class="metric-label">PIN da sessão</div></div>
           </div>
-          <div class="flex" style="flex-wrap:wrap;margin-bottom:1rem">
+          <div class="flex flex-wrap-gap mb1">
             <button class="btn btn-gold" onclick="showScreen('sParticipant'); openParticipantHub()">👤 Abrir Participante</button>
             <button class="btn" onclick="openParticipantProjector()">📺 Projetar Resultados</button>
-            <button class="btn" style="background:linear-gradient(135deg,#1a2a1a,#1f3a2a);border-color:var(--green2);color:#9beba7"
-              onclick="openProjector()">📽 Abrir Projetor</button>
+            <button class="btn btn-success" onclick="openProjector()">📽 Abrir Projetor</button>
             <button class="btn" onclick="prevSlide()">◀ Slide</button>
             <button class="btn" onclick="nextSlide()">Slide ▶</button>
             <button class="btn" onclick="adminTab(document.querySelector('.sidebar-item:last-child'),'tabScoreboard')">📊 Ver Placar</button>
@@ -2048,7 +2143,7 @@ nav {
      QUESTION MODAL
 ══════════════════════════════════════════ -->
 <div class="overlay" id="questionOverlay">
-  <div class="modal" style="max-width:620px">
+  <div class="modal modal-lg">
     <button class="modal-close" onclick="closeOverlay('questionOverlay')">✕</button>
     <h2 id="qModalTitle">NOVA QUESTÃO</h2>
     <div class="field">
@@ -2059,20 +2154,20 @@ nav {
       <label>Enunciado da Questão</label>
       <textarea id="qText" placeholder="Digite a pergunta completa aqui..."></textarea>
     </div>
-    <div style="display:grid;gap:.75rem;margin-bottom:1rem">
-      <div class="field" style="margin:0">
+    <div class="stack-grid">
+      <div class="field field-compact">
         <label>Opção A</label>
         <input type="text" id="qA" placeholder="Alternativa A">
       </div>
-      <div class="field" style="margin:0">
+      <div class="field field-compact">
         <label>Opção B</label>
         <input type="text" id="qB" placeholder="Alternativa B">
       </div>
-      <div class="field" style="margin:0">
+      <div class="field field-compact">
         <label>Opção C</label>
         <input type="text" id="qC" placeholder="Alternativa C">
       </div>
-      <div class="field" style="margin:0">
+      <div class="field field-compact">
         <label>Opção D</label>
         <input type="text" id="qD" placeholder="Alternativa D">
       </div>
@@ -2086,7 +2181,7 @@ nav {
         <option value="3">D</option>
       </select>
     </div>
-    <div class="flex" style="justify-content:flex-end">
+    <div class="flex justify-end">
       <button class="btn" onclick="closeOverlay('questionOverlay')">Cancelar</button>
       <button class="btn btn-gold" onclick="saveQuestion()">Salvar Questão</button>
     </div>
@@ -2102,9 +2197,9 @@ nav {
       <div class="quiz-q-num" id="qNumLabel">QUESTÃO 1 DE 10</div>
       <div class="quiz-title-sm">Campeonato Brasileiro de História Militar 2026</div>
     </div>
-    <div class="flex" style="margin-left:auto;flex-wrap:wrap;gap:.5rem">
+    <div class="flex flex-wrap-gap ml-auto">
       <button class="btn btn-sm" onclick="skipQuestion()">Avançar →</button>
-      <button class="btn btn-sm" style="border-color:var(--green2);color:#9beba7" onclick="openProjector()" title="Abrir tela do projetor">📽 Projetor</button>
+      <button class="btn btn-success btn-sm" onclick="openProjector()" title="Abrir tela do projetor">📽 Projetor</button>
       <button class="btn btn-sm btn-danger" onclick="showScreen('sAdmin')">✕ Sair</button>
     </div>
   </div>
@@ -2119,11 +2214,11 @@ nav {
       </div>
 
       <!-- bonus streak indicator -->
-      <div id="streakBar" class="hidden" style="margin-top:1rem;padding:.75rem 1.2rem;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.25);border-radius:var(--r);display:flex;align-items:center;gap:.75rem">
-        <span style="font-size:1.2rem">⭐</span>
+      <div id="streakBar" class="hidden streak-bar">
+        <span class="streak-star">⭐</span>
         <div>
-          <div style="font-family:var(--fh);font-size:.8rem;color:var(--gold2)">SEQUÊNCIA BÔNUS</div>
-          <div id="streakText" style="font-size:.85rem;color:var(--muted)"></div>
+          <div class="streak-label">SEQUÊNCIA BÔNUS</div>
+          <div id="streakText" class="muted-small"></div>
         </div>
       </div>
     </div>
@@ -2131,7 +2226,7 @@ nav {
     <!-- RIGHT: timer + teams -->
     <div>
       <div class="timer-wrap">
-        <div class="timer-ring-svg" style="position:relative">
+        <div class="timer-ring-svg pos-relative">
           <svg width="140" height="140" viewBox="0 0 140 140">
             <circle class="ring-bg"   cx="70" cy="70" r="62"/>
             <circle class="ring-fill" id="ringFill" cx="70" cy="70" r="62"
@@ -2165,11 +2260,11 @@ nav {
     <button class="btn btn-sm" onclick="showScreen('sLanding')">← Voltar</button>
   </nav>
 
-  <div class="sScoreboard" style="flex:1;padding:2rem 1rem;display:flex;align-items:flex-start;justify-content:center">
+  <div class="sScoreboard">
     <div class="scoreboard-wrap">
       <div class="scoreboard-title">⚔ CLASSIFICAÇÃO GERAL</div>
       <div class="scoreboard-sub">Campeonato Brasileiro de História Militar · AMAN 2026</div>
-      <div class="divider" style="margin-bottom:2rem"></div>
+      <div class="divider mb2"></div>
 
       <div class="podium" id="podium"></div>
       <div class="sb-list" id="sbList"></div>
@@ -2191,7 +2286,7 @@ nav {
     <button class="btn btn-sm" onclick="closeParticipantHub()">← Voltar</button>
   </nav>
 
-  <div style="flex:1;padding:1rem;display:flex;flex-direction:column;gap:1rem">
+  <div class="panel-col">
     <div class="card" id="participantJoinPanel">
       <div class="card-header">
         <div>
@@ -2200,23 +2295,23 @@ nav {
         </div>
       </div>
       <div class="participant-join">
-        <div class="field" style="margin:0">
+        <div class="field field-compact">
           <label>Seu nome</label>
           <input type="text" id="participantNameInput" placeholder="Digite seu nome">
         </div>
-        <div class="field" style="margin:0">
+        <div class="field field-compact">
           <label>Código da sessão</label>
-          <input type="text" id="participantCodeInput" placeholder="Ex: CBHM2026" style="font-family:var(--fh);letter-spacing:3px;text-transform:uppercase">
+          <input type="text" id="participantCodeInput" placeholder="Ex: CBHM2026" class="code-input">
         </div>
-        <div class="field" style="margin:0">
+        <div class="field field-compact">
           <label>PIN da sessão</label>
-          <input type="text" id="participantPinInput" placeholder="000000" style="font-family:var(--fh);letter-spacing:4px;text-transform:uppercase">
+          <input type="text" id="participantPinInput" placeholder="000000" class="pin-input">
         </div>
-        <div class="field" style="margin:0;display:flex;align-items:end">
-          <button class="btn btn-gold" style="width:100%;justify-content:center" onclick="joinParticipantSession()">Entrar</button>
+        <div class="field field-compact align-end">
+          <button class="btn btn-gold full-btn" onclick="joinParticipantSession()">Entrar</button>
         </div>
-        <div class="field" style="margin:0;display:flex;align-items:end">
-          <button class="btn" style="width:100%;justify-content:center" onclick="openParticipantScanner()">📷 Ler QR com câmera</button>
+        <div class="field field-compact align-end">
+          <button class="btn full-btn" onclick="openParticipantScanner()">📷 Ler QR com câmera</button>
         </div>
       </div>
       <p class="participant-mini mt">Dica: escaneie o QR code exibido pelo admin para preencher automaticamente o código e o PIN.</p>
@@ -2229,7 +2324,7 @@ nav {
             <div class="session-pill" id="participantSessionCode">SESSÃO</div>
             <div class="participant-mini" id="participantNameLabel">—</div>
           </div>
-          <div class="flex" style="flex-wrap:wrap;justify-content:flex-end">
+          <div class="flex flex-wrap-gap justify-end">
             <span class="timer-pill" id="participantTimer">00:00</span>
             <span class="session-pill" id="participantCount">0 participantes</span>
           </div>
@@ -2271,7 +2366,7 @@ nav {
       <div class="pp-title">RESULTADOS AO VIVO</div>
       <div class="pp-meta" id="ppSessionMeta">Sessão —</div>
     </div>
-    <div class="flex" style="flex-wrap:wrap;justify-content:flex-end">
+    <div class="flex flex-wrap-gap justify-end">
       <span class="timer-pill" id="ppTimer">00:00</span>
       <button class="btn btn-sm" onclick="prevSlide()">◀</button>
       <button class="btn btn-sm" onclick="nextSlide()">▶</button>
@@ -2291,7 +2386,7 @@ nav {
       </div>
     </div>
     <div class="pp-card">
-      <div class="card-title" style="margin-bottom:.75rem">Distribuição das respostas</div>
+      <div class="card-title mb1">Distribuição das respostas</div>
       <div class="pp-chart-wrap">
         <canvas id="ppChartCanvas"></canvas>
       </div>
@@ -2299,16 +2394,16 @@ nav {
   </div>
 </div>
 
-<div id="participantQrScannerModal" class="hidden" style="position:fixed;inset:0;z-index:9998;background:rgba(8,11,16,.92);backdrop-filter:blur(12px);padding:1rem;display:flex;align-items:center;justify-content:center;">
-  <div class="card" style="width:min(92vw,680px);max-width:680px;max-height:90vh;overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.55)">
-    <div class="card-header" style="align-items:center">
+<div id="participantQrScannerModal" class="hidden qr-modal">
+  <div class="card qr-modal-card">
+    <div class="card-header qr-modal-head">
       <div>
         <div class="card-title">LER QR COM CÂMERA</div>
         <div class="card-meta">Aponte a câmera do celular para preencher código e PIN automaticamente</div>
       </div>
       <button class="btn btn-sm" onclick="closeParticipantScanner()">✕ Fechar</button>
     </div>
-    <div id="participantQrScannerMount" style="min-height:320px"></div>
+    <div id="participantQrScannerMount" class="qr-modal-mount"></div>
   </div>
 </div>
 
@@ -2324,7 +2419,7 @@ nav {
     <div class="proj-logo">
       <div class="proj-logo-emblem">⚔</div>
       <div>
-        <div id="projBrandSubtitle" style="font-size:clamp(.6rem,1vw,.8rem);color:var(--muted);letter-spacing:2px">ACADEMIA MILITAR DAS AGULHAS NEGRAS</div>
+        <div id="projBrandSubtitle" class="proj-brand-sub">ACADEMIA MILITAR DAS AGULHAS NEGRAS</div>
         <div id="projBrandTitle">CAMPEONATO BRASILEIRO DE HISTÓRIA MILITAR</div>
       </div>
     </div>
@@ -2344,9 +2439,9 @@ nav {
       <div class="proj-waiting-emblem">⚔</div>
       <div class="proj-waiting-title" id="projWaitingTitle">CAMPEONATO BRASILEIRO DE HISTÓRIA MILITAR</div>
       <div class="proj-waiting-sub" id="projWaitingSub">Academia Militar das Agulhas Negras · Resende / RJ</div>
-      <div style="display:flex;align-items:center;gap:.75rem;margin-top:1rem">
+      <div class="wait-row">
         <span class="proj-pulse-dot"></span>
-        <span style="font-family:var(--fh);font-size:clamp(.7rem,1.2vw,.9rem);color:var(--muted);letter-spacing:2px">AGUARDANDO INÍCIO DA COMPETIÇÃO</span>
+        <span class="wait-label">AGUARDANDO INÍCIO DA COMPETIÇÃO</span>
       </div>
     </div>
 
@@ -2361,12 +2456,12 @@ nav {
     <div class="proj-right hidden" id="projRight">
       <div class="proj-timer-wrap">
         <div class="proj-ring-wrap">
-          <svg viewBox="0 0 180 180" style="width:clamp(110px,18vw,155px);height:clamp(110px,18vw,155px)">
+          <svg viewBox="0 0 180 180" class="proj-ring-svg">
             <circle cx="90" cy="90" r="80" fill="none" stroke="rgba(201,168,76,.1)" stroke-width="8"/>
-            <circle id="projRingFill" cx="90" cy="90" r="80" fill="none"
+              <circle id="projRingFill" class="proj-ring-fill" cx="90" cy="90" r="80" fill="none"
               stroke="var(--gold)" stroke-width="8" stroke-linecap="round"
               stroke-dasharray="502.6" stroke-dashoffset="0"
-              transform="rotate(-90 90 90)" style="transition:stroke-dashoffset .08s linear,stroke .3s"/>
+              transform="rotate(-90 90 90)"/>
           </svg>
           <div class="proj-timer-num" id="projTimerNum">30</div>
         </div>
@@ -2389,16 +2484,14 @@ nav {
   <div class="proj-footer">
     <span class="proj-aman">AMAN · Resende / RJ</span>
     <div class="proj-progress">
-      <div class="proj-progress-fill" id="projProgressFill" style="width:0%"></div>
+      <div class="proj-progress-fill proj-boost" id="projProgressFill"></div>
     </div>
     <span class="proj-aman" id="projFooterRight">Res Non Verba</span>
   </div>
 
   <!-- bonus overlay -->
-  <div id="projStreakOverlay" style="position:absolute;inset:0;z-index:50;
-       background:rgba(6,8,16,.93);backdrop-filter:blur(8px);
-       display:none;flex-direction:column;align-items:center;justify-content:center;gap:1rem">
-    <div style="font-size:clamp(3rem,8vw,6rem)">⭐</div>
+  <div id="projStreakOverlay" class="streak-overlay">
+    <div class="streak-icon">⭐</div>
     <div class="proj-streak-text" id="projStreakText">SEQUÊNCIA BÔNUS!</div>
     <div class="proj-streak-sub" id="projStreakSub">90 pontos conquistados</div>
   </div>
@@ -2471,6 +2564,9 @@ let participantProjectorTickInterval = null;
 function showScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  if(id === 'sAdmin' && adminLogged){
+    scheduleMenuAccessControl();
+  }
 }
 
 function adminTab(el, tab){
@@ -2518,15 +2614,13 @@ function openJoinTeam(){ openOverlay('joinOverlay'); }
 /* ════════════════════════════════
    AUTH
 ════════════════════════════════ */
-function doLogin(){
+async function doLogin(){
   const email = document.getElementById('loginUser').value.trim();
   const password = document.getElementById('loginPass').value;
   const errEl = document.getElementById('loginErr');
   errEl.classList.add('hidden');
 
-  const user = window.resolveLoginUser ? window.resolveLoginUser(email, password, users) : null;
-
-  if(user){
+  const finishLogin = async (user) => {
     adminLogged = true;
     currentUser = {
       ...user,
@@ -2536,12 +2630,36 @@ function doLogin(){
     window.persistAuthUser?.(currentUser);
     closeOverlay('loginOverlay');
     showScreen('sAdmin');
-    loadAdminData();
+    syncMenuAccessControl(currentUser);
+    await loadAdminData();
+    syncMenuAccessControl(currentUser);
+    scheduleMenuAccessControl();
     toast('Bem-vindo, '+(currentUser.warName || currentUser.email || 'usuário')+'!','ok');
-  } else {
-    errEl.textContent='E-mail ou senha inválidos. Tente novamente.';
-    errEl.classList.remove('hidden');
-  }
+  };
+
+  const tryLogin = async () => {
+    const storedUsers = await dbGet('users');
+    const userList = Array.isArray(storedUsers)
+      ? storedUsers
+      : storedUsers && typeof storedUsers === 'object'
+        ? Object.entries(storedUsers).map(([id, value]) => ({ ...value, id }))
+        : users;
+
+    if(Array.isArray(userList) && userList.length){
+      users = userList;
+    }
+
+    const user = window.resolveLoginUser ? window.resolveLoginUser(email, password, userList) : null;
+
+    if(user){
+      await finishLogin(user);
+    } else {
+      errEl.textContent='E-mail ou senha inválidos. Tente novamente.';
+      errEl.classList.remove('hidden');
+    }
+  };
+
+  tryLogin();
 }
 
 function logout(){
@@ -2570,8 +2688,14 @@ function checkAccess(feature){
 }
 
 // Ocultar itens do menu baseado no perfil do usuário
-function applyMenuAccessControl(){
-  window.CBHMAuth?.applyMenuAccessControl?.(currentUser);
+function syncMenuAccessControl(user = currentUser || window.restoreAuthUser?.() || null){
+  window.CBHMAuth?.applyMenuAccessControl?.(user);
+}
+
+function scheduleMenuAccessControl(){
+  const run = () => syncMenuAccessControl();
+  if(typeof requestAnimationFrame === 'function') requestAnimationFrame(run);
+  else setTimeout(run, 0);
 }
 
 /* ════════════════════════════════
@@ -2609,7 +2733,7 @@ async function loadAdminData(){
   });
 
   // Aplicar controle de acesso ao menu
-  applyMenuAccessControl();
+  syncMenuAccessControl();
   
   refreshDashboard();
 }
@@ -3271,7 +3395,7 @@ function renderParticipantAnswerArea(slide){
         <label>Digite sua resposta</label>
         <textarea id="participantTextVote" rows="3" placeholder="Sua contribuição"></textarea>
       </div>
-      <div class="flex" style="flex-wrap:wrap">
+      <div class="flex flex-wrap-gap">
         <button class="btn btn-gold" onclick="submitParticipantTextVote()">Enviar resposta</button>
       </div>
       ${myResponse?.value ? `<p class="vote-note">Sua resposta atual: <strong>${esc(myResponse.value)}</strong></p>` : ''}
@@ -3867,7 +3991,7 @@ async function addUserFromAdmin(){
 function renderUsers(){
   const el = document.getElementById('userList');
   if(!users.length){
-    el.innerHTML = '<tr><td colspan="5" style="padding:1.5rem;text-align:center;color:var(--muted)">Nenhum usuário registrado.</td></tr>';
+    el.innerHTML = '<tr><td colspan="5" class="td-cell" style="text-align:center;color:var(--muted)">Nenhum usuário registrado.</td></tr>';
     return;
   }
 
@@ -3878,13 +4002,13 @@ function renderUsers(){
   };
 
   el.innerHTML = users.map(u => `
-    <tr style="border-bottom:1px solid var(--border)">
-      <td style="padding:.75rem">${esc(u.warName)}</td>
-      <td style="padding:.75rem;font-size:.9rem">${esc(u.email)}</td>
-      <td style="padding:.75rem"><span style="background:rgba(201,168,76,.1);border:1px solid var(--gold);color:var(--gold);padding:.25rem .5rem;border-radius:4px;font-size:.8rem">${profileNames[u.profile] || u.profile}</span></td>
-      <td style="padding:.75rem;font-size:.9rem">${esc(u.sector)}</td>
-      <td style="padding:.75rem;text-align:center">
-        <button class="btn btn-sm" onclick="editUser('${u.id}')" style="background:rgba(0,212,170,.1);border-color:rgba(0,212,170,.3);color:#00d4aa">✏</button>
+    <tr class="tbody-row">
+      <td class="td-cell">${esc(u.warName)}</td>
+      <td class="td-cell td-cell.small">${esc(u.email)}</td>
+      <td class="td-cell"><span class="profile-pill">${profileNames[u.profile] || u.profile}</span></td>
+      <td class="td-cell td-cell.small">${esc(u.sector)}</td>
+      <td class="td-cell" style="text-align:center">
+        <button class="btn btn-sm btn-accent" onclick="editUser('${u.id}')">✏</button>
         <button class="btn btn-sm btn-danger" onclick="removeUser('${u.id}')">✕</button>
       </td>
     </tr>
@@ -4778,6 +4902,7 @@ document.addEventListener('appReady',()=>{
       profile: window.normalizeProfile ? window.normalizeProfile(savedUser.profile || savedUser.role || savedUser.perfil) : (savedUser.profile || savedUser.role || savedUser.perfil),
       role: savedUser.role || savedUser.profile || savedUser.perfil || '',
     };
+    scheduleMenuAccessControl();
   }
 
   // Check URL params
