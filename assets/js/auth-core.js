@@ -25,7 +25,7 @@ function persistAuthUser(user){
 
 function restoreAuthUser(){
   const user = lsGet(AUTH_STORAGE_KEY);
-  if(user && user.id && user.profile) return user;
+  if(user && user.id && (user.profile || user.role || user.perfil)) return user;
   return null;
 }
 
@@ -53,7 +53,7 @@ function resolveLoginUser(email, password, users){
       id: matchedUser.id,
       email: matchedUser.email,
       warName: matchedUser.warName,
-      profile: normalizeProfile(matchedUser.profile || matchedUser.role || matchedUser.access || matchedUser.type),
+      profile: normalizeProfile(matchedUser.profile || matchedUser.role || matchedUser.perfil || matchedUser.access || matchedUser.type),
       source: 'users-db',
     };
   }
@@ -74,7 +74,7 @@ function resolveLoginUser(email, password, users){
 function hasUserAccess(user, feature){
   if(!user) return false;
 
-  const profile = normalizeProfile(user.profile || user.role || user.access || user.type);
+  const profile = normalizeProfile(user.profile || user.role || user.perfil || user.access || user.type);
 
   const featureAccessMap = {
     admin: ['dashboard', 'questions', 'teams', 'users', 'gemini', 'landing', 'session', 'scoreboard', 'live', 'results'],

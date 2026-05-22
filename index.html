@@ -2528,12 +2528,16 @@ function doLogin(){
 
   if(user){
     adminLogged = true;
-    currentUser = user;
+    currentUser = {
+      ...user,
+      profile: window.normalizeProfile ? window.normalizeProfile(user.profile || user.role || user.perfil) : (user.profile || user.role || user.perfil),
+      role: user.role || user.profile || user.perfil || '',
+    };
     window.persistAuthUser?.(currentUser);
     closeOverlay('loginOverlay');
     showScreen('sAdmin');
     loadAdminData();
-    toast('Bem-vindo, '+user.warName+'!','ok');
+    toast('Bem-vindo, '+(currentUser.warName || currentUser.email || 'usuário')+'!','ok');
   } else {
     errEl.textContent='E-mail ou senha inválidos. Tente novamente.';
     errEl.classList.remove('hidden');
@@ -2549,7 +2553,11 @@ function logout(){
 
 // Verifica se o usuário tem acesso à funcionalidade baseado em seu perfil
 function hasUserAccess(feature){
-  return window.CBHMAuth?.hasUserAccess ? window.CBHMAuth.hasUserAccess(currentUser, feature) : false;
+  const accessUser = currentUser ? {
+    ...currentUser,
+    profile: window.normalizeProfile ? window.normalizeProfile(currentUser.profile || currentUser.role || currentUser.perfil) : (currentUser.profile || currentUser.role || currentUser.perfil),
+  } : null;
+  return window.CBHMAuth?.hasUserAccess ? window.CBHMAuth.hasUserAccess(accessUser, feature) : false;
 }
 
 // Verificar acesso e mostrar mensagem se não tiver permissão
@@ -4765,7 +4773,11 @@ document.addEventListener('appReady',()=>{
   const savedUser = window.restoreAuthUser ? window.restoreAuthUser() : lsGet('currentUser');
   if(savedUser && savedUser.id && savedUser.profile){
     adminLogged = true;
-    currentUser = savedUser;
+    currentUser = {
+      ...savedUser,
+      profile: window.normalizeProfile ? window.normalizeProfile(savedUser.profile || savedUser.role || savedUser.perfil) : (savedUser.profile || savedUser.role || savedUser.perfil),
+      role: savedUser.role || savedUser.profile || savedUser.perfil || '',
+    };
   }
 
   // Check URL params
