@@ -1653,6 +1653,9 @@ nav {
         <div class="sidebar-item" onclick="adminTab(this,'tabLanding')">
           <span class="si-icon">🛠</span> Página Principal
         </div>
+        <div class="sidebar-item" onclick="adminTab(this,'tabSistema')">
+          <span class="si-icon">⚙</span> Sistema
+        </div>
       </div>
       <div class="sidebar-section">
         <div class="sidebar-label">Competição</div>
@@ -2129,6 +2132,39 @@ nav {
       </div>
 
       <!-- SCOREBOARD ADMIN -->
+      <!-- SISTEMA -->
+      <div id="tabSistema" class="hidden">
+        <h1>ADMINISTRAÇÃO DO SISTEMA</h1>
+        <p class="sub">Gerenciar usuários, perfis e configurações globais</p>
+
+        <div class="card">
+          <div class="card-title section-title">Usuários e Perfis</div>
+          <p class="about-text">Crie um novo admin padrão ou redefina todos os usuários.</p>
+          <div class="flex flex-wrap-gap mb1">
+            <button class="btn btn-accent" onclick="initializeDefaultAdmin()">🔑 Criar Admin Padrão</button>
+            <button class="btn btn-danger" onclick="resetAllUsers()">⚠ Limpar Todos os Usuários</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title section-title">Informações do Sistema</div>
+          <div class="score-grid">
+            <div class="score-row">
+              <span class="score-key">Usuários registrados:</span>
+              <span class="score-text" id="sysUsersCount">0</span>
+            </div>
+            <div class="score-row">
+              <span class="score-key">Armazenamento:</span>
+              <span class="score-text" id="sysStorageType">Supabase + LocalStorage</span>
+            </div>
+            <div class="score-row">
+              <span class="score-key">Status do Supabase:</span>
+              <span class="score-text" id="sysSupabaseStatus">Verificando...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div id="tabScoreboard" class="hidden">
         <h1>PLACAR GERAL</h1>
         <p class="sub">Classificação em tempo real</p>
@@ -2579,7 +2615,8 @@ function adminTab(el, tab){
     tabUsers: 'users',
     tabLanding: 'landing',
     tabSession: 'session',
-    tabScoreboard: 'scoreboard'
+    tabScoreboard: 'scoreboard',
+    tabSistema: 'sistema'
   };
 
   // Verificar acesso
@@ -2601,6 +2638,7 @@ function adminTab(el, tab){
   if(tab==='tabGemini') loadGeminiKey();
   if(tab==='tabLanding') fillLandingConfigForm();
   if(tab==='tabSession'){ syncSlideForm(); renderSlideDeck(); renderSessionDashboard(); }
+  if(tab==='tabSistema') refreshSystemInfo();
 }
 
 /* ════════════════════════════════
@@ -4053,6 +4091,86 @@ async function removeUser(id){
 
   renderUsers();
   toast('Usuário removido com sucesso','ok');
+}
+
+/* ════════════════════════════════
+   ADMIN SISTEMA
+════════════════════════════════ */
+async function initializeDefaultAdmin(){
+  const adminExists = users.some(u => u.profile === 'admin');
+  if(adminExists){
+    toast('Já existe um administrador no sistema','err');
+    return;
+  }
+
+  const defaultAdmin = {
+    id: 'u_admin_' + Date.now(),
+    rank: 'Administrador',
+    warName: 'Admin Master',
+    cpf: '00000000000',
+    email: 'admin@cbhm.com.br',
+    sector: 'Administração',
+    profile: 'admin',
+    password: btoa('Admin@2026!'),  // Base64: Admin@2026!
+    created: Date.now()
+  };
+
+  users.push(defaultAdmin);
+  
+  try {
+    if(sb()) {
+      await window._sb.from('kv').upsert({ key:'users', value: users }, { onConflict:'key' });
+    } else {
+      lsSet('users', users);
+    }
+    renderUsers();
+    refreshSystemInfo();
+    toast('Admin padrão criado! Email: admin@cbhm.com.br | Senha: Admin@2026!','ok');
+  } catch(err){
+    console.error('Erro ao criar admin:', err);
+    toast('Erro ao salvar admin no banco de dados','err');
+  }
+}
+
+async function resetAllUsers(){
+  if(!confirm('⚠️ Tem certeza? Isso apagará TODOS os usuários do sistema.\\n\\nDigite "SIM" para confirmar.')){
+    return;
+  }
+
+  const confirmation = prompt('Digite SIM para confirmar que deseja apagar todos os usuários:');
+  if(confirmation !== 'SIM'){
+    toast('Operação cancelada','info');
+    return;
+  }
+
+  users = [];
+  
+  try {
+    if(sb()) {
+      await window._sb.from('kv').upsert({ key:'users', value: [] }, { onConflict:'key' });
+    } else {
+      lsSet('users', []);
+    }
+    renderUsers();
+    refreshSystemInfo();
+    toast('Todos os usuários foram removidos','ok');
+  } catch(err){
+    console.error('Erro ao resetar usuários:', err);
+    toast('Erro ao apagar usuários do banco de dados','err');
+  }
+}
+
+function refreshSystemInfo(){
+  const usersCountEl = document.getElementById('sysUsersCount');
+  const supabaseEl = document.getElementById('sysSupabaseStatus');
+  
+  if(usersCountEl) usersCountEl.textContent = users.length;
+  
+  if(supabaseEl){
+    const sbStatus = sb() ? '✅ Conectado' : '⚠️ Usando LocalStorage (Supabase não disponível)';
+    supabaseEl.textContent = sbStatus;
+    supabaseEl.style.color = sb() ? 'var(--green2)' : 'var(--gold2)';
+  }
 }
 
 /* ════════════════════════════════

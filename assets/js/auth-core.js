@@ -77,7 +77,7 @@ function hasUserAccess(user, feature){
   const profile = normalizeProfile(user.profile || user.role || user.perfil || user.access || user.type);
 
   const featureAccessMap = {
-    admin: ['dashboard', 'questions', 'teams', 'users', 'gemini', 'landing', 'session', 'scoreboard', 'live', 'results'],
+    admin: ['dashboard', 'questions', 'teams', 'users', 'gemini', 'landing', 'session', 'scoreboard', 'live', 'results', 'sistema'],
     manager: ['dashboard', 'questions', 'teams', 'session', 'scoreboard'],
     teacher: ['questions', 'session', 'scoreboard'],
   };
@@ -97,6 +97,7 @@ function applyMenuAccessControl(user){
     tabLanding: 'landing',
     tabSession: 'session',
     tabScoreboard: 'scoreboard',
+    tabSistema: 'sistema',
   };
 
   Object.entries(menuItemMap).forEach(([tab, feature]) => {
