@@ -2605,6 +2605,21 @@ function showScreen(id){
   }
 }
 
+/* ════════════════════════════════
+   AUTO-RESTORE USER ON PAGE LOAD
+════════════════════════════════ */
+(function(){
+  // Restaurar usuário do localStorage quando a página carrega
+  if(typeof window.restoreAuthUser === 'function') {
+    const stored = window.restoreAuthUser();
+    if(stored && stored.id) {
+      currentUser = stored;
+      adminLogged = true;
+      console.log('[AUTH] Usuário restaurado do localStorage:', stored.email);
+    }
+  }
+})();
+
 function adminTab(el, tab){
   // Mapear abas para features
   const tabFeatureMap = {
@@ -2619,11 +2634,28 @@ function adminTab(el, tab){
     tabSistema: 'sistema'
   };
 
-  // Verificar acesso
+  // Verificar acesso - Garantir que currentUser está restaurado
   const feature = tabFeatureMap[tab];
-  if(feature && !hasUserAccess(feature)){
-    toast('Você não tem permissão para acessar esta funcionalidade','err');
-    return;
+  
+  if(feature) {
+    // Restaurar currentUser se necessário antes de verificar acesso
+    if(!currentUser) {
+      try {
+        const stored = localStorage.getItem('cbhm_currentUser');
+        if(stored) {
+          currentUser = JSON.parse(stored);
+          adminLogged = true;
+        }
+      } catch(e) {
+        console.error('[adminTab] Erro ao restaurar usuário:', e);
+      }
+    }
+    
+    // Agora verificar acesso
+    if(!hasUserAccess(feature)){
+      toast('Você não tem permissão para acessar esta funcionalidade','err');
+      return;
+    }
   }
 
   document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
@@ -2709,10 +2741,43 @@ function logout(){
 
 // Verifica se o usuário tem acesso à funcionalidade baseado em seu perfil
 function hasUserAccess(feature){
-  const accessUser = currentUser ? {
-    ...currentUser,
-    profile: window.normalizeProfile ? window.normalizeProfile(currentUser.profile || currentUser.role || currentUser.perfil) : (currentUser.profile || currentUser.role || currentUser.perfil),
-  } : null;
+  // Tentar usar currentUser em memória primeiro
+  let accessUser = currentUser;
+  
+  // Se não houver currentUser em memória, tentar restaurar do localStorage
+  if(!accessUser) {
+    try {
+      const stored = localStorage.getItem('cbhm_currentUser');
+      if(stored) {
+        accessUser = JSON.parse(stored);
+        // Atualizar currentUser em memória para próximos acessos
+        if(accessUser && accessUser.id) {
+          currentUser = accessUser;
+          adminLogged = true;
+        }
+      }
+    } catch(e) {
+      console.error('[AUTH] Erro ao restaurar usuário:', e);
+    }
+  }
+  
+  // Se ainda não houver usuário, tentar via restoreAuthUser
+  if(!accessUser && window.restoreAuthUser) {
+    accessUser = window.restoreAuthUser();
+    if(accessUser && accessUser.id) {
+      currentUser = accessUser;
+      adminLogged = true;
+    }
+  }
+  
+  // Normalizar o perfil se houver usuário
+  if(accessUser) {
+    accessUser = {
+      ...accessUser,
+      profile: window.normalizeProfile ? window.normalizeProfile(accessUser.profile || accessUser.role || accessUser.perfil) : (accessUser.profile || accessUser.role || accessUser.perfil),
+    };
+  }
+  
   return window.CBHMAuth?.hasUserAccess ? window.CBHMAuth.hasUserAccess(accessUser, feature) : false;
 }
 

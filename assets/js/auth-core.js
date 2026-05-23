@@ -1,4 +1,4 @@
-const AUTH_STORAGE_KEY = 'currentUser';
+const AUTH_STORAGE_KEY = 'currentUser';  // lsSet() adiciona o prefixo cbhm_ automaticamente
 const ADMIN_CREDENTIALS = { admin: 'cbhm2026' };
 
 function normalizeProfile(profile){
