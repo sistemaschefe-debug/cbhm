@@ -2697,7 +2697,7 @@ async function doLogin(){
     }
   };
 
-  tryLogin();
+  await tryLogin();
 }
 
 function logout(){
@@ -2709,11 +2709,17 @@ function logout(){
 
 // Verifica se o usuário tem acesso à funcionalidade baseado em seu perfil
 function hasUserAccess(feature){
-  const accessUser = currentUser ? {
-    ...currentUser,
-    profile: window.normalizeProfile ? window.normalizeProfile(currentUser.profile || currentUser.role || currentUser.perfil) : (currentUser.profile || currentUser.role || currentUser.perfil),
-  } : null;
-  return window.CBHMAuth?.hasUserAccess ? window.CBHMAuth.hasUserAccess(accessUser, feature) : false;
+  if(!currentUser) return false;
+  
+  const profile = window.normalizeProfile ? window.normalizeProfile(currentUser.profile || currentUser.role || currentUser.perfil) : (currentUser.profile || currentUser.role || currentUser.perfil);
+  
+  const accessMap = {
+    admin: ['dashboard', 'questions', 'teams', 'users', 'gemini', 'landing', 'session', 'scoreboard', 'live', 'results', 'sistema'],
+    manager: ['dashboard', 'questions', 'teams', 'session', 'scoreboard'],
+    teacher: ['questions', 'session', 'scoreboard'],
+  };
+  
+  return (accessMap[profile] || []).includes(feature);
 }
 
 // Verificar acesso e mostrar mensagem se não tiver permissão
@@ -3975,6 +3981,13 @@ async function addUserFromAdmin(){
     return;
   }
 
+  // Validar se o perfil é um dos permitidos
+  const validProfiles = ['admin', 'manager', 'teacher', 'administrador', 'gerente', 'professor', 'administrador (acesso total)'];
+  if(!validProfiles.some(p => p.toLowerCase() === profile.toLowerCase())){
+    toast('Perfil inválido. Use: admin, manager ou teacher','err');
+    return;
+  }
+
   // Validar CPF (11 dígitos)
   if(!/^\d{11}$/.test(cpf)){
     toast('CPF deve ter 11 dígitos','err');
@@ -4004,7 +4017,7 @@ async function addUserFromAdmin(){
     cpf,
     email,
     sector,
-    profile,  // 'admin', 'manager', 'teacher'
+    profile: window.normalizeProfile(profile),  // Normalizar perfil: admin, manager, teacher
     password: btoa(password),  // Codificação básica (não é segura para produção)
     created: Date.now()
   };
@@ -5006,7 +5019,23 @@ endQuiz = function(){
 /* ════════════════════════════════
    INIT
 ════════════════════════════════ */
-document.addEventListener('appReady',()=>{
+function whenAppReady(callback){
+  const run = () => {
+    if(typeof window._sbReady !== 'undefined'){
+      callback();
+    } else {
+      document.addEventListener('appReady', callback, { once: true });
+    }
+  };
+
+  if(document.readyState !== 'loading'){
+    run();
+  } else {
+    document.addEventListener('DOMContentLoaded', run, { once: true });
+  }
+}
+
+whenAppReady(() => {
   loadLandingConfig();
   loadSessionSlidesDraft();
   syncSlideForm();
@@ -5021,6 +5050,7 @@ document.addEventListener('appReady',()=>{
       role: savedUser.role || savedUser.profile || savedUser.perfil || '',
     };
     scheduleMenuAccessControl();
+    loadAdminData();  // Carregar dados do admin ao restaurar sessão
   }
 
   // Check URL params
