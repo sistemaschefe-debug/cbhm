@@ -12,7 +12,9 @@ function normalizeProfile(profile){
     teacher: 'teacher',
     professor: 'teacher',
   };
-  return aliases[value] || value;
+  const normalized = aliases[value] || value;
+  // Se ainda for vazio após normalização, retornar 'teacher' como padrão
+  return normalized || 'teacher';
 }
 
 function persistAuthUser(user){

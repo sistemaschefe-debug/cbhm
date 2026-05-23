@@ -2606,6 +2606,8 @@ function showScreen(id){
 }
 
 function adminTab(el, tab){
+  console.log(`adminTab called: tab=${tab}, currentUser=${currentUser?.email}, adminLogged=${adminLogged}`);
+  
   // Mapear abas para features
   const tabFeatureMap = {
     tabDashboard: 'dashboard',
@@ -2621,6 +2623,7 @@ function adminTab(el, tab){
 
   // Verificar acesso
   const feature = tabFeatureMap[tab];
+  console.log(`adminTab: feature=${feature}, hasUserAccess=${hasUserAccess(feature)}`);
   if(feature && !hasUserAccess(feature)){
     toast('Você não tem permissão para acessar esta funcionalidade','err');
     return;
@@ -2660,11 +2663,33 @@ async function doLogin(){
 
   const finishLogin = async (user) => {
     adminLogged = true;
+    
+    // Normalizar profile com segurança
+    let normalizedProfile = user.profile || user.role || user.perfil || 'teacher';
+    if(typeof window.normalizeProfile === 'function'){
+      normalizedProfile = window.normalizeProfile(normalizedProfile);
+    } else {
+      // Fallback de normalização local
+      const aliases = {
+        admin: 'admin',
+        administrador: 'admin',
+        manager: 'manager',
+        gerente: 'manager',
+        teacher: 'teacher',
+        professor: 'teacher',
+      };
+      const lower = String(normalizedProfile || '').trim().toLowerCase();
+      normalizedProfile = aliases[lower] || lower || 'teacher';
+    }
+    
     currentUser = {
       ...user,
-      profile: window.normalizeProfile ? window.normalizeProfile(user.profile || user.role || user.perfil) : (user.profile || user.role || user.perfil),
+      profile: normalizedProfile,
       role: user.role || user.profile || user.perfil || '',
     };
+    
+    console.log(`finishLogin: user=${user.email}, originalProfile=${user.profile}, normalizedProfile=${currentUser.profile}`);
+    
     window.persistAuthUser?.(currentUser);
     closeOverlay('loginOverlay');
     showScreen('sAdmin');
@@ -2709,9 +2734,30 @@ function logout(){
 
 // Verifica se o usuário tem acesso à funcionalidade baseado em seu perfil
 function hasUserAccess(feature){
-  if(!currentUser) return false;
+  if(!currentUser) {
+    console.warn('hasUserAccess: currentUser is null/undefined');
+    return false;
+  }
   
-  const profile = window.normalizeProfile ? window.normalizeProfile(currentUser.profile || currentUser.role || currentUser.perfil) : (currentUser.profile || currentUser.role || currentUser.perfil);
+  // Usar normalizeProfile diretamente da janela ou da função local
+  let profile = currentUser.profile || currentUser.role || currentUser.perfil;
+  
+  // Se normalizeProfile estiver disponível, usar ele
+  if(typeof window.normalizeProfile === 'function'){
+    profile = window.normalizeProfile(profile);
+  } else {
+    // Fallback: normalização local
+    const aliases = {
+      admin: 'admin',
+      administrador: 'admin',
+      manager: 'manager',
+      gerente: 'manager',
+      teacher: 'teacher',
+      professor: 'professor',
+    };
+    const lowerProfile = String(profile || '').trim().toLowerCase();
+    profile = aliases[lowerProfile] || lowerProfile || 'teacher';
+  }
   
   const accessMap = {
     admin: ['dashboard', 'questions', 'teams', 'users', 'gemini', 'landing', 'session', 'scoreboard', 'live', 'results', 'sistema'],
@@ -2719,7 +2765,9 @@ function hasUserAccess(feature){
     teacher: ['questions', 'session', 'scoreboard'],
   };
   
-  return (accessMap[profile] || []).includes(feature);
+  const hasAccess = (accessMap[profile] || []).includes(feature);
+  console.log(`hasUserAccess: currentUser=${currentUser.email}, rawProfile=${currentUser.profile}, normalizedProfile=${profile}, feature=${feature}, hasAccess=${hasAccess}`);
+  return hasAccess;
 }
 
 // Verificar acesso e mostrar mensagem se não tiver permissão
@@ -5017,6 +5065,32 @@ endQuiz = function(){
 };
 
 /* ════════════════════════════════
+   DIAGNÓSTICO (Para Debug)
+════════════════════════════════ */
+window.CBHM_DEBUG = {
+  showCurrentUser: () => {
+    console.log('currentUser:', currentUser);
+    console.log('adminLogged:', adminLogged);
+    console.log('window.normalizeProfile:', typeof window.normalizeProfile);
+  },
+  showUsers: async () => {
+    const storedUsers = await dbGet('users');
+    console.log('Usuários no banco:', storedUsers);
+    console.log('users global:', users);
+  },
+  testLogin: async (email, password) => {
+    const storedUsers = await dbGet('users');
+    const userList = Array.isArray(storedUsers) ? storedUsers : storedUsers && typeof storedUsers === 'object' ? Object.entries(storedUsers).map(([id, value]) => ({ ...value, id })) : users;
+    console.log('testLogin - userList:', userList);
+    const result = window.resolveLoginUser ? window.resolveLoginUser(email, password, userList) : null;
+    console.log('testLogin - result:', result);
+  },
+  testAccess: (feature) => {
+    console.log(`testAccess(${feature}):`, hasUserAccess(feature));
+  }
+};
+
+/* ════════════════════════════════
    INIT
 ════════════════════════════════ */
 function whenAppReady(callback){
@@ -5044,11 +5118,32 @@ whenAppReady(() => {
   const savedUser = window.restoreAuthUser ? window.restoreAuthUser() : lsGet('currentUser');
   if(savedUser && savedUser.id && savedUser.profile){
     adminLogged = true;
+    
+    // Normalizar profile com segurança
+    let normalizedProfile = savedUser.profile || savedUser.role || savedUser.perfil || 'teacher';
+    if(typeof window.normalizeProfile === 'function'){
+      normalizedProfile = window.normalizeProfile(normalizedProfile);
+    } else {
+      // Fallback de normalização local
+      const aliases = {
+        admin: 'admin',
+        administrador: 'admin',
+        manager: 'manager',
+        gerente: 'manager',
+        teacher: 'teacher',
+        professor: 'teacher',
+      };
+      const lower = String(normalizedProfile || '').trim().toLowerCase();
+      normalizedProfile = aliases[lower] || lower || 'teacher';
+    }
+    
     currentUser = {
       ...savedUser,
-      profile: window.normalizeProfile ? window.normalizeProfile(savedUser.profile || savedUser.role || savedUser.perfil) : (savedUser.profile || savedUser.role || savedUser.perfil),
+      profile: normalizedProfile,
       role: savedUser.role || savedUser.profile || savedUser.perfil || '',
     };
+    
+    console.log(`appReady: restored user=${savedUser.email}, profile=${normalizedProfile}`);
     scheduleMenuAccessControl();
     loadAdminData();  // Carregar dados do admin ao restaurar sessão
   }
