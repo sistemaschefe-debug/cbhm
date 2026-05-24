@@ -5151,7 +5151,18 @@ whenAppReady(() => {
   const p=new URLSearchParams(location.search);
   if(p.get('join')){ document.getElementById('joinCode').value=p.get('join'); openJoinTeam(); }
   if(p.get('participant')==='1'){
-    openParticipantHub();
+    (async () => {
+      if(!activeSession){
+        const data = await dbGet('activeSession');
+        if(data){
+          activeSession = data;
+          if(activeSession?.slides?.length){
+            sessionSlides = activeSession.slides.map(normalizeSlide);
+          }
+        }
+      }
+      openParticipantHub();
+    })();
   }
   if(p.get('participantProjector')==='1'){
     startParticipantProjectorMirrorMode();
