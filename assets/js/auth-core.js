@@ -1,5 +1,6 @@
 const AUTH_STORAGE_KEY = 'currentUser';
 const ADMIN_CREDENTIALS = { admin: 'cbhm2026' };
+const SESSION_DURATION = 15 * 60 * 1000; // 15 minutos
 
 function normalizeProfile(profile){
   const value = String(profile || '').trim().toLowerCase();
@@ -19,7 +20,7 @@ function normalizeProfile(profile){
 
 function persistAuthUser(user){
   if(user){
-    lsSet(AUTH_STORAGE_KEY, user);
+    lsSet(AUTH_STORAGE_KEY, { ...user, loggedAt: Date.now() });
   } else {
     lsSet(AUTH_STORAGE_KEY, null);
   }
@@ -27,8 +28,12 @@ function persistAuthUser(user){
 
 function restoreAuthUser(){
   const user = lsGet(AUTH_STORAGE_KEY);
-  if(user && user.id && (user.profile || user.role || user.perfil)) return user;
-  return null;
+  if(!user || !user.id || !(user.profile || user.role || user.perfil)) return null;
+  if(user.loggedAt && Date.now() - user.loggedAt > SESSION_DURATION){
+    lsSet(AUTH_STORAGE_KEY, null);
+    return null;
+  }
+  return user;
 }
 
 function resolveLoginUser(email, password, users){
@@ -137,6 +142,7 @@ window.CBHMAuth = {
   checkUserAccess,
   normalizeProfile,
   ADMIN_CREDENTIALS,
+  SESSION_DURATION,
 };
 
 window.persistAuthUser = persistAuthUser;
@@ -145,3 +151,4 @@ window.resolveLoginUser = resolveLoginUser;
 window.hasUserAccess = hasUserAccess;
 window.applyMenuAccessControl = applyMenuAccessControl;
 window.checkUserAccess = checkUserAccess;
+window.SESSION_DURATION = SESSION_DURATION;

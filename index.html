@@ -187,6 +187,8 @@ body::after {
   height: 120px;
   margin: 0 auto 2rem;
   position: relative;
+  perspective: 600px;
+  transform-style: preserve-3d;
 }
 
 .emblem-ring {
@@ -195,8 +197,9 @@ body::after {
   border: 2px solid var(--gold);
   display:flex;align-items:center;justify-content:center;
   position:relative;
-  animation: rotateSlow 30s linear infinite reverse;
+  animation: rotate3d 20s linear infinite;
   box-shadow: 0 0 30px rgba(201,168,76,.25), inset 0 0 20px rgba(201,168,76,.05);
+  transform-style: preserve-3d;
 }
 .emblem-ring::before {
   content:'';
@@ -206,16 +209,20 @@ body::after {
 }
 .emblem-star {
   font-size: 3rem;
-  animation: rotateSlow 30s linear infinite reverse;
+  animation: rotate3d 20s linear infinite;
   filter: drop-shadow(0 0 12px rgba(201,168,76,.6));
+  transform-style: preserve-3d;
 }
 .emblem-logo {
   width: 78px;
   height: 78px;
   object-fit: contain;
   filter: drop-shadow(0 0 12px rgba(201,168,76,.45));
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
 }
 @keyframes rotateSlow { to { transform: rotate(360deg); } }
+@keyframes rotate3d { to { transform: rotateY(360deg); } }
 
 .landing-subtitle {
   font-family: var(--fh);
@@ -2569,6 +2576,7 @@ const DEFAULT_LANDING_CONFIG = {
 
 let adminLogged    = false;
 let currentUser    = null;  // Usuário atualmente logado { id, email, warName, profile }
+let _sessionTimer  = null; // Timer para logout automático
 let questions      = [];
 let teams          = [];
 let users          = [];  // Usuários do sistema
@@ -2698,6 +2706,7 @@ async function doLogin(){
     await loadAdminData();
     syncMenuAccessControl(currentUser);
     scheduleMenuAccessControl();
+    startSessionTimer();
     toast('Bem-vindo, '+(currentUser.warName || currentUser.email || 'usuário')+'!','ok');
   };
 
@@ -2726,7 +2735,19 @@ async function doLogin(){
   await tryLogin();
 }
 
+function startSessionTimer(){
+  if(_sessionTimer) clearTimeout(_sessionTimer);
+  const duration = window.SESSION_DURATION || 900000;
+  const elapsed = currentUser?.loggedAt ? Date.now() - currentUser.loggedAt : 0;
+  const remaining = Math.max(0, duration - elapsed);
+  _sessionTimer = setTimeout(() => {
+    toast('Sessão expirada por inatividade','err');
+    logout();
+  }, remaining);
+}
+
 function logout(){
+  if(_sessionTimer) { clearTimeout(_sessionTimer); _sessionTimer = null; }
   adminLogged = false;
   currentUser = null;
   window.persistAuthUser?.(null);
@@ -2974,6 +2995,7 @@ async function saveLandingConfigFromAdmin(){
 
   landingConfig = cfg;
   await dbSet('settings/landing', cfg);
+  localStorage.setItem('_cbhm_landingConfig', JSON.stringify(cfg));
   applyLandingConfig();
   fillLandingConfigForm();
   document.getElementById('lpLogoFile').value = '';
@@ -2983,6 +3005,7 @@ async function saveLandingConfigFromAdmin(){
 async function resetLandingConfig(){
   landingConfig = { ...DEFAULT_LANDING_CONFIG };
   await dbSet('settings/landing', landingConfig);
+  localStorage.setItem('_cbhm_landingConfig', JSON.stringify(landingConfig));
   applyLandingConfig();
   fillLandingConfigForm();
   document.getElementById('lpLogoFile').value = '';
@@ -5151,6 +5174,7 @@ whenAppReady(() => {
     
     console.log(`appReady: restored user=${savedUser.email}, profile=${normalizedProfile}`);
     scheduleMenuAccessControl();
+    startSessionTimer();
     loadAdminData();  // Carregar dados do admin ao restaurar sessão
   }
 
