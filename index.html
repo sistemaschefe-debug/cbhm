@@ -1554,9 +1554,6 @@ nav {
 
   <div class="landing-btns">
     <button class="btn btn-gold btn-lg" onclick="openLogin()">🔐 Acesso Restrito</button>
-    <button class="btn btn-lg" onclick="openJoinTeam()">🏛 Entrar como Equipe</button>
-    <button class="btn btn-lg" onclick="openParticipantHub()">👤 Modo Participante</button>
-    <button class="btn btn-lg" onclick="showScreen('sScoreboard'); loadScoreboard()">📊 Placar Geral</button>
   </div>
 
   <div class="divider-sm spacer-lg"></div>
@@ -3421,8 +3418,12 @@ function closeParticipantHub(){
   participantJoined = false;
   participantProfile = null;
   lsSet('participant_profile', null);
-  showScreen('sAdmin');
-  if(adminLogged) loadAdminData();
+  if(adminLogged){
+    showScreen('sAdmin');
+    loadAdminData();
+  } else {
+    showScreen('sLanding');
+  }
 }
 
 async function joinParticipantSession(){
