@@ -2733,13 +2733,40 @@ function logout(){
 }
 
 // Verifica se o usuário tem acesso à funcionalidade baseado em seu perfil
-// Usa a função hasUserAccess do auth-core.js via window.CBHMAuth
 function hasUserAccess(feature){
   if(!currentUser){
-    console.warn('hasUserAccess: currentUser is null/undefined');
     return false;
   }
-  return window.CBHMAuth?.hasUserAccess?.(currentUser, feature) || false;
+
+  // Obter perfil do usuário
+  const profile = String(currentUser.profile || currentUser.role || currentUser.perfil || '').trim().toLowerCase();
+
+  // Mapeamento de acesso por perfil
+  const accessMap = {
+    admin: ['dashboard', 'questions', 'teams', 'users', 'gemini', 'landing', 'session', 'scoreboard', 'live', 'results', 'sistema'],
+    manager: ['dashboard', 'questions', 'teams', 'session', 'scoreboard'],
+    teacher: ['questions', 'session', 'scoreboard'],
+  };
+
+  // Verificar acesso direto (perfil já normalizado)
+  if(accessMap[profile] && accessMap[profile].includes(feature)){
+    return true;
+  }
+
+  // Verificar aliases
+  const aliases = {
+    administrador: 'admin',
+    'administrador (acesso total)': 'admin',
+    gerente: 'manager',
+    professor: 'teacher',
+  };
+
+  const normalizedProfile = aliases[profile] || profile;
+  if(accessMap[normalizedProfile] && accessMap[normalizedProfile].includes(feature)){
+    return true;
+  }
+
+  return false;
 }
 
 // Verificar acesso e mostrar mensagem se não tiver permissão
