@@ -73,7 +73,16 @@ function resolveLoginUser(email, password, users){
   return null;
 }
 
-function hasUserAccess(user, feature){
+function hasUserAccess(userOrFeature, feature){
+  // Suporta ambos: hasUserAccess(feature) ou hasUserAccess(user, feature)
+  let user;
+  if(feature === undefined){
+    user = currentUser;
+    feature = userOrFeature;
+  } else {
+    user = userOrFeature;
+  }
+
   if(!user) return false;
 
   const profile = normalizeProfile(user.profile || user.role || user.perfil || user.access || user.type);
