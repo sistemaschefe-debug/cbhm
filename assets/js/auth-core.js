@@ -50,25 +50,29 @@ function resolveLoginUser(email, password, users){
     );
   });
 
-  if(matchedUser){
-    return {
-      id: matchedUser.id,
-      email: matchedUser.email,
-      warName: matchedUser.warName,
-      profile: normalizeProfile(matchedUser.profile || matchedUser.role || matchedUser.perfil || matchedUser.access || matchedUser.type),
-      source: 'users-db',
-    };
-  }
+   if(matchedUser){
+     return {
+       id: matchedUser.id,
+       email: matchedUser.email,
+       warName: matchedUser.warName,
+       rank: matchedUser.rank || '',
+       icon: matchedUser.icon || '',
+       profile: normalizeProfile(matchedUser.profile || matchedUser.role || matchedUser.perfil || matchedUser.access || matchedUser.type),
+       source: 'users-db',
+     };
+   }
 
-  if(ADMIN_CREDENTIALS.admin === normalizedPassword && normalizedEmail === 'admin'){
-    return {
-      id: 'admin',
-      email: 'admin',
-      warName: 'Administrador',
-      profile: 'admin',
-      source: 'fallback-admin',
-    };
-  }
+   if(ADMIN_CREDENTIALS.admin === normalizedPassword && normalizedEmail === 'admin'){
+     return {
+       id: 'admin',
+       email: 'admin',
+       warName: 'Administrador',
+       rank: '',
+       icon: '',
+       profile: 'admin',
+       source: 'fallback-admin',
+     };
+   }
 
   return null;
 }

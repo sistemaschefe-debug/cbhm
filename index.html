@@ -1625,9 +1625,10 @@ nav {
       <span id="adminNavLogoText" class="nav-logo-text">⚔</span>
     </span>
     <span class="nav-badge">Painel do Administrador</span>
-    <div class="nav-sep"></div>
-    <span id="sessionCodeBadge" class="nav-badge hidden"></span>
-    <button class="btn btn-sm" onclick="logout()">Sair</button>
+     <div class="nav-sep"></div>
+     <span id="sessionCodeBadge" class="nav-badge hidden"></span>
+     <button class="btn btn-sm" onclick="openProfileModal()">👤 Perfil</button>
+     <button class="btn btn-sm" onclick="logout()">Sair</button>
   </nav>
 
   <div class="admin-body">
@@ -4101,13 +4102,15 @@ function renderUsers(){
 
   el.innerHTML = users.map(u => `
     <tr class="tbody-row">
+      <td class="td-cell" style="text-align:center">${esc(u.icon || '')}</td>
       <td class="td-cell">${esc(u.warName)}</td>
       <td class="td-cell td-cell.small">${esc(u.email)}</td>
+      <td class="td-cell td-cell.small">${esc(u.rank || '')}</td>
       <td class="td-cell"><span class="profile-pill">${profileNames[u.profile] || u.profile}</span></td>
       <td class="td-cell td-cell.small">${esc(u.sector)}</td>
       <td class="td-cell" style="text-align:center">
-        <button class="btn btn-sm btn-accent" onclick="editUser('${u.id}')">✏</button>
-        <button class="btn btn-sm btn-danger" onclick="removeUser('${u.id}')">✕</button>
+        <button class="btn btn-sm btn-accent" onclick="editUser('${u.id}')">✏️</button>
+        <button class="btn btn-sm btn-danger" onclick="removeUser('${u.id}')">🗑️</button>
       </td>
     </tr>
   `).join('');
@@ -4123,6 +4126,9 @@ async function editUser(id){
   const nextWarName = prompt('Nome de Guerra:', user.warName || '');
   if(nextWarName === null) return;
 
+  const nextIcon = prompt('Ícone de Perfil (emoji, max 2 caracteres):', user.icon || '');
+  if(nextIcon === null) return;
+
   const nextSector = prompt('Setor:', user.sector || '');
   if(nextSector === null) return;
 
@@ -4133,6 +4139,7 @@ async function editUser(id){
 
   user.rank = nextRank.trim();
   user.warName = nextWarName.trim();
+  user.icon = nextIcon.trim().substring(0, 2); // Limitar a 2 caracteres
   user.sector = nextSector.trim();
 
   if(sb()) await window._sb.from('kv').upsert({ key:'users', value: users }, { onConflict:'key' });
@@ -5164,10 +5171,194 @@ whenAppReady(() => {
       openParticipantHub();
     })();
   }
-  if(p.get('participantProjector')==='1'){
-    startParticipantProjectorMirrorMode();
-  }
+   if(p.get('participantProjector')==='1'){
+     startParticipantProjectorMirrorMode();
+   }
 });
+
+<!-- ══════════════════════════════════════════
+     PERFIL MODAL
+═════════════════════════════════════════ -->
+<div class="overlay" id="profileOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeOverlay('profileOverlay')">✕</button>
+    <h2>👤 EDITAR PERFIL</h2>
+    <div class="divider-sm divider-tight"></div>
+    <div class="field">
+      <label>Nome</label>
+      <input type="text" id="profileName" placeholder="Digite seu nome completo">
+    </div>
+    <div class="field">
+      <label>Posto/Graduação</label>
+      <input type="text" id="profileRank" placeholder="Ex: Capitão, Tenente, Primeiro-Sargento">
+    </div>
+    <div class="field">
+      <label>Ícone de Perfil</label>
+      <input type="text" id="profileIcon" placeholder="Ex: 🎖️, 🏅, 📌, 🎯" maxlength="2">
+    </div>
+    <div class="field">
+      <label>Nova Senha (deixe em branco para não alterar)</label>
+      <input type="password" id="profilePassword" placeholder="Digite a nova senha">
+    </div>
+    <div class="field">
+      <label>Confirmar Nova Senha</label>
+      <input type="password" id="profilePasswordConfirm" placeholder="Confirme a nova senha">
+    </div>
+    <div class="grid-2 gap-1">
+      <div class="field field-compact">
+        <label>E-mail</label>
+        <input type="email" id="profileEmail" readonly disabled>
+      </div>
+      <div class="field field-compact">
+        <label>Perfil</label>
+        <input type="text" id="profileRole" readonly disabled>
+      </div>
+    </div>
+    <div id="profileErr" class="hidden error-box"></div>
+    <button class="btn btn-gold full-btn" onclick="saveProfile()">Salvar Alterações</button>
+    <p class="muted-center text-center">
+      Campos em cinza não podem ser alterados
+    </p>
+  </div>
+</div>
+
+<script>
+
+/* ══════════════════════════════════════════════════════
+   PERFIL MODAL FUNCTIONS
+═══════════════════════════════════════════════════════ */
+
+function openProfileModal(){
+  if(!currentUser){
+    toast('Usuário não logado', 'err');
+    return;
+  }
+
+  // Preencher os campos com os dados atuais
+  document.getElementById('profileName').value = currentUser.warName || currentUser.name || '';
+  document.getElementById('profileRank').value = currentUser.rank || '';
+  document.getElementById('profileIcon').value = currentUser.icon || '';
+  document.getElementById('profileEmail').value = currentUser.email || '';
+  document.getElementById('profileRole').value = currentUser.profile || currentUser.role || '';
+  
+  // Limpar campos de senha
+  document.getElementById('profilePassword').value = '';
+  document.getElementById('profilePasswordConfirm').value = '';
+  
+  // Esconder mensagem de erro
+  document.getElementById('profileErr').classList.add('hidden');
+  
+  // Abrir modal
+  openOverlay('profileOverlay');
+}
+
+async function saveProfile(){
+  if(!currentUser){
+    toast('Usuário não logado', 'err');
+    return;
+  }
+
+  // Obter valores dos campos
+  const name = document.getElementById('profileName').value.trim();
+  const rank = document.getElementById('profileRank').value.trim();
+  const icon = document.getElementById('profileIcon').value.trim();
+  const password = document.getElementById('profilePassword').value;
+  const passwordConfirm = document.getElementById('profilePasswordConfirm').value;
+  const errEl = document.getElementById('profileErr');
+
+  // Validações
+  if(!name){
+    errEl.textContent = 'Nome é obrigatório';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  // Validar se senha foi preenchida e confirmada
+  if(password && password !== passwordConfirm){
+    errEl.textContent = 'As senhas não coincidem';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  // Se senha foi preenchida, validar formato
+  if(password && password.length < 6){
+    errEl.textContent = 'A senha deve ter no mínimo 6 caracteres';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  // Esconder mensagem de erro
+  errEl.classList.add('hidden');
+
+  // Preparar dados atualizados
+  const updatedUserData = {
+    ...currentUser,
+    warName: name,
+    rank: rank,
+    icon: icon,
+    updatedAt: Date.now()
+  };
+
+  // Se houver nova senha, criptografar
+  if(password){
+    try {
+      updatedUserData.password = btoa(password); // Criptografar base64
+    } catch(e) {
+      errEl.textContent = 'Erro ao criptografar senha';
+      errEl.classList.remove('hidden');
+      return;
+    }
+  }
+
+  // Atualizar na memória
+  currentUser = updatedUserData;
+
+  // Atualizar no banco de dados
+  try {
+    if(sb()){
+      // Supabase mode
+      await window._sb.from('kv').upsert({ 
+        key: 'users', 
+        value: users.map(user => 
+          user.id === currentUser.id ? updatedUserData : user
+        )
+      }, { onConflict: 'key' });
+    } else {
+      // LocalStorage mode
+      const updatedUsers = users.map(user => 
+        user.id === currentUser.id ? updatedUserData : user
+      );
+      users = updatedUsers;
+      lsSet('users', updatedUsers);
+    }
+
+    // Atualizar o usuário atual no localStorage
+    window.persistAuthUser?.(updatedUserData);
+
+    // Fechar modal
+    closeOverlay('profileOverlay');
+
+    // Atualizar UI
+    if(adminLogged){
+      scheduleMenuAccessControl();
+      loadAdminData();
+    }
+
+    // Atualizar logo do nav se houver ícone
+    if(icon){
+      const navLogoText = document.getElementById('adminNavLogoText');
+      if(navLogoText) navLogoText.textContent = icon;
+    }
+
+    toast('Perfil atualizado com sucesso!', 'ok');
+
+  } catch(error) {
+    console.error('Erro ao salvar perfil:', error);
+    errEl.textContent = 'Erro ao salvar alterações: ' + error.message;
+    errEl.classList.remove('hidden');
+  }
+}
+
 </script>
 </body>
 </html>
