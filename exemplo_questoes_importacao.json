@@ -1,0 +1,82 @@
+[
+  {
+    "text": "Qual foi o ano da Proclamação da República Brasileira?",
+    "opts": ["15 de novembro de 1889", "7 de setembro de 1822", "13 de maio de 1888", "21 de abril de 1792"],
+    "correct": 0,
+    "cat": "Proclamação da República",
+    "feedback": "A República foi proclamada em 15 de novembro de 1889, destituindo a monarquia do Brasil. Este foi um marco importante na história política brasileira.",
+    "imageUrl": ""
+  },
+  {
+    "text": "Quem foi o primeiro presidente constitucional da República Brasileira?",
+    "opts": ["Deodoro da Fonseca", "Afonso Pena", "Floriano Peixoto", "Hermes da Fonseca"],
+    "correct": 0,
+    "cat": "Primeira República",
+    "feedback": "Deodoro da Fonseca foi o primeiro presidente constitucional, eleito em 1891. Ele serviu até 1894.",
+    "imageUrl": ""
+  },
+  {
+    "text": "Em qual batalha ocorreu o Golpe da Pólvora, marcando o domínio português no Brasil?",
+    "opts": ["Batalha de Guararapes", "Batalha do Passo das Cruzes", "Batalha de Montes Claros", "Batalha de Itororó"],
+    "correct": 0,
+    "cat": "História Militar",
+    "feedback": "A Batalha de Guararapes foi decisiva para a consolidação da presença portuguesa no Brasil Colonial.",
+    "imageUrl": ""
+  },
+  {
+    "text": "Qual general comandou as forças brasileiras na Guerra do Paraguai?",
+    "opts": ["Marquês de Tamandaré", "Manuel Luis Osório", "Duque de Caxias", "Visconde de Pirajá"],
+    "correct": 2,
+    "cat": "Guerra do Paraguai",
+    "feedback": "O Duque de Caxias foi o principal comandante das forças brasileiras na Guerra do Paraguai (1864-1870), ganhando grande prestígio militar.",
+    "imageUrl": ""
+  },
+  {
+    "text": "Em que ano terminou a Guerra do Paraguai?",
+    "opts": ["1870", "1865", "1875", "1880"],
+    "correct": 0,
+    "cat": "Guerra do Paraguai",
+    "feedback": "A Guerra do Paraguai terminou em 1870 com a vitória das forças aliadas (Brasil, Argentina e Uruguai).",
+    "imageUrl": ""
+  },
+  {
+    "text": "Qual foi a principal causa do fim da escravidão no Brasil?",
+    "opts": ["Pressão internacional", "Lei Áurea de 1888", "Movimentos abolicionistas", "Decisão do Imperador"],
+    "correct": 1,
+    "cat": "Abolição",
+    "feedback": "A Lei Áurea, assinada pela Princesa Isabel em 13 de maio de 1888, foi o instrumento legal que aboliu a escravidão no Brasil.",
+    "imageUrl": ""
+  },
+  {
+    "text": "Qual era o nome do navio que trouxe a Princesa Isabel ao Brasil?",
+    "opts": ["Navios brasileiros", "Navios portugueses", "Navios ingleses", "Navios franceses"],
+    "correct": 2,
+    "cat": "Transporte Marítimo",
+    "feedback": "Navios ingleses foram frequentemente utilizados para transportes diplomáticos neste período histórico.",
+    "imageUrl": ""
+  },
+  {
+    "text": "Em qual ano Portugal e Brasil foram unidos sob a mesma coroa?",
+    "opts": ["1580", "1600", "1640", "1668"],
+    "correct": 0,
+    "cat": "União Ibérica",
+    "feedback": "Em 1580, Portugal ficou sob o domínio da Espanha (União Ibérica), afetando indiretamente o Brasil colonial.",
+    "imageUrl": ""
+  },
+  {
+    "text": "Qual foi a primeira capital do Brasil colonial?",
+    "opts": ["Rio de Janeiro", "Salvador", "São Vicente", "Olinda"],
+    "correct": 1,
+    "cat": "Brasil Colonial",
+    "feedback": "Salvador foi a primeira capital do Brasil colonial, sendo a sede da Capitania-Geral desde 1549.",
+    "imageUrl": ""
+  },
+  {
+    "text": "Quantos anos durou a dominação holandesa no Brasil?",
+    "opts": ["24 anos", "35 anos", "42 anos", "50 anos"],
+    "correct": 0,
+    "cat": "Invasões Holandesas",
+    "feedback": "Os holandeses dominaram Pernambuco e partes do Nordeste por cerca de 24 anos (1630-1654), principalmente durante o governo de Maurício de Nassau.",
+    "imageUrl": ""
+  }
+]

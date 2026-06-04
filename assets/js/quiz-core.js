@@ -41,6 +41,14 @@ export function renderQuizQuestion(){
   document.getElementById('qCatDisplay').textContent = q.cat||'História Militar';
   document.getElementById('qStatement').textContent  = q.text;
 
+  // Exibir imagem se existir
+  const imageContainer = document.getElementById('qImageContainer');
+  if(q.imageData || q.imageUrl){
+    imageContainer.innerHTML = `<img src="${q.imageData || q.imageUrl}" alt="Imagem da questão">`;
+  } else {
+    imageContainer.innerHTML = '';
+  }
+
   const keys=['A','B','C','D'];
   document.getElementById('answerGrid').innerHTML = q.opts.map((o,i)=>`
     <button class="ans-btn" id="ans${i}" onclick="adminSelectAnswer(${i})">
@@ -90,6 +98,7 @@ export function adminSelectAnswer(optIdx){
 
   clearInterval(timerInterval);
   if(correct) window.confetti && window.confetti(pts>=30?'#c9a84c':'#2d7a4e');
+  showFeedback(q);
   setTimeout(()=>nextQuestion(),2200);
 }
 
@@ -99,7 +108,19 @@ export function revealAnswer(){
     b.disabled=true;
     if(i===q.correct) b.classList.add('correct');
   });
+  showFeedback(q);
   setTimeout(()=>nextQuestion(),2000);
+}
+
+export function showFeedback(q){
+  const feedbackEl = document.getElementById('qFeedbackDisplay');
+  if(!feedbackEl) return;
+  if(q?.feedback && q.feedback.trim()){
+    feedbackEl.textContent = q.feedback;
+    feedbackEl.classList.remove('hidden');
+  } else {
+    feedbackEl.classList.add('hidden');
+  }
 }
 
 export function skipQuestion(){ clearInterval(timerInterval); nextQuestion(); }

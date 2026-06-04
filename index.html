@@ -697,6 +697,18 @@ nav {
   font-weight:300;
 }
 
+.q-image-container {
+  margin-bottom:1.5rem;
+  text-align:center;
+}
+.q-image-container img {
+  max-width:100%;
+  max-height:300px;
+  border-radius:12px;
+  border:1px solid var(--border2);
+  object-fit:contain;
+}
+
 .answer-grid {
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -729,6 +741,25 @@ nav {
   background:rgba(242,201,76,.15);
   display:flex;align-items:center;justify-content:center;
   flex-shrink:0;color:var(--gold);
+}
+
+.q-feedback {
+  margin-top:2rem;
+  padding:1.2rem;
+  border-left:4px solid var(--gold);
+  background:rgba(242,201,76,.08);
+  border-radius:8px;
+  font-size:.95rem;
+  line-height:1.6;
+  color:var(--gold3);
+  animation:slideInUp .4s ease-out;
+}
+.q-feedback.hidden {
+  display:none;
+}
+@keyframes slideInUp {
+  from { opacity:0;transform:translateY(10px); }
+  to { opacity:1;transform:translateY(0); }
 }
 
 /* team panels */
@@ -873,6 +904,8 @@ nav {
 .field-compact { margin:0; }
 .center-flex { display:flex;align-items:center; }
 .muted-inline { font-size:.82rem;color:var(--muted); }
+.question-image-preview { max-width:200px;max-height:200px;border-radius:8px;margin-right:1rem;object-fit:contain; }
+.question-image-preview.hidden { display:none; }
 .table-wrap { width:100%;border-collapse:collapse; }
 .table-head { background:var(--bg3);border-bottom:1px solid var(--border); }
 .th-cell { padding:.75rem;text-align:left;font-family:var(--fh);color:var(--gold2);font-size:.85rem; }
@@ -1875,6 +1908,7 @@ nav {
         <p class="sub">Banco de questões de múltipla escolha com 4 opções</p>
           <div class="flex flex-wrap-gap mb15">
           <button class="btn btn-gold" onclick="openQuestionModal()">+ Nova Questão</button>
+          <button class="btn btn-accent" onclick="openImportModal()">📥 Importar Lote</button>
           <button class="btn btn-accent"
             onclick="adminTab(document.querySelectorAll('.sidebar-item')[2],'tabGemini')">🤖 Gerar com Gemini</button>
           <span id="qCount" class="tag">0 questões</span>
@@ -2180,6 +2214,48 @@ nav {
 </div>
 
 <!-- ══════════════════════════════════════════
+     IMPORT QUESTIONS MODAL
+══════════════════════════════════════════ -->
+<div class="overlay" id="importOverlay">
+  <div class="modal modal-lg">
+    <button class="modal-close" onclick="closeOverlay('importOverlay')">✕</button>
+    <h2>Importar Questões em Lote</h2>
+    
+    <div class="card">
+      <div class="card-title">FORMATO JSON</div>
+      <p class="sub" style="margin-bottom:1rem">Cole um array JSON com as questões ou faça upload de um arquivo:</p>
+      <div class="field">
+        <label>Arquivo JSON ou CSV</label>
+        <input type="file" id="importFile" accept=".json,.csv,.txt">
+      </div>
+      <div class="field">
+        <label>Ou cole o JSON diretamente</label>
+        <textarea id="importJson" rows="8" placeholder='[{"text":"Pergunta?","opts":["A","B","C","D"],"correct":0,"cat":"Categoria","feedback":"Explicação","imageUrl":""}]'></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">FORMATO ESPERADO</div>
+      <pre style="background:var(--bg3);padding:1rem;border-radius:8px;overflow-x:auto;font-size:.85rem;color:var(--muted)">[
+  {
+    "text": "Qual foi o ano da Proclamação da República?",
+    "opts": ["1889", "1822", "1891", "1808"],
+    "correct": 0,
+    "cat": "História do Brasil",
+    "feedback": "A República foi proclamada em 1889.",
+    "imageUrl": "https://..."
+  }
+]</pre>
+    </div>
+
+    <div class="flex justify-end">
+      <button class="btn" onclick="closeOverlay('importOverlay')">Cancelar</button>
+      <button class="btn btn-gold" onclick="importQuestionsFromInput()">Importar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
      QUESTION MODAL
 ══════════════════════════════════════════ -->
 <div class="overlay" id="questionOverlay">
@@ -2193,6 +2269,18 @@ nav {
     <div class="field">
       <label>Enunciado da Questão</label>
       <textarea id="qText" placeholder="Digite a pergunta completa aqui..."></textarea>
+    </div>
+    <div class="field">
+      <label>Imagem da Questão (opcional)</label>
+      <input type="url" id="qImageUrl" placeholder="https://.../imagem.jpg">
+    </div>
+    <div class="field">
+      <label>Ou envie um arquivo de imagem</label>
+      <input type="file" id="qImageFile" accept="image/*" onchange="previewQuestionImageFile()">
+    </div>
+    <div class="center-flex">
+      <img id="qImagePreview" alt="Prévia da imagem" class="question-image-preview hidden">
+      <span class="muted-inline">A imagem será exibida junto com a pergunta.</span>
     </div>
     <div class="stack-grid">
       <div class="field field-compact">
@@ -2221,8 +2309,13 @@ nav {
         <option value="3">D</option>
       </select>
     </div>
+    <div class="field">
+      <label>Feedback da Resposta (explicação que será exibida após a resposta)</label>
+      <textarea id="qFeedback" placeholder="Ex: A resposta correta é [X] porque..."></textarea>
+    </div>
     <div class="flex justify-end">
       <button class="btn" onclick="closeOverlay('questionOverlay')">Cancelar</button>
+      <button class="btn btn-success" onclick="saveQuestion(); setTimeout(()=>openQuestionModal(), 600)">Salvar + Nova Questão</button>
       <button class="btn btn-gold" onclick="saveQuestion()">Salvar Questão</button>
     </div>
   </div>
@@ -2250,7 +2343,9 @@ nav {
       <div class="q-card" id="qCard">
         <span class="q-category" id="qCatDisplay">—</span>
         <div class="q-statement" id="qStatement">Carregando questão...</div>
+        <div class="q-image-container" id="qImageContainer"></div>
         <div class="answer-grid" id="answerGrid"></div>
+        <div class="q-feedback hidden" id="qFeedbackDisplay"></div>
       </div>
 
       <!-- bonus streak indicator -->
@@ -3844,11 +3939,26 @@ function openQuestionModal(q=null){
   document.getElementById('qModalTitle').textContent = q ? 'EDITAR QUESTÃO' : 'NOVA QUESTÃO';
   document.getElementById('qCat').value     = q?.cat||'';
   document.getElementById('qText').value    = q?.text||'';
+  document.getElementById('qImageUrl').value = q?.imageUrl||'';
   document.getElementById('qA').value       = q?.opts?.[0]||'';
   document.getElementById('qB').value       = q?.opts?.[1]||'';
   document.getElementById('qC').value       = q?.opts?.[2]||'';
   document.getElementById('qD').value       = q?.opts?.[3]||'';
   document.getElementById('qCorrect').value = q?.correct||0;
+  document.getElementById('qFeedback').value = q?.feedback||'';
+  
+  // Carregar imagem preview
+  questionImageBase64 = q?.imageData || '';
+  const qImagePreview = document.getElementById('qImagePreview');
+  if(q?.imageData || q?.imageUrl){
+    qImagePreview.src = q?.imageData || q?.imageUrl;
+    qImagePreview.classList.remove('hidden');
+  } else {
+    qImagePreview.classList.add('hidden');
+    qImagePreview.removeAttribute('src');
+  }
+  document.getElementById('qImageFile').value = '';
+  
   openOverlay('questionOverlay');
 }
 
@@ -3861,6 +3971,9 @@ async function saveQuestion(){
              document.getElementById('qC').value.trim(),
              document.getElementById('qD').value.trim()],
     correct: +document.getElementById('qCorrect').value,
+    feedback: document.getElementById('qFeedback').value.trim(),
+    imageUrl: document.getElementById('qImageUrl').value.trim(),
+    imageData: questionImageBase64,
   };
   if(!q.text||!q.opts.every(o=>o)){ toast('Preencha todos os campos','err'); return; }
 
@@ -3897,10 +4010,11 @@ function renderQuestions(){
     <div class="q-row">
       <div>
         <div class="q-text"><strong>${i+1}.</strong> ${q.text}</div>
+        ${q.imageData || q.imageUrl ? `<div style="margin-top:.5rem;margin-bottom:.5rem"><img src="${q.imageData || q.imageUrl}" alt="Imagem da questão" style="max-height:100px;max-width:150px;border-radius:6px;object-fit:contain;"></div>` : ''}
         <div class="q-opts">
           ${q.opts.map((o,j)=>`<span class="q-opt-pill ${j===q.correct?'correct':''}">${['A','B','C','D'][j]}) ${o}</span>`).join('')}
         </div>
-        <div style="margin-top:.4rem"><span class="tag">${q.cat||'Sem categoria'}</span></div>
+        <div style="margin-top:.4rem"><span class="tag">${q.cat||'Sem categoria'}</span>${q.feedback ? `<span class="tag" style="background:rgba(45,122,78,.15);color:#9beba7;border-color:rgba(45,122,78,.3);margin-left:.5rem">💬 Feedback</span>` : ''}</div>
       </div>
       <div class="flex" style="flex-direction:column;gap:.4rem">
         <button class="btn btn-sm btn-icon" onclick="openQuestionModal(questions[${i}])" title="Editar">✏</button>
@@ -3908,6 +4022,130 @@ function renderQuestions(){
       </div>
     </div>
   `).join('');
+}
+
+function openImportModal(){
+  document.getElementById('importJson').value = '';
+  document.getElementById('importFile').value = '';
+  openOverlay('importOverlay');
+}
+
+async function importQuestionsFromInput(){
+  let questionsToImport = [];
+  
+  // Tentar ler do arquivo primeiro
+  const file = document.getElementById('importFile')?.files?.[0];
+  if(file){
+    try {
+      const text = await file.text();
+      if(file.name.endsWith('.json')){
+        questionsToImport = JSON.parse(text);
+      } else if(file.name.endsWith('.csv') || file.name.endsWith('.txt')){
+        questionsToImport = parseCSV(text);
+      }
+    } catch(e){
+      toast('Erro ao ler arquivo: '+e.message,'err');
+      return;
+    }
+  }
+  
+  // Se não houver arquivo, tentar ler do textarea
+  if(questionsToImport.length === 0){
+    const jsonText = document.getElementById('importJson').value.trim();
+    if(!jsonText){
+      toast('Carregue um arquivo ou cole um JSON válido','err');
+      return;
+    }
+    try {
+      questionsToImport = JSON.parse(jsonText);
+    } catch(e){
+      toast('JSON inválido: '+e.message,'err');
+      return;
+    }
+  }
+  
+  // Validar
+  if(!Array.isArray(questionsToImport)){
+    toast('O JSON deve ser um array de questões','err');
+    return;
+  }
+  
+  if(questionsToImport.length === 0){
+    toast('Nenhuma questão encontrada','err');
+    return;
+  }
+  
+  // Normalizar e validar questões
+  let validCount = 0;
+  let importedQuestions = [];
+  
+  for(const q of questionsToImport){
+    const normalized = {
+      id: 'q' + Date.now() + Math.random().toString(36).substr(2, 9),
+      text: String(q.text || q.pergunta || q.question || '').trim(),
+      opts: Array.isArray(q.opts || q.options || q.alternativas) 
+        ? (q.opts || q.options || q.alternativas).map(o=>String(o).trim())
+        : [],
+      correct: parseInt(q.correct || q.resposta || q.answer || 0),
+      cat: String(q.cat || q.category || q.categoria || q.theme || q.tema || '').trim(),
+      feedback: String(q.feedback || q.explicação || q.explanation || '').trim(),
+      imageUrl: String(q.imageUrl || q.image || q.imagem || '').trim(),
+      imageData: q.imageData || ''
+    };
+    
+    // Validar
+    if(normalized.text && normalized.opts.length === 4 && normalized.opts.every(o=>o)){
+      importedQuestions.push(normalized);
+      validCount++;
+    }
+  }
+  
+  if(validCount === 0){
+    toast('Nenhuma questão válida encontrada. Verifique o formato.','err');
+    return;
+  }
+  
+  // Adicionar ao array existente
+  questions.push(...importedQuestions);
+  
+  // Salvar no banco
+  if(sb()) await window._sb.from('kv').upsert({ key:'questions', value: questions }, { onConflict:'key' });
+  else lsSet('questions', questions);
+  
+  closeOverlay('importOverlay');
+  renderQuestions();
+  refreshDashboard();
+  toast(`✅ ${validCount} questão(ões) importada(s) com sucesso!`,'ok');
+}
+
+function parseCSV(csvText){
+  const lines = csvText.trim().split('\n');
+  const questions = [];
+  
+  // Se a primeira linha é cabeçalho, pular
+  let startIdx = 0;
+  if(lines[0].toLowerCase().includes('texto') || lines[0].toLowerCase().includes('question')){
+    startIdx = 1;
+  }
+  
+  for(let i = startIdx; i < lines.length; i++){
+    const line = lines[i].trim();
+    if(!line) continue;
+    
+    // Formato simples: pergunta | opcao1 | opcao2 | opcao3 | opcao4 | resposta | categoria | feedback
+    const parts = line.split('|').map(p=>p.trim());
+    if(parts.length >= 6){
+      questions.push({
+        text: parts[0],
+        opts: [parts[1], parts[2], parts[3], parts[4]],
+        correct: parseInt(parts[5]) || 0,
+        cat: parts[6] || '',
+        feedback: parts[7] || ''
+      });
+    }
+  }
+  
+  return questions;
 }
 
 /* ════════════════════════════════
@@ -3940,6 +4178,23 @@ function previewAdminTeamImageFile(){
   };
   fr.readAsDataURL(file);
 }
+
+function previewQuestionImageFile(){
+  const input = document.getElementById('qImageFile');
+  const file = input?.files?.[0];
+  const prev = document.getElementById('qImagePreview');
+  if(!file){ prev.classList.add('hidden'); prev.removeAttribute('src'); questionImageBase64=''; return; }
+
+  const fr = new FileReader();
+  fr.onload = ()=>{
+    prev.src = String(fr.result || '');
+    prev.classList.remove('hidden');
+    questionImageBase64 = String(fr.result || '');
+  };
+  fr.readAsDataURL(file);
+}
+
+let questionImageBase64 = '';
 
 function teamAvatarHtml(team, cls='team-avatar'){
   if(team?.image){

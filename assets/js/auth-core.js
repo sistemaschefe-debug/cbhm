@@ -1,6 +1,6 @@
 const AUTH_STORAGE_KEY = 'currentUser';
 const ADMIN_CREDENTIALS = { admin: 'cbhm2026' };
-const SESSION_DURATION = 15 * 60 * 1000; // 15 minutos
+const SESSION_DURATION = 8 * 60 * 60 * 1000; // 8 horas (aumentado de 15 minutos para resolver problema de logout)
 
 function normalizeProfile(profile){
   const value = String(profile || '').trim().toLowerCase();
