@@ -1499,7 +1499,7 @@ nav {
 .participant-panel { padding:1rem; }
 .participant-header { display:flex;justify-content:space-between;align-items:center;gap:.75rem;flex-wrap:wrap;margin-bottom:1rem; }
 .session-pill { display:inline-flex;align-items:center;gap:.35rem;padding:.25rem .6rem;border-radius:999px;border:1px solid var(--border);color:var(--muted);font-size:.75rem;letter-spacing:1px; }
-.slide-stage { min-height:280px;padding:1rem;border-radius:14px;background:var(--bg3);border:1px solid var(--border);display:flex;flex-direction:column;gap:1rem; }
+.slide-stage { min-height:200px;padding:1rem;border-radius:14px;background:var(--bg3);border:1px solid var(--border);display:flex;flex-direction:column;gap:1rem; }
 .slide-question { font-family:var(--fh);font-size:clamp(1.2rem,2vw,2rem);color:var(--gold3);line-height:1.35; }
 .slide-meta { font-size:.82rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase; }
 .vote-panel { padding:1rem;display:flex;flex-direction:column;gap:1rem; }
@@ -1511,7 +1511,12 @@ nav {
 .vote-btn.correct { border-color:var(--green2);background:rgba(45,122,78,.14);color:#9beba7; }
 .vote-btn.wrong { border-color:var(--red2);background:rgba(139,26,26,.14);color:#e07070; }
 .vote-note { font-size:.82rem;color:var(--muted);line-height:1.5; }
-.chart-panel { padding:1rem;min-height:280px; }
+.vote-confirmed { display:flex;flex-direction:column;align-items:center;gap:.6rem;padding:.75rem;text-align:center; }
+.vc-badge { display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .85rem;border-radius:999px;background:rgba(45,122,78,.12);border:1px solid rgba(45,122,78,.3);color:#6dda9a;font-family:var(--fh);font-size:.85rem;letter-spacing:1px; }
+.vc-value { font-family:var(--fh);font-size:1.15rem;color:var(--gold3);padding:.5rem 1rem;background:var(--bg3);border-radius:12px;border:1px solid var(--border);word-break:break-word;max-width:100%; }
+.vc-wait { font-size:.82rem;color:var(--muted);font-style:italic; }
+.chart-panel { padding:1rem;min-height:200px; }
+.chart-panel canvas { max-height:300px;width:100%!important; }
 .chart-panel h3 { font-family:var(--fh);font-size:.95rem;color:var(--gold2);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:.75rem; }
 .cloud-wrap { display:flex;flex-wrap:wrap;gap:.5rem;min-height:70px; }
 .cloud-item { display:inline-flex;align-items:center;justify-content:center;padding:.4rem .7rem;border-radius:999px;background:rgba(242,201,76,.06);border:1px solid rgba(242,201,76,.15);color:var(--gold3);font-family:var(--fh); }
@@ -3751,8 +3756,22 @@ function renderParticipantAnswerArea(slide){
   const myResponse = participantProfile ? getSlideResponses(slide.id)[participantProfile.id] : null;
   if(!target) return;
 
+  const hasVoted = myResponse?.value !== undefined && myResponse?.value !== null;
+
+  if(hasVoted){
+    const value = myResponse.value;
+    target.innerHTML = `
+      <div class="vote-confirmed">
+        <div class="vc-badge">✓ Voto registrado</div>
+        <div class="vc-value">${esc(String(value))}</div>
+        <div class="vc-wait">Aguardando próximo slide...</div>
+      </div>
+    `;
+    return;
+  }
+
   if(slide.type==='multiple'){
-    target.innerHTML = `<div class="vote-grid">${(slide.options||[]).map((option, index)=>`<button class="vote-btn ${myResponse?.value===option?'selected':''}" data-value="${esc(option)}" onclick="submitParticipantVote(this.dataset.value)">${esc(option)}</button>`).join('')}</div>`;
+    target.innerHTML = `<div class="vote-grid">${(slide.options||[]).map((option, index)=>`<button class="vote-btn" data-value="${esc(option)}" onclick="submitParticipantVote(this.dataset.value)">${esc(option)}</button>`).join('')}</div>`;
   } else if(slide.type==='wordcloud' || slide.type==='open'){
     target.innerHTML = `
       <div class="field">
@@ -3762,17 +3781,15 @@ function renderParticipantAnswerArea(slide){
       <div class="flex flex-wrap-gap">
         <button class="btn btn-gold" onclick="submitParticipantTextVote()">Enviar resposta</button>
       </div>
-      ${myResponse?.value ? `<p class="vote-note">Sua resposta atual: <strong>${esc(myResponse.value)}</strong></p>` : ''}
     `;
   } else if(slide.type==='stars'){
     const maxStars = slide.maxStars || 5;
-    target.innerHTML = `<div class="vote-grid">${Array.from({length:maxStars},(_,i)=>i+1).map(n=>`<button class="vote-btn ${String(myResponse?.value)===String(n)?'selected':''}" onclick="submitParticipantVote(${n})">${'⭐'.repeat(n)}</button>`).join('')}</div>`;
+    target.innerHTML = `<div class="vote-grid">${Array.from({length:maxStars},(_,i)=>i+1).map(n=>`<button class="vote-btn" onclick="submitParticipantVote(${n})">${'⭐'.repeat(n)}</button>`).join('')}</div>`;
   } else if(slide.type==='scale'){
     const min = Number(slide.min || 1);
     const max = Number(slide.max || 5);
-    const current = Number(myResponse?.value ?? min);
     target.innerHTML = `
-      <div class="scale-track">${Array.from({length:max-min+1},(_,i)=>min+i).map(n=>`<div class="scale-label"><button class="scale-dot ${current===n?'selected':''}" onclick="submitParticipantVote(${n})">${n}</button><span class="participant-mini">${n}</span></div>`).join('')}</div>
+      <div class="scale-track">${Array.from({length:max-min+1},(_,i)=>min+i).map(n=>`<div class="scale-label"><button class="scale-dot" onclick="submitParticipantVote(${n})">${n}</button><span class="participant-mini">${n}</span></div>`).join('')}</div>
       <div class="flex" style="justify-content:space-between;margin-top:.75rem">
         <span class="participant-mini">${esc(slide.leftLabel || 'Menor')}</span>
         <span class="participant-mini">${esc(slide.rightLabel || 'Maior')}</span>
