@@ -398,11 +398,23 @@ nav {
   max-height: 90vh;
   overflow-y: auto;
 }
+.modal.modal-fullscreen {
+  width: min(900px,100%);
+  max-width: 100%;
+  max-height: 96vh;
+  height: 96vh;
+  border-radius: 20px;
+  padding: 1.5rem;
+}
+.modal-fullscreen .stack-grid {
+  gap: 1rem;
+}
 .modal-close {
   position:absolute;top:1rem;right:1.25rem;
   background:none;border:none;
   color:var(--muted);font-size:1.4rem;cursor:pointer;
 }
+.modal-close:hover { color:var(--tx); }
 .modal-close:hover { color:var(--tx); }
 .modal h2 {
   font-family:var(--fh);
@@ -2222,30 +2234,17 @@ nav {
     <h2>Importar Questões em Lote</h2>
     
     <div class="card">
-      <div class="card-title">FORMATO JSON</div>
-      <p class="sub" style="margin-bottom:1rem">Cole um array JSON com as questões ou faça upload de um arquivo:</p>
+      <div class="card-title">FORMATO CSV</div>
+      <p class="sub" style="margin-bottom:1rem">Faça upload de um arquivo CSV com as questões no formato esperado:</p>
       <div class="field">
-        <label>Arquivo JSON ou CSV</label>
-        <input type="file" id="importFile" accept=".json,.csv,.txt">
+        <label>Arquivo CSV</label>
+        <input type="file" id="importFile" accept=".csv,text/csv">
       </div>
       <div class="field">
-        <label>Ou cole o JSON diretamente</label>
-        <textarea id="importJson" rows="8" placeholder='[{"text":"Pergunta?","opts":["A","B","C","D"],"correct":0,"cat":"Categoria","feedback":"Explicação","imageUrl":""}]'></textarea>
+        <label>Formato esperado</label>
+        <textarea readonly rows="8" style="resize:none;cursor:not-allowed;background:rgba(255,255,255,.03);">Pergunta|Opção A|Opção B|Opção C|Opção D|Resposta (0-3)|Categoria|Feedback
+Qual foi...?|Opção 1|Opção 2|Opção 3|Opção 4|0|História|Explicação aqui</textarea>
       </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">FORMATO ESPERADO</div>
-      <pre style="background:var(--bg3);padding:1rem;border-radius:8px;overflow-x:auto;font-size:.85rem;color:var(--muted)">[
-  {
-    "text": "Qual foi o ano da Proclamação da República?",
-    "opts": ["1889", "1822", "1891", "1808"],
-    "correct": 0,
-    "cat": "História do Brasil",
-    "feedback": "A República foi proclamada em 1889.",
-    "imageUrl": "https://..."
-  }
-]</pre>
     </div>
 
     <div class="flex justify-end">
@@ -2259,7 +2258,7 @@ nav {
      QUESTION MODAL
 ══════════════════════════════════════════ -->
 <div class="overlay" id="questionOverlay">
-  <div class="modal modal-lg">
+  <div class="modal modal-lg modal-fullscreen">
     <button class="modal-close" onclick="closeOverlay('questionOverlay')">✕</button>
     <h2 id="qModalTitle">NOVA QUESTÃO</h2>
     <div class="field">
@@ -2285,19 +2284,19 @@ nav {
     <div class="stack-grid">
       <div class="field field-compact">
         <label>Opção A</label>
-        <input type="text" id="qA" placeholder="Alternativa A">
+        <textarea id="qA" rows="2" placeholder="Cole a alternativa A aqui..."></textarea>
       </div>
       <div class="field field-compact">
         <label>Opção B</label>
-        <input type="text" id="qB" placeholder="Alternativa B">
+        <textarea id="qB" rows="2" placeholder="Cole a alternativa B aqui..."></textarea>
       </div>
       <div class="field field-compact">
         <label>Opção C</label>
-        <input type="text" id="qC" placeholder="Alternativa C">
+        <textarea id="qC" rows="2" placeholder="Cole a alternativa C aqui..."></textarea>
       </div>
       <div class="field field-compact">
         <label>Opção D</label>
-        <input type="text" id="qD" placeholder="Alternativa D">
+        <textarea id="qD" rows="2" placeholder="Cole a alternativa D aqui..."></textarea>
       </div>
     </div>
     <div class="field">
@@ -3966,10 +3965,10 @@ async function saveQuestion(){
   const q = {
     cat:     document.getElementById('qCat').value.trim(),
     text:    document.getElementById('qText').value.trim(),
-    opts:   [document.getElementById('qA').value.trim(),
-             document.getElementById('qB').value.trim(),
-             document.getElementById('qC').value.trim(),
-             document.getElementById('qD').value.trim()],
+    opts:   [normalizeOptionText(document.getElementById('qA').value),
+             normalizeOptionText(document.getElementById('qB').value),
+             normalizeOptionText(document.getElementById('qC').value),
+             normalizeOptionText(document.getElementById('qD').value)],
     correct: +document.getElementById('qCorrect').value,
     feedback: document.getElementById('qFeedback').value.trim(),
     imageUrl: document.getElementById('qImageUrl').value.trim(),
@@ -4025,7 +4024,6 @@ function renderQuestions(){
 }
 
 function openImportModal(){
-  document.getElementById('importJson').value = '';
   document.getElementById('importFile').value = '';
   openOverlay('importOverlay');
 }
@@ -4033,45 +4031,32 @@ function openImportModal(){
 async function importQuestionsFromInput(){
   let questionsToImport = [];
   
-  // Tentar ler do arquivo primeiro
   const file = document.getElementById('importFile')?.files?.[0];
-  if(file){
-    try {
-      const text = await file.text();
-      if(file.name.endsWith('.json')){
-        questionsToImport = JSON.parse(text);
-      } else if(file.name.endsWith('.csv') || file.name.endsWith('.txt')){
-        questionsToImport = parseCSV(text);
-      }
-    } catch(e){
-      toast('Erro ao ler arquivo: '+e.message,'err');
-      return;
-    }
+  if(!file){
+    toast('Selecione um arquivo CSV para importar','err');
+    return;
   }
-  
-  // Se não houver arquivo, tentar ler do textarea
-  if(questionsToImport.length === 0){
-    const jsonText = document.getElementById('importJson').value.trim();
-    if(!jsonText){
-      toast('Carregue um arquivo ou cole um JSON válido','err');
+
+  try {
+    const text = await file.text();
+    if(file.name.toLowerCase().endsWith('.csv') || file.name.toLowerCase().endsWith('.txt')){
+      questionsToImport = parseCSV(text);
+    } else {
+      toast('Importação permitida apenas via arquivo CSV','err');
       return;
     }
-    try {
-      questionsToImport = JSON.parse(jsonText);
-    } catch(e){
-      toast('JSON inválido: '+e.message,'err');
-      return;
-    }
+  } catch(e){
+    toast('Erro ao ler arquivo: '+e.message,'err');
+    return;
   }
-  
-  // Validar
+
   if(!Array.isArray(questionsToImport)){
-    toast('O JSON deve ser um array de questões','err');
+    toast('O CSV deve gerar uma lista de questões válidas','err');
     return;
   }
   
   if(questionsToImport.length === 0){
-    toast('Nenhuma questão encontrada','err');
+    toast('Nenhuma questão válida encontrada no CSV','err');
     return;
   }
   
@@ -4084,7 +4069,7 @@ async function importQuestionsFromInput(){
       id: 'q' + Date.now() + Math.random().toString(36).substr(2, 9),
       text: String(q.text || q.pergunta || q.question || '').trim(),
       opts: Array.isArray(q.opts || q.options || q.alternativas) 
-        ? (q.opts || q.options || q.alternativas).map(o=>String(o).trim())
+        ? (q.opts || q.options || q.alternativas).map(o=>normalizeOptionText(String(o)))
         : [],
       correct: parseInt(q.correct || q.resposta || q.answer || 0),
       cat: String(q.cat || q.category || q.categoria || q.theme || q.tema || '').trim(),
@@ -4122,9 +4107,9 @@ function parseCSV(csvText){
   const lines = csvText.trim().split('\n');
   const questions = [];
   
-  // Se a primeira linha é cabeçalho, pular
   let startIdx = 0;
-  if(lines[0].toLowerCase().includes('texto') || lines[0].toLowerCase().includes('question')){
+  const firstLine = lines[0]?.trim().toLowerCase() || '';
+  if(firstLine.includes('pergunta') || firstLine.includes('opção a') || firstLine.includes('question')){
     startIdx = 1;
   }
   
@@ -4132,20 +4117,29 @@ function parseCSV(csvText){
     const line = lines[i].trim();
     if(!line) continue;
     
-    // Formato simples: pergunta | opcao1 | opcao2 | opcao3 | opcao4 | resposta | categoria | feedback
     const parts = line.split('|').map(p=>p.trim());
     if(parts.length >= 6){
-      questions.push({
-        text: parts[0],
-        opts: [parts[1], parts[2], parts[3], parts[4]],
-        correct: parseInt(parts[5]) || 0,
-        cat: parts[6] || '',
-        feedback: parts[7] || ''
-      });
+      const opts = [parts[1], parts[2], parts[3], parts[4]].map(normalizeOptionText);
+      if(parts[0] && opts.every(o=>o)){
+        questions.push({
+          text: parts[0],
+          opts,
+          correct: Math.min(Math.max(parseInt(parts[5]) || 0, 0), 3),
+          cat: parts[6] || '',
+          feedback: parts[7] || '',
+          imageUrl: parts[8] || '',
+          imageData: ''
+        });
+      }
     }
   }
   
   return questions;
+}
+
+function normalizeOptionText(value){
+  const text = String(value || '').trim();
+  return text.replace(/^[A-Da-d]\s*[:\)\.\-]?\s*/,'').trim();
 }
 
 /* ════════════════════════════════
