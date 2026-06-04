@@ -2071,6 +2071,20 @@ nav {
                   <option value="scale">Escala</option>
                 </select>
               </div>
+              <div class="field hidden" id="slideQuestionSourceField">
+                <label>Fonte da questão</label>
+                <select id="slideQuestionSource" onchange="syncSlideForm()">
+                  <option value="">Criar manualmente</option>
+                  <option value="bank">Usar questão do banco</option>
+                </select>
+              </div>
+              <div class="field hidden" id="slideQuestionPickerField">
+                <label>Selecionar questão do banco</label>
+                <select id="slideQuestionPicker">
+                  <option value="">-- nenhuma --</option>
+                </select>
+                <p class="note-small muted">A pergunta será usada como enunciado e as alternativas preencherão o slide.</p>
+              </div>
               <div class="field">
                 <label>Título do slide</label>
                 <input type="text" id="slideTitle" placeholder="Ex: Feedback da aula">
@@ -2916,6 +2930,7 @@ async function loadAdminData(){
     if(sb()) await window._sb.from('kv').upsert({ key:'questions', value: questions }, { onConflict:'key' });
     else lsSet('questions', questions);
   }
+  populateSlideQuestionPicker();
 
   // Load teams
   const tData = await dbGet('teams');
@@ -3165,9 +3180,16 @@ function applySlideTemplate(){
 
 function syncSlideForm(){
   const type = document.getElementById('slideType').value;
-  document.getElementById('slideOptionsField').classList.toggle('hidden', !(type==='multiple' || type==='wordcloud'));
-  document.getElementById('slideScaleField').classList.toggle('hidden', type!=='scale');
-  document.getElementById('slideStarsField').classList.toggle('hidden', type!=='stars');
+  const source = document.getElementById('slideQuestionSource')?.value || '';
+  const showQuestionSource = true;
+  const showQuestionPicker = source === 'bank';
+  const showOptions = (type === 'multiple' && source !== 'bank') || (type === 'wordcloud' && source !== 'bank');
+
+  document.getElementById('slideQuestionSourceField').classList.toggle('hidden', !showQuestionSource);
+  document.getElementById('slideQuestionPickerField').classList.toggle('hidden', !showQuestionPicker);
+  document.getElementById('slideOptionsField').classList.toggle('hidden', !showOptions);
+  document.getElementById('slideScaleField').classList.toggle('hidden', type !== 'scale');
+  document.getElementById('slideStarsField').classList.toggle('hidden', type !== 'stars');
 }
 
 function addSlideFromForm(){
@@ -3175,9 +3197,23 @@ function addSlideFromForm(){
   const title = document.getElementById('slideTitle').value.trim();
   const prompt = document.getElementById('slidePrompt').value.trim();
   const optionsRaw = document.getElementById('slideOptions').value.trim();
+  const source = document.getElementById('slideQuestionSource')?.value || '';
+  const questionId = document.getElementById('slideQuestionPicker')?.value || '';
   const slide = { id:'slide-'+Date.now(), type, title, prompt };
 
-  if(type==='multiple' || type==='wordcloud'){
+  if(source === 'bank'){
+    if(!questionId){ toast('Selecione uma questão do banco','err'); return; }
+    const q = questions.find(item => item.id === questionId);
+    if(!q){ toast('Questão do banco não encontrada','err'); return; }
+    slide.questionId = q.id;
+    slide.prompt = q.text;
+    slide.title = slide.title || q.cat || q.text.slice(0, 60);
+    slide.questionFeedback = q.feedback || '';
+    if(type === 'multiple'){
+      slide.options = Array.isArray(q.opts) ? q.opts.map(o => String(o).trim()).filter(Boolean) : [];
+      if(slide.options.length < 2){ toast('A questão selecionada não possui opções suficientes para múltipla escolha','err'); return; }
+    }
+  } else if(type==='multiple' || type==='wordcloud'){
     slide.options = optionsRaw.split(/[\n,]/).map(s=>s.trim()).filter(Boolean);
   }
   if(type==='scale'){
@@ -3190,7 +3226,7 @@ function addSlideFromForm(){
     slide.maxStars = +document.getElementById('slideStarsMax').value || 5;
   }
 
-  if(!title || !prompt){ toast('Preencha título e enunciado do slide','err'); return; }
+  if(!slide.title || !slide.prompt){ toast('Preencha título e enunciado do slide','err'); return; }
   if(type==='multiple' && slide.options.length<2){ toast('Informe ao menos 2 opções','err'); return; }
 
   sessionSlides.push(normalizeSlide(slide));
@@ -4004,7 +4040,7 @@ async function deleteQuestion(id){
 function renderQuestions(){
   document.getElementById('qCount').textContent = questions.length+' questões';
   const el = document.getElementById('questionList');
-  if(!questions.length){ el.innerHTML='<p style="color:var(--muted);font-style:italic">Nenhuma questão cadastrada.</p>'; return; }
+  if(!questions.length){ el.innerHTML='<p style="color:var(--muted);font-style:italic">Nenhuma questão cadastrada.</p>'; populateSlideQuestionPicker(); return; }
   el.innerHTML = questions.map((q,i)=>`
     <div class="q-row">
       <div>
@@ -4021,6 +4057,7 @@ function renderQuestions(){
       </div>
     </div>
   `).join('');
+  populateSlideQuestionPicker();
 }
 
 function openImportModal(){
@@ -4140,6 +4177,23 @@ function parseCSV(csvText){
 function normalizeOptionText(value){
   const text = String(value || '').trim();
   return text.replace(/^[A-Da-d]\s*[:\)\.\-]?\s*/,'').trim();
+}
+
+function populateSlideQuestionPicker(){
+  const picker = document.getElementById('slideQuestionPicker');
+  if(!picker) return;
+  picker.innerHTML = '';
+  const defaultOption = document.createElement('option');
+  defaultOption.value = '';
+  defaultOption.textContent = '-- nenhuma --';
+  picker.appendChild(defaultOption);
+
+  questions.filter(q=>q.text).forEach(q=>{
+    const option = document.createElement('option');
+    option.value = q.id;
+    option.textContent = q.text.length > 80 ? q.text.slice(0,80) + '…' : q.text;
+    picker.appendChild(option);
+  });
 }
 
 /* ════════════════════════════════
