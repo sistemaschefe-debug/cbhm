@@ -1563,6 +1563,43 @@ nav {
 .pp-stat { background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:.75rem; }
 .pp-stat-v { font-family:var(--fh);font-size:1.3rem;color:var(--gold2); }
 .pp-stat-l { font-size:.72rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase; }
+
+/* ════════ WIZARD STEPS ════════ */
+.wizard-steps { display:flex;align-items:center;gap:.75rem;margin-bottom:2rem;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.5rem; }
+.wizard-step { display:flex;align-items:center;gap:.6rem;cursor:pointer;opacity:.45;transition:all .25s;flex:1;user-select:none; }
+.wizard-step.active { opacity:1; }
+.wizard-step.done { opacity:.75; }
+.wizard-step.done .ws-number { background:var(--green2);border-color:var(--green2);color:#fff; }
+.wizard-step:hover { opacity:.9; }
+.ws-number { width:32px;height:32px;border-radius:50%;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:.85rem;color:var(--gold2);flex-shrink:0;transition:all .25s;font-weight:600; }
+.wizard-step.active .ws-number { background:rgba(242,201,76,.15);border-color:var(--gold);color:var(--gold);box-shadow:0 0 12px rgba(242,201,76,.15); }
+.ws-info { display:flex;flex-direction:column;gap:.1rem; }
+.ws-label { font-family:var(--fh);font-size:.82rem;color:var(--tx);letter-spacing:1px; }
+.ws-desc { font-size:.72rem;color:var(--muted); }
+.ws-connector { flex:0 0 32px;height:1px;background:var(--border);margin:0 .25rem; }
+.wizard-nav { display:flex;gap:.75rem;justify-content:flex-end;border-top:1px solid var(--border);padding-top:1.25rem;margin-top:1.25rem; }
+@media(max-width:600px){ .wizard-steps { flex-direction:column;gap:.5rem; } .ws-connector { width:1px;height:12px;flex:0 0 auto; } }
+
+/* ════════ TEMPLATE CARDS ════════ */
+.template-grid { display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin:1rem 0; }
+@media(max-width:960px){ .template-grid { grid-template-columns:repeat(2,1fr); } }
+@media(max-width:520px){ .template-grid { grid-template-columns:1fr; } }
+.template-card { background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:1.25rem;cursor:pointer;transition:all .22s;display:flex;flex-direction:column;gap:.5rem;position:relative;overflow:hidden; }
+.template-card::after { content:'';position:absolute;inset:0;border-radius:14px;border:2px solid transparent;transition:border-color .22s;pointer-events:none; }
+.template-card:hover { border-color:rgba(242,201,76,.35);transform:translateY(-3px);box-shadow:0 8px 28px rgba(0,0,0,.35); }
+.template-card.selected { border-color:var(--gold);background:rgba(242,201,76,.05); }
+.template-card.selected::after { border-color:var(--gold); }
+.tc-icon { font-size:2.2rem;line-height:1; }
+.tc-title { font-family:var(--fh);font-size:.95rem;color:var(--gold3);letter-spacing:1px; }
+.tc-desc { font-size:.8rem;color:var(--silver);line-height:1.45; }
+.tc-slides { font-size:.72rem;color:var(--muted);margin-top:auto;padding-top:.6rem;border-top:1px solid var(--border); }
+
+/* ════════ SESSION SUMMARY ════════ */
+.session-summary-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem; }
+@media(max-width:520px){ .session-summary-grid { grid-template-columns:1fr; } }
+.summary-item { background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:1rem;text-align:center; }
+.si-value { font-family:var(--fh);font-size:1.5rem;color:var(--gold2);font-weight:700; }
+.si-label { font-size:.72rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:.25rem; }
 </style>
 </head>
 <body>
@@ -2038,125 +2075,207 @@ nav {
       <!-- SESSION -->
       <div id="tabSession" class="hidden">
         <h1>SESSÃO AO VIVO</h1>
-        <p class="sub">Gerencie e inicie a competição em tempo real</p>
+        <p class="sub">Crie sua sessão interativa em poucos passos, como no Mentimeter</p>
 
-        <div class="card">
-          <div class="card-header">
-            <div>
-              <div class="card-title">SLIDES DA SESSÃO</div>
-              <div class="card-meta">Múltipla escolha, nuvem de palavras, estrelas, pergunta aberta e escala</div>
+        <!-- Wizard Steps Indicator -->
+        <div class="wizard-steps" id="wizardSteps">
+          <div class="wizard-step active" data-step="1" onclick="wizardGoTo(1)">
+            <div class="ws-number">1</div>
+            <div class="ws-info">
+              <div class="ws-label">Modelo</div>
+              <div class="ws-desc">Escolher template</div>
             </div>
-            <button class="btn btn-sm" onclick="saveSessionSlidesDraft()">Salvar rascunho</button>
           </div>
-          <div class="slide-builder">
-            <div>
-              <div class="field">
-                <label>Template padrão do evento</label>
-                <div class="flex flex-wrap-gap">
-                  <select id="slideTemplatePreset" class="select-wide">
-                    <option value="institucional">Institucional (padrão)</option>
-                    <option value="academico">Acadêmico / Aula</option>
-                    <option value="feedback">Feedback rápido</option>
-                  </select>
-                  <button class="btn" onclick="applySlideTemplate()">Aplicar template</button>
-                </div>
-              </div>
-              <div class="field">
-                <label>Tipo de slide</label>
-                <select id="slideType" onchange="syncSlideForm()">
-                  <option value="multiple">Múltipla escolha</option>
-                  <option value="wordcloud">Nuvem de palavras</option>
-                  <option value="stars">Avaliação com estrelas</option>
-                  <option value="open">Pergunta aberta</option>
-                  <option value="scale">Escala</option>
-                </select>
-              </div>
-              <div class="field hidden" id="slideQuestionSourceField">
-                <label>Fonte da questão</label>
-                <select id="slideQuestionSource" onchange="syncSlideForm()">
-                  <option value="">Criar manualmente</option>
-                  <option value="bank">Usar questão do banco</option>
-                </select>
-              </div>
-              <div class="field hidden" id="slideQuestionPickerField">
-                <label>Selecionar questão do banco</label>
-                <select id="slideQuestionPicker">
-                  <option value="">-- nenhuma --</option>
-                </select>
-                <p class="note-small muted">A pergunta será usada como enunciado e as alternativas preencherão o slide.</p>
-              </div>
-              <div class="field">
-                <label>Título do slide</label>
-                <input type="text" id="slideTitle" placeholder="Ex: Feedback da aula">
-              </div>
-              <div class="field">
-                <label>Enunciado / Prompt</label>
-                <textarea id="slidePrompt" rows="3" placeholder="Digite a pergunta ou instrução do slide"></textarea>
-              </div>
-              <div class="field" id="slideOptionsField">
-                <label>Opções da votação (separe por vírgula ou nova linha)</label>
-                <textarea id="slideOptions" rows="3" placeholder="Opção 1, Opção 2, Opção 3"></textarea>
-              </div>
-              <div class="field hidden" id="slideScaleField">
-                <label>Configuração de escala</label>
-                <div class="grid-3">
-                  <input type="number" id="slideScaleMin" value="1" min="1" max="10" placeholder="Mínimo">
-                  <input type="number" id="slideScaleMax" value="5" min="2" max="10" placeholder="Máximo">
-                  <input type="text" id="slideScaleLeft" placeholder="Rótulo esquerdo" value="Discordo">
-                </div>
-                <div class="field mt">
-                  <input type="text" id="slideScaleRight" placeholder="Rótulo direito" value="Concordo">
-                </div>
-              </div>
-              <div class="field hidden" id="slideStarsField">
-                <label>Configuração de estrelas</label>
-                <input type="number" id="slideStarsMax" value="5" min="3" max="10">
-              </div>
-              <div class="flex flex-wrap-gap">
-                <button class="btn btn-gold" onclick="addSlideFromForm()">+ Adicionar slide</button>
-                <button class="btn" onclick="loadDefaultSlides()">↺ Carregar exemplos</button>
+          <div class="ws-connector"></div>
+          <div class="wizard-step" data-step="2" onclick="wizardGoTo(2)">
+            <div class="ws-number">2</div>
+            <div class="ws-info">
+              <div class="ws-label">Slides</div>
+              <div class="ws-desc">Adicionar perguntas</div>
+            </div>
+          </div>
+          <div class="ws-connector"></div>
+          <div class="wizard-step" data-step="3" onclick="wizardGoTo(3)">
+            <div class="ws-number">3</div>
+            <div class="ws-info">
+              <div class="ws-label">Iniciar</div>
+              <div class="ws-desc">Configurar e lançar</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WIZARD CONTENT (inside sessionCard for compatibility with updateSessionUI) -->
+        <div class="card" id="sessionCard">
+
+          <!-- STEP 1: Choose Template -->
+          <div id="wizardStep1">
+            <div class="card-header">
+              <div>
+                <div class="card-title">PASSO 1 — ESCOLHA UM MODELO</div>
+                <div class="card-meta">Comece com um modelo pronto ou crie do zero</div>
               </div>
             </div>
-            <div>
-              <div class="card preview-help">
-                  <div class="card-title preview-help-title">PRÉVIA / AJUDA</div>
+            <div class="template-grid">
+              <div class="template-card" data-template="institucional" onclick="selectWizardTemplate('institucional')">
+                <div class="tc-icon">🏛️</div>
+                <div class="tc-title">Institucional</div>
+                <div class="tc-desc">Para eventos oficiais, cerimônias e solenidades</div>
+                <div class="tc-slides">5 slides · múltipla, nuvem, estrelas, aberta, escala</div>
+              </div>
+              <div class="template-card" data-template="academico" onclick="selectWizardTemplate('academico')">
+                <div class="tc-icon">📚</div>
+                <div class="tc-title">Acadêmico</div>
+                <div class="tc-desc">Para aulas, palestras e workshops interativos</div>
+                <div class="tc-slides">5 slides · múltipla, escala, nuvem, aberta, estrelas</div>
+              </div>
+              <div class="template-card" data-template="feedback" onclick="selectWizardTemplate('feedback')">
+                <div class="tc-icon">⭐</div>
+                <div class="tc-title">Feedback</div>
+                <div class="tc-desc">Para pesquisas, encerramento e avaliação</div>
+                <div class="tc-slides">5 slides · estrelas, múltipla, escala, nuvem, aberta</div>
+              </div>
+              <div class="template-card" data-template="blank" onclick="selectWizardTemplate('blank')">
+                <div class="tc-icon">📝</div>
+                <div class="tc-title">Começar do zero</div>
+                <div class="tc-desc">Monte seus slides manualmente, sem modelo pré-definido</div>
+                <div class="tc-slides">Nenhum slide — você adiciona tudo</div>
+              </div>
+            </div>
+            <div class="wizard-nav">
+              <button class="btn btn-gold" onclick="wizardNext()">Avançar →</button>
+            </div>
+          </div>
+
+          <!-- STEP 2: Add Slides -->
+          <div class="hidden" id="wizardStep2">
+            <div class="card-header">
+              <div>
+                <div class="card-title">PASSO 2 — ADICIONE SEUS SLIDES</div>
+                <div class="card-meta">Crie quantos slides desejar para sua sessão ao vivo</div>
+              </div>
+              <button class="btn btn-sm" onclick="saveSessionSlidesDraft()">💾 Salvar rascunho</button>
+            </div>
+            <div class="slide-builder">
+              <div>
+                <div class="field">
+                  <label>Tipo de interação</label>
+                  <select id="slideType" onchange="syncSlideForm()">
+                    <option value="multiple">📊 Múltipla escolha</option>
+                    <option value="wordcloud">☁️ Nuvem de palavras</option>
+                    <option value="stars">⭐ Avaliação com estrelas</option>
+                    <option value="open">💬 Pergunta aberta</option>
+                    <option value="scale">📏 Escala</option>
+                  </select>
+                </div>
+                <div class="field hidden" id="slideQuestionSourceField">
+                  <label>Fonte da questão</label>
+                  <select id="slideQuestionSource" onchange="syncSlideForm()">
+                    <option value="">✍️ Criar manualmente</option>
+                    <option value="bank">📂 Usar questão do banco</option>
+                  </select>
+                </div>
+                <div class="field hidden" id="slideQuestionPickerField">
+                  <label>Selecionar questão do banco</label>
+                  <select id="slideQuestionPicker">
+                    <option value="">-- nenhuma --</option>
+                  </select>
+                  <p class="note-small muted">A pergunta será usada como enunciado e as alternativas preencherão o slide.</p>
+                </div>
+                <div class="field">
+                  <label>Título do slide</label>
+                  <input type="text" id="slideTitle" placeholder="Ex: Feedback da aula">
+                </div>
+                <div class="field">
+                  <label>Pergunta / Instrução</label>
+                  <textarea id="slidePrompt" rows="2" placeholder="Digite a pergunta ou instrução do slide"></textarea>
+                </div>
+                <div class="field" id="slideOptionsField">
+                  <label>Opções (separe por vírgula ou nova linha)</label>
+                  <textarea id="slideOptions" rows="2" placeholder="Opção 1, Opção 2, Opção 3"></textarea>
+                </div>
+                <div class="field hidden" id="slideScaleField">
+                  <label>Configuração de escala</label>
+                  <div class="grid-3">
+                    <input type="number" id="slideScaleMin" value="1" min="1" max="10" placeholder="Mínimo">
+                    <input type="number" id="slideScaleMax" value="5" min="2" max="10" placeholder="Máximo">
+                    <input type="text" id="slideScaleLeft" placeholder="Rótulo esquerdo" value="Discordo">
+                  </div>
+                  <div class="field mt">
+                    <input type="text" id="slideScaleRight" placeholder="Rótulo direito" value="Concordo">
+                  </div>
+                </div>
+                <div class="field hidden" id="slideStarsField">
+                  <label>Quantidade máxima de estrelas</label>
+                  <input type="number" id="slideStarsMax" value="5" min="3" max="10">
+                </div>
+                <div class="flex flex-wrap-gap">
+                  <button class="btn btn-gold" onclick="addSlideFromForm()">+ Adicionar slide</button>
+                  <button class="btn" onclick="loadDefaultSlides()">↺ Recarregar exemplos</button>
+                </div>
+              </div>
+              <div>
+                <div class="card preview-help">
+                  <div class="card-title preview-help-title">💡 Dica</div>
                   <p class="preview-help-text">
-                    Os slides ficam disponíveis para o modo participante por PIN ou QR code.
-                    O painel ao vivo mostra respostas em tempo real com gráficos e a contagem de participantes.
+                    Os slides aparecem um por vez durante a sessão. O público responde pelo celular via PIN ou QR code.
+                    Você pode reordenar os slides arrastando ou usando os botões.
                   </p>
                   <div class="preview-tags">
                     <span class="tag">PIN seguro</span>
                     <span class="tag">QR code</span>
-                    <span class="tag">Chart.js</span>
-                    <span class="tag">Mobile first</span>
+                    <span class="tag">Tempo real</span>
+                    <span class="tag">Gráficos</span>
                   </div>
                 </div>
+              </div>
+            </div>
+            <p class="participant-mini mt">Arraste para reordenar, ou use ↑ ↓ / ✏ editar / ✕ excluir</p>
+            <div class="slide-list mt2" id="slideList"></div>
+            <div class="wizard-nav">
+              <button class="btn" onclick="wizardPrev()">← Voltar</button>
+              <button class="btn btn-gold" onclick="wizardNext()">Avançar →</button>
             </div>
           </div>
-          <p class="participant-mini mt">Reordene os slides arrastando e soltando no desktop, ou use os botões ↑ ↓.</p>
-          <div class="slide-list mt2" id="slideList"></div>
-        </div>
 
-        <div class="card" id="sessionCard">
-          <div class="card-header">
-            <div>
-              <div class="card-title">CRIAR NOVA SESSÃO</div>
-              <div class="card-meta">Uma sessão contém slides, participantes, timer e dados em tempo real</div>
+          <!-- STEP 3: Configure & Launch -->
+          <div class="hidden" id="wizardStep3">
+            <div class="card-header">
+              <div>
+                <div class="card-title">PASSO 3 — CONFIGURAR E INICIAR</div>
+                <div class="card-meta">Defina os detalhes finais e comece sua sessão</div>
+              </div>
+            </div>
+            <div class="session-summary-grid">
+              <div class="summary-item">
+                <div class="si-value" id="wizSlideCount">0</div>
+                <div class="si-label">Slides</div>
+              </div>
+              <div class="summary-item">
+                <div class="si-value" id="wizTemplateName">Personalizado</div>
+                <div class="si-label">Modelo</div>
+              </div>
+              <div class="summary-item">
+                <div class="si-value" id="wizSlideTypes">—</div>
+                <div class="si-label">Tipos de slide</div>
+              </div>
+            </div>
+            <div class="field">
+              <label>Código da Sessão</label>
+              <input type="text" id="sessionCode" value="CBHM2026" class="pin-input" oninput="this.value=this.value.toUpperCase()">
+            </div>
+            <div class="field">
+              <label>Duração (minutos)</label>
+              <input type="number" id="sessionDuration" value="20" min="1" max="240">
+            </div>
+            <div class="flex flex-wrap-gap">
+              <button class="btn btn-gold" onclick="createSession()">⚡ Iniciar Sessão</button>
+              <button class="btn" onclick="showScreen('sParticipant')">👤 Abrir Participante</button>
+            </div>
+            <p class="note-small italic">Após iniciar, compartilhe o PIN ou QR code com os participantes.</p>
+            <div class="wizard-nav">
+              <button class="btn" onclick="wizardPrev()">← Voltar</button>
             </div>
           </div>
-          <div class="field">
-            <label>Código da Sessão</label>
-            <input type="text" id="sessionCode" value="CBHM2026" class="pin-input" oninput="this.value=this.value.toUpperCase()">
-          </div>
-          <div class="field">
-            <label>Duração da sessão (minutos)</label>
-            <input type="number" id="sessionDuration" value="20" min="1" max="240">
-          </div>
-          <div class="flex flex-wrap-gap">
-            <button class="btn btn-gold" onclick="createSession()">⚡ Iniciar Sessão</button>
-            <button class="btn" onclick="showScreen('sParticipant')">👤 Abrir Participante</button>
-          </div>
-          <p class="note-small italic">Após criar a sessão, compartilhe o PIN/QR code e acompanhe as respostas ao vivo.</p>
         </div>
 
         <div class="card hidden" id="activeSessionCard">
@@ -2753,7 +2872,7 @@ function adminTab(el, tab){
   if(tab==='tabDashboard') refreshDashboard();
   if(tab==='tabGemini') loadGeminiKey();
   if(tab==='tabLanding') fillLandingConfigForm();
-  if(tab==='tabSession'){ syncSlideForm(); renderSlideDeck(); renderSessionDashboard(); }
+  if(tab==='tabSession'){ if(!activeSession?.active) wizardGoTo(1); syncSlideForm(); renderSlideDeck(); renderSessionDashboard(); }
   if(tab==='tabSistema') refreshSystemInfo();
 }
 
@@ -4626,8 +4745,64 @@ function updateSessionUI(){
   } else {
     clearInterval(sessionTickInterval);
     closeParticipantProjector();
+    wizardGoTo(1);
   }
   renderSessionDashboard();
+}
+
+/* ════════════════════════════════
+   WIZARD NAVIGATION
+════════════════════════════════ */
+let wizardCurrentStep = 1;
+let wizardSelectedTemplate = 'institucional';
+
+function wizardGoTo(step){
+  for(let i = 1; i <= 3; i++){
+    const el = document.getElementById('wizardStep'+i);
+    if(el) el.classList.toggle('hidden', i !== step);
+    const dot = document.querySelector(`.wizard-step[data-step="${i}"]`);
+    if(dot){
+      dot.classList.toggle('active', i === step);
+      dot.classList.toggle('done', i < step);
+    }
+  }
+  wizardCurrentStep = step;
+  if(step === 2){ syncSlideForm(); renderSlideDeck(); }
+  if(step === 3) updateWizardSummary();
+}
+
+function wizardNext(){
+  if(wizardCurrentStep === 1){
+    if(wizardSelectedTemplate === 'blank'){
+      sessionSlides = [];
+    } else {
+      sessionSlides = getDefaultSlides(wizardSelectedTemplate).map(normalizeSlide);
+    }
+    saveSessionSlidesDraft();
+    renderSlideDeck();
+    if(wizardSelectedTemplate !== 'blank') toast('Template '+wizardSelectedTemplate+' aplicado','ok');
+  }
+  if(wizardCurrentStep < 3) wizardGoTo(wizardCurrentStep + 1);
+}
+
+function wizardPrev(){
+  if(wizardCurrentStep > 1) wizardGoTo(wizardCurrentStep - 1);
+}
+
+function selectWizardTemplate(template){
+  wizardSelectedTemplate = template;
+  document.querySelectorAll('.template-card').forEach(c => c.classList.remove('selected'));
+  const card = document.querySelector(`.template-card[data-template="${template}"]`);
+  if(card) card.classList.add('selected');
+}
+
+function updateWizardSummary(){
+  const slides = sessionSlides;
+  document.getElementById('wizSlideCount').textContent = slides.length;
+  const names = { institucional: 'Institucional', academico: 'Acadêmico', feedback: 'Feedback', blank: 'Personalizado' };
+  document.getElementById('wizTemplateName').textContent = names[wizardSelectedTemplate] || 'Personalizado';
+  const types = [...new Set(slides.map(s => slideTypeLabel(s.type)))].join(', ');
+  document.getElementById('wizSlideTypes').textContent = types || '—';
 }
 
 /* ════════════════════════════════
@@ -5445,6 +5620,7 @@ whenAppReady(() => {
   loadLandingConfig();
   loadSessionSlidesDraft();
   syncSlideForm();
+  selectWizardTemplate('institucional');
 
   // Verificar se há autenticação persistida
   const savedUser = window.restoreAuthUser ? window.restoreAuthUser() : lsGet('currentUser');
