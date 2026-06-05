@@ -72,13 +72,21 @@ async function dbGet(path){
 }
 
 async function dbSet(path, value){
+  const parts = String(path).split('/');
+  const rootKey = parts[0];
+
   if(!sb()){
-    lsSet(_lsKey(path), value);
+    if(parts.length === 1){
+      lsSet(_lsKey(path), value);
+    } else {
+      const root = lsGet(_lsKey(rootKey)) || {};
+      _deepSet(root, parts, value);
+      lsSet(_lsKey(rootKey), root);
+    }
     return;
   }
+
   try {
-    const parts = String(path).split('/');
-    const rootKey = parts[0];
     if(parts.length === 1){
       await window._sb.from('kv').upsert({ key: rootKey, value }, { onConflict: 'key' });
       return;
@@ -86,50 +94,75 @@ async function dbSet(path, value){
 
     const { data } = await window._sb.from('kv').select('value').eq('key', rootKey).maybeSingle();
     const root = data?.value ?? {};
-    let cur = root;
-    for(let i = 1; i < parts.length - 1; i++){
-      if(!cur[parts[i]] || typeof cur[parts[i]] !== 'object') cur[parts[i]] = {};
-      cur = cur[parts[i]];
-    }
-    cur[parts[parts.length - 1]] = value;
+    _deepSet(root, parts, value);
     await window._sb.from('kv').upsert({ key: rootKey, value: root }, { onConflict: 'key' });
   } catch (error) {
     console.warn('dbSet erro:', path, error);
-    lsSet(_lsKey(path), value);
+    if(parts.length === 1){
+      lsSet(_lsKey(path), value);
+    } else {
+      const root = lsGet(_lsKey(rootKey)) || {};
+      _deepSet(root, parts, value);
+      lsSet(_lsKey(rootKey), root);
+    }
   }
 }
 
+function _deepSet(root, parts, value){
+  let cur = root;
+  for(let i = 1; i < parts.length - 1; i++){
+    if(!cur[parts[i]] || typeof cur[parts[i]] !== 'object') cur[parts[i]] = {};
+    cur = cur[parts[i]];
+  }
+  const last = parts[parts.length - 1];
+  cur[last] = value;
+}
+
 async function dbUpdate(path, updates){
+  const parts = String(path).split('/');
+  const rootKey = parts[0];
+
   if(!sb()){
-    const current = lsGet(_lsKey(path)) || {};
-    lsSet(_lsKey(path), { ...current, ...updates });
+    const root = lsGet(_lsKey(rootKey)) || {};
+    if(parts.length === 1){
+      Object.assign(root, updates);
+    } else {
+      _deepSet(root, parts, { ...(_deepGet(root, parts) || {}), ...updates });
+    }
+    lsSet(_lsKey(rootKey), root);
     return;
   }
 
   try {
-    const parts = String(path).split('/');
-    const rootKey = parts[0];
     const { data } = await window._sb.from('kv').select('value').eq('key', rootKey).maybeSingle();
     let root = data?.value ?? {};
 
     if(parts.length === 1){
       root = { ...root, ...updates };
     } else {
-      let cur = root;
-      for(let i = 1; i < parts.length - 1; i++){
-        if(!cur[parts[i]] || typeof cur[parts[i]] !== 'object') cur[parts[i]] = {};
-        cur = cur[parts[i]];
-      }
-      const last = parts[parts.length - 1];
-      cur[last] = { ...(cur[last] || {}), ...updates };
+      _deepSet(root, parts, { ...(_deepGet(root, parts) || {}), ...updates });
     }
 
     await window._sb.from('kv').upsert({ key: rootKey, value: root }, { onConflict: 'key' });
   } catch (error) {
     console.warn('dbUpdate erro:', path, error);
-    const current = lsGet(_lsKey(path)) || {};
-    lsSet(_lsKey(path), { ...current, ...updates });
+    const root = lsGet(_lsKey(rootKey)) || {};
+    if(parts.length === 1){
+      Object.assign(root, updates);
+    } else {
+      _deepSet(root, parts, { ...(_deepGet(root, parts) || {}), ...updates });
+    }
+    lsSet(_lsKey(rootKey), root);
   }
+}
+
+function _deepGet(root, parts){
+  let cur = root;
+  for(let i = 1; i < parts.length; i++){
+    if(cur == null || typeof cur !== 'object') return undefined;
+    cur = cur[parts[i]];
+  }
+  return cur;
 }
 
 async function dbPush(path, data){
@@ -159,32 +192,42 @@ async function dbPush(path, data){
 }
 
 function dbListen(path, cb){
-  dbGet(path).then(value => cb(value));
+  let lastValue;
+  dbGet(path).then(value => { lastValue = JSON.stringify(value); cb(value); });
+
+  const rootKey = String(path).split('/')[0];
+  const pollKey = 'poll_' + rootKey;
+  if(DB_CHANNELS[pollKey]) return;
+  DB_CHANNELS[pollKey] = setInterval(async () => {
+    const value = await dbGet(path);
+    const str = JSON.stringify(value);
+    if(str !== lastValue){
+      lastValue = str;
+      cb(value);
+    }
+  }, 1500);
 
   if(!sb()) return;
 
-  const rootKey = String(path).split('/')[0];
   const channelName = 'kv-' + rootKey;
-  if(DB_CHANNELS[channelName]) return;
-
   DB_CHANNELS[channelName] = window._sb
     .channel(channelName)
     .on('postgres_changes', {
       event: '*', schema: 'public', table: 'kv', filter: `key=eq.${rootKey}`
     }, async () => {
-      cb(await dbGet(path));
+      const value = await dbGet(path);
+      const str = JSON.stringify(value);
+      if(str !== lastValue){
+        lastValue = str;
+        cb(value);
+      }
     })
     .subscribe(status => {
       if(status === 'SUBSCRIBED'){
         console.log('🔴 Realtime ativo:', channelName);
-        if(DB_CHANNELS[channelName + '_poll']){
-          clearInterval(DB_CHANNELS[channelName + '_poll']);
-          delete DB_CHANNELS[channelName + '_poll'];
-        }
-      } else if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT'){
-        if(!DB_CHANNELS[channelName + '_poll']){
-          console.warn('Realtime indisponível, polling 2s para:', path);
-          DB_CHANNELS[channelName + '_poll'] = setInterval(async () => cb(await dbGet(path)), 2000);
+        if(DB_CHANNELS[pollKey]){
+          clearInterval(DB_CHANNELS[pollKey]);
+          delete DB_CHANNELS[pollKey];
         }
       }
     });

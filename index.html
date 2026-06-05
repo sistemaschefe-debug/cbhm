@@ -3615,10 +3615,9 @@ async function setSessionSlideIndex(index){
   activeSession.currentSlideIndex = nextIndex;
   await dbUpdate('activeSession/currentSlideIndex', nextIndex);
   renderSessionDashboard();
-  renderSlideDeck();  // Atualizar destaque do slide atual
-  updateLiveChart();  // Atualizar gráfico com dados atualizados
-  if(participantProjectorOpen) renderParticipantProjector();  // Só se tela do projector está aberta
-  renderParticipantMode();
+  renderSlideDeck();
+  updateLiveChart();
+  if(participantProjectorOpen) renderParticipantProjector();
 }
 
 function nextSlide(){
@@ -4749,10 +4748,16 @@ async function endSession(silent=false){
   toast('Sessão encerrada','ok');
 }
 
+let _sessionUIState = '';
+
 function updateSessionUI(){
   const has = activeSession?.active;
-  document.getElementById('sessionCard').classList.toggle('hidden',!!has);
-  document.getElementById('activeSessionCard').classList.toggle('hidden',!has);
+  const stateKey = String(has) + '|' + (activeSession?.code||'');
+  if(stateKey === _sessionUIState) return;
+  _sessionUIState = stateKey;
+
+  document.getElementById('sessionCard')?.classList.toggle('hidden',!!has);
+  document.getElementById('activeSessionCard')?.classList.toggle('hidden',!has);
   if(has){
     document.getElementById('activeSesTitle').textContent='SESSÃO ATIVA: '+activeSession.code;
     document.getElementById('activeSesCode').textContent=(activeSession.slides?.length || sessionSlides.length)+' slides · '+(activeSession.participants ? Object.keys(activeSession.participants).length : 0)+' participantes';
