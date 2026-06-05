@@ -3613,7 +3613,7 @@ async function setSessionSlideIndex(index){
   if(!slides.length){ toast('Nenhum slide cadastrado','err'); return; }
   const nextIndex = Math.max(0, Math.min(index, slides.length - 1));
   activeSession.currentSlideIndex = nextIndex;
-  await dbUpdate('activeSession/currentSlideIndex', nextIndex);
+  await dbSet('activeSession/currentSlideIndex', nextIndex);
   renderSessionDashboard();
   renderSlideDeck();
   updateLiveChart();

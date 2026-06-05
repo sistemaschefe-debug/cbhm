@@ -118,6 +118,12 @@ function _deepSet(root, parts, value){
   cur[last] = value;
 }
 
+function _mergeOrSet(existing, updates){
+  return (typeof updates === 'object' && updates !== null && !Array.isArray(updates))
+    ? { ...(existing || {}), ...updates }
+    : updates;
+}
+
 async function dbUpdate(path, updates){
   const parts = String(path).split('/');
   const rootKey = parts[0];
@@ -127,7 +133,7 @@ async function dbUpdate(path, updates){
     if(parts.length === 1){
       Object.assign(root, updates);
     } else {
-      _deepSet(root, parts, { ...(_deepGet(root, parts) || {}), ...updates });
+      _deepSet(root, parts, _mergeOrSet(_deepGet(root, parts), updates));
     }
     lsSet(_lsKey(rootKey), root);
     return;
@@ -140,7 +146,7 @@ async function dbUpdate(path, updates){
     if(parts.length === 1){
       root = { ...root, ...updates };
     } else {
-      _deepSet(root, parts, { ...(_deepGet(root, parts) || {}), ...updates });
+      _deepSet(root, parts, _mergeOrSet(_deepGet(root, parts), updates));
     }
 
     await window._sb.from('kv').upsert({ key: rootKey, value: root }, { onConflict: 'key' });
@@ -150,7 +156,7 @@ async function dbUpdate(path, updates){
     if(parts.length === 1){
       Object.assign(root, updates);
     } else {
-      _deepSet(root, parts, { ...(_deepGet(root, parts) || {}), ...updates });
+      _deepSet(root, parts, _mergeOrSet(_deepGet(root, parts), updates));
     }
     lsSet(_lsKey(rootKey), root);
   }
