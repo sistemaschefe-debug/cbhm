@@ -3064,16 +3064,6 @@ async function loadAdminData(){
   const uData = await dbGet('users');
   users = uData ? (Array.isArray(uData)?uData:Object.entries(uData).map(([id,v])=>({...v,id}))) : [];
 
-  // Listen to active session
-  dbListen('activeSession', data=>{
-    activeSession = data || null;
-    if(activeSession?.slides?.length){
-      sessionSlides = activeSession.slides.map(normalizeSlide);
-    }
-    updateSessionUI();
-    renderParticipantMode();
-  });
-
   // Aplicar controle de acesso ao menu
   syncMenuAccessControl();
   
@@ -5678,6 +5668,16 @@ whenAppReady(() => {
     startSessionTimer();
     loadAdminData();  // Carregar dados do admin ao restaurar sessão
   }
+
+  // Listen to active session changes (runs for ALL users — admin, participant, projector)
+  dbListen('activeSession', data=>{
+    activeSession = data || null;
+    if(activeSession?.slides?.length){
+      sessionSlides = activeSession.slides.map(normalizeSlide);
+    }
+    updateSessionUI();
+    renderParticipantMode();
+  });
 
   // Check URL params
   const p=new URLSearchParams(location.search);
