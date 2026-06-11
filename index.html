@@ -4301,7 +4301,7 @@ function parseCSV(csvText){
 
 function normalizeOptionText(value){
   const text = String(value || '').trim();
-  return text.replace(/^[A-Da-d]\s*[:\)\.\-]?\s*/,'').trim();
+  return text.replace(/^[A-Da-d]\s*[:\)\.\-]\s*/,'').trim();
 }
 
 function populateSlideQuestionPicker(){
